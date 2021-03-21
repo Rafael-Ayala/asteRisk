@@ -1,0 +1,16 @@
+Package: asteRisk
+Type: Package
+Title: Computation of Satellite Position
+Version: 0.99.0
+Author: Rafael Ayala, Daniel Ayala, Lara Selles Vidal
+Maintainer: Rafael Ayala <rafael.ayala@oist.jp>
+Description: Provides basic functionalities to calculate the position of
+    satellites given a known state vector. The package includes implementations
+    of the SGP4 and SDP4 simplified perturbation models to propagate orbital
+    state vectors, as well as utilities to read TLE files and convert coordinates
+    between different frames of reference.
+License: GPL-3
+Suggests: knitr, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr
+VignetteBuilder: knitr
+Encoding: UTF-8
+LazyData: true
