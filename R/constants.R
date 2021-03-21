@@ -1,5 +1,6 @@
 XKMPER <- 6378.135 # Earth radius in kilometers
 ae <- 1 # distance units per earth radii
+earthEccentricity <- 0.0818191908 # Earth eccentricity
 
 J2 <- 1.082616e-3 # second gravitational zonal harmonic of Earth
 J3 <- -2.53881e-6 # third gravitational zonal harmonic of Earth
@@ -119,3 +120,17 @@ sl <- 0
 sgh <- 0
 shdq <- 0
 
+# WGS84 constants
+
+WGS84_A <- 6.378137e6
+WGS84_E <- 8.18191908426214947083e-2
+WGS84_E2D2 <-WGS84_E^2/2
+WGS84_E4D4 <- WGS84_E^4/4
+WGS84_INVA2 <- 1/WGS84_A^2
+WGS84_P1ME2 <- 1 - WGS84_E^2
+WGS84_P1ME2DA2 <- (1 - WGS84_E^2) / (WGS84_A^2)
+WGS84_HMIN <- 2.25010182030430273673e-14
+
+# Other constants
+
+inv_cbr_2 <- 1/(2^(1/3))

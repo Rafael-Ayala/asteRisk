@@ -2,6 +2,10 @@ deg2rad <- function(degrees) {
     return(degrees*pi/180)
 }
 
+rad2deg <- function(radians) {
+    return(radians*180/pi)
+}
+
 parseTLElines <- function(lines) {
     if(length(lines) == 2) {
         line1 <- lines[1]
