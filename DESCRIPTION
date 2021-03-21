@@ -1,7 +1,7 @@
 Package: asteRisk
 Type: Package
 Title: Computation of Satellite Position
-Version: 0.99.0
+Version: 0.99.99
 Author: Rafael Ayala, Daniel Ayala, Lara Selles Vidal
 Maintainer: Rafael Ayala <rafael.ayala@oist.jp>
 Description: Provides basic functionalities to calculate the position of
