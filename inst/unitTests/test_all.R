@@ -16,10 +16,10 @@ checkTrue(length(testTLEs) == 29)
 testSGDP4_1 <- sgdp4(
     n0 = testTLEs[[29]]$meanMotion * ((2 * pi) / (1440)),
     e0 = testTLEs[[29]]$eccentricity,
-    i0 = astrodynamics:::deg2rad(testTLEs[[29]]$inclination),
-    M0 = astrodynamics:::deg2rad(testTLEs[[29]]$meanAnomaly),
-    omega0 = astrodynamics:::deg2rad(testTLEs[[29]]$perigeeArgument),
-    OMEGA0 = astrodynamics:::deg2rad(testTLEs[[29]]$ascension),
+    i0 = asteRisk:::deg2rad(testTLEs[[29]]$inclination),
+    M0 = asteRisk:::deg2rad(testTLEs[[29]]$meanAnomaly),
+    omega0 = asteRisk:::deg2rad(testTLEs[[29]]$perigeeArgument),
+    OMEGA0 = asteRisk:::deg2rad(testTLEs[[29]]$ascension),
     Bstar = testTLEs[[29]]$Bstar,
     initialDateTime = testTLEs[[29]]$dateTime,
     targetTime = 80
@@ -28,10 +28,10 @@ testSGDP4_1 <- sgdp4(
 testSGDP4_2 <- sgdp4(
     n0 = testTLEs[[17]]$meanMotion * ((2 * pi) / (1440)),
     e0 = testTLEs[[17]]$eccentricity,
-    i0 = astrodynamics:::deg2rad(testTLEs[[17]]$inclination),
-    M0 = astrodynamics:::deg2rad(testTLEs[[17]]$meanAnomaly),
-    omega0 = astrodynamics:::deg2rad(testTLEs[[17]]$perigeeArgument),
-    OMEGA0 = astrodynamics:::deg2rad(testTLEs[[17]]$ascension),
+    i0 = asteRisk:::deg2rad(testTLEs[[17]]$inclination),
+    M0 = asteRisk:::deg2rad(testTLEs[[17]]$meanAnomaly),
+    omega0 = asteRisk:::deg2rad(testTLEs[[17]]$perigeeArgument),
+    OMEGA0 = asteRisk:::deg2rad(testTLEs[[17]]$ascension),
     Bstar = testTLEs[[17]]$Bstar,
     initialDateTime = testTLEs[[17]]$dateTime,
     targetTime = 1440
