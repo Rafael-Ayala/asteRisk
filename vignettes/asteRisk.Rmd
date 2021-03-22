@@ -237,6 +237,11 @@ frame of reference. In the ECEF frame, the origin is also placed at the center
 of mass of Earth, but the frame rotates with respect to the stars to remain 
 fixed with respect to the Earth surface as it rotates.
 
+Additionally, the <b>TEMEtoLATLON()</b> and <b>ECEFtoLATLON()</b> functions
+convert Cartesian coordinates to geodetic latitude, longitude and altitude
+values, from the TEME and ECEF frames respectively. This can be useful, for 
+example, to visualize the ground track followed by a satellite.
+
 ```{r tidy = TRUE}
 # Let us convert the last propagation previously calculated for the MOLNIYA 1-83
 # satellite into the ECEF frame. In order to do so, it is required to provide
@@ -251,6 +256,33 @@ new_dateTime <- "2006-06-25 12:33:43"
 ecef_coordinates <- TEMEtoECEF(last_molniya_propagation$position,
                                last_molniya_propagation$velocity,
                                new_dateTime)
+
+# Let us now convert the previously calculated set of TEME coordinates to
+# geodetic latitude and longitude
+
+geodetic_matrix <- matrix(nrow=nrow(results_position_matrix), ncol=3)
+
+for(i in 1:nrow(geodetic_matrix)) {
+    new_dateTime <- as.character(as.POSIXct(molniya$dateTime, tz="UTC") + 60*targetTimes[i])
+    new_geodetic <- TEMEtoLATLON(results_position_matrix[i, 1:3],
+                                 new_dateTime)
+    geodetic_matrix[i,] <- new_geodetic
+}
+
+colnames(geodetic_matrix) <- c("latitude", "longitude", "altitude")
+
+# We can then visualize the ground track of the satellite
+
+library(ggmap)
+
+ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
+  geom_segment(data=as.data.frame(geodetic_matrix), 
+               aes(x=longitude, y=latitude, 
+                   xend=c(tail(longitude, n=-1), NA), 
+                   yend=c(tail(latitude, n=-1), NA)), 
+               na.rm=TRUE) +
+  geom_point(data=as.data.frame(geodetic_matrix), aes(x=longitude, y=latitude), 
+             color="blue", size=0.3, alpha=0.8)
 ```
 
 # References

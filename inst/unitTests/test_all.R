@@ -48,4 +48,19 @@ testECEF <- TEMEtoECEF(testSGDP4_2$position,
                        testSGDP4_2$velocity,
                        "2006-06-27 00:58:29")
 
-checkEqualsNumeric(testECEF$position[1], 41021.5990, tolerance=0.0001)
+checkEqualsNumeric(testECEF$position[1], -37325.97, tolerance=0.0001)
+
+# Test ECEFtoLATLON
+
+testLATLON1 <- ECEFtoLATLON(testECEF$position)
+
+checkEqualsNumeric(testLATLON1[1], 0.18918, tolerance=0.0001)
+
+# Test TEMEtoLATLON
+
+testLATLON2 <- TEMEtoLATLON(testSGDP4_2$position,
+                            "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testLATLON2[1], 0.18918, tolerance=0.0001)
+
+
