@@ -10,7 +10,7 @@ output:
   } else html_document
 vignette: |
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{asteRisk}
+  %\VignetteIndexEntry{openSkies}
   \usepackage[utf8]{inputenc}
 ---
 
