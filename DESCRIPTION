@@ -11,11 +11,11 @@ Description: Provides basic functionalities to calculate the position of
     of the SGP4 and SDP4 simplified perturbation models to propagate orbital
     state vectors, as well as utilities to read TLE files and convert coordinates
     between different frames of reference.
-    Felix R. Hoots, Ronald L. Roehrich and T.S. Kelso (1988) <https://celestrak.com/NORAD/documentation/spacetrk.pdf>
-    David Vallado, Paul Crawford, Richard Hujsak and T.S. Kelso (2012) <doi:10.2514/6.2006-6753>
-    Felix R. Hoots, Paul W. Schumacher Jr. and Robert A. Glover (2014) <doi:10.2514/1.9161>
+    Felix R. Hoots, Ronald L. Roehrich and T.S. Kelso (1988) <https://celestrak.com/NORAD/documentation/spacetrk.pdf>.
+    David Vallado, Paul Crawford, Richard Hujsak and T.S. Kelso (2012) <doi:10.2514/6.2006-6753>.
+    Felix R. Hoots, Paul W. Schumacher Jr. and Robert A. Glover (2014) <doi:10.2514/1.9161>.
 License: GPL-3
-Suggests: knitr, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap
+Suggests: knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap
 VignetteBuilder: knitr
 Encoding: UTF-8
 LazyData: true
