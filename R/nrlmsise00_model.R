@@ -322,7 +322,7 @@ globe7 <- function(p, input, flags) {
     if (flags$sw[9]) {
         t81 <- (p[24]*plg[3,4]+p[36]*plg[3,6])*cd14*flags$swc[6]
         t82 <- (p[34]*plg[3,4]+p[37]*plg[3,6])*cd14*flags$swc[6]
-        t(8) <- f2*((p[6]*plg[3,3]+ p[42]*plg[3,5] + t81)*c2tloc + 
+        t[8] <- f2*((p[6]*plg[3,3]+ p[42]*plg[3,5] + t81)*c2tloc + 
                         (p[9]*plg[3,3] + p[43]*plg[3,5] + t82)*s2tloc)
     }
     # terdiurnal
@@ -465,8 +465,8 @@ glob7s <- function(p, input, flags) {
         t[11] <- (1 + plg[1,2]*(p[81]*flags$swc[6]*cos(dr*(input$doy-p[82]))
                                 + p[86]*flags$swc[7]*cos(2*dr*(input$doy-p[87])))
                   + p[84]*flags$swc[4]*cos(dr*(input$doy-p[85]))
-                  + p[88]*flags$swc[5]*cos(2*dr*(input$doy-p[89])))
-        * ((p[65]*plg[2,3]+p[66]*plg[2,5]+p[67]*plg[2,7] +
+                  + p[88]*flags$swc[5]*cos(2*dr*(input$doy-p[89]))) *
+         ((p[65]*plg[2,3]+p[66]*plg[2,5]+p[67]*plg[2,7] +
                 p[75]*plg[2,2]+p[76]*plg[2,4]+p[77]*plg[2,6]) *
                cos(dgtr*input$g_long) + (p[91]*plg[2,3]+p[92]*plg[2,5]+p[93]*plg[2,7] +
                                              p[78]*plg[2,2]+p[79]*plg[2,4]+p[80]*plg[2,6])
