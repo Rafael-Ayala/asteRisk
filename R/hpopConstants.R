@@ -83,7 +83,7 @@ DJC <- 36525.0
 MJD_J2000 <- 51544.5 # MJD for J2000.0
 
 # Acceleration equations constants
-DE436coeffs <- read.csv("R/hpop_files/DE436Coeff.csv", header=FALSE, sep = ",", dec = ".")
+DE436coeffs <- read.csv(unz("R/hpop_files/DE436Coeff.zip", "DE436Coeff.csv"), header=FALSE, sep = ",", dec = ".")
 # Table 6.5a IERS 2010
 solidEarthTides_dC21dS21 <- read.csv("R/hpop_files/solidEarthTides_dC21dS21.csv", header=FALSE) 
 # Table 6.5b IERS 2010
