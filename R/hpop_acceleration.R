@@ -305,14 +305,14 @@ solarRadiationAcceleration <- function(r, r_earth, r_moon, r_sun, r_sunSSB,
     } else {
         nu <- geometricShadow(pccor,ccor,pscor,sbcor,bcor,sbpcor)$lambda
     }
-    a <- nu*Cr*(area/mass)*P0*(AU*AU)*bcor/(norm(bcor)^3)
+    a <- nu*Cr*(area/mass)*P0*(AU*AU)*bcor/(norm(bcor, type="2")^3)
     return(a)
 }
 
 dragAcceleration <- function(dens, r, v, T, area, mass, CD, Omega) {
     omega = c(0, 0, Omega)
-    r_tod <- T * r
-    v_tod <- T * v
+    r_tod <- T %*% r
+    v_tod <- T %*% v
     v_rel <- v_tod - c(omega[2]*r_tod[3] - omega[3]*r_tod[2],
                        omega[3]*r_tod[1] - omega[1]*r_tod[3],
                        omega[1]*r_tod[2] - omega[2]*r_tod[1])
@@ -329,26 +329,51 @@ relativity <- function(r, v) {
     return(a)
 }
 
-accel <- function(t, Y, MJD_UTC, satelliteMass, satelliteArea, Cr, Cd) {
+accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd) {
     MJD_UTC <- MJD_UTC + t/86400
     IERS_results <- IERS(earthPositions, MJD_UTC, "l")
-    timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
+    x_pole <- IERS_results$x_pole[[1]]
+    y_pole <- IERS_results$y_pole[[1]]
+    UT1_UTC <- IERS_results$UT1_UTC[[1]]
+    LOD <- IERS_results$LOD[[1]]
+    dpsi <- IERS_results$dpsi[[1]]
+    deps <- IERS_results$deps[[1]]
+    dx_pole <- IERS_results$dx_pole[[1]]
+    dy_pole <- IERS_results$dy_pole[[1]]
+    TAI_UTC <- IERS_results$TAI_UTC[[1]]
+    
+    timeDiffs_results <- timeDiffs(UT1_UTC, TAI_UTC)
+    UT1_TAI <- timeDiffs_results$UT1_TAI[[1]]
+    UTC_GPS <- timeDiffs_results$UTC_GPS[[1]]
+    UT1_GPS <- timeDiffs_results$UT1_GPS[[1]]
+    TT_UTC <- timeDiffs_results$TT_UTC[[1]]
+    GPS_UTC <- timeDiffs_results$GPS_UTC[[1]]
+    
     JD <- MJD_UTC + 2400000.5
     invjday_results <- invjday(MJD_UTC+2400000.5)
-    iauCal2jd_results <- iauCal2jd(invjday$year, invjday$month, invjday$day)
+    year <- invjday_results$year
+    month <- invjday_results$month
+    day <- invjday_results$day
+    hour <- invjday_results$hour
+    minute <- invjday_results$min
+    sec <- invjday_results$sec
     
-    TIME <- (60*(60*invjday$hour + invjday$minute) + invjday$sec)/86400
-    UTC <- iauCal2jd_results$DATE + TIME
-    TT <- UTC + timeDiffs_results$TT_UTC/86400
-    TUT <- TIME + IERS_results$UT1_UTC/86400
-    UT1 <- iauCal2jd_results$DATE + TUT
+    iauCal2jd_results <- iauCal2jd(year, month, day)
+    DJMJD0 <-iauCal2jd_results$DJMJD0
+    DATE <- iauCal2jd_results$DATE
     
-    PMM <- iauPom00(IERS_results$x_pole, IERS_results$y_pole, iauSp00(iauCal2jd$DJMJD0, TT))
-    NPB <- iauPnm06a(iauCal2jd$DJMJD0, TT)
+    TIME <- (60*(60*hour + minute) + sec)/86400
+    UTC <- DATE + TIME
+    TT <- UTC + TT_UTC/86400
+    TUT <- TIME + UT1_UTC/86400
+    UT1 <- DATE + TUT
+    
+    PMM <- iauPom00(x_pole, y_pole, iauSp00(DJMJD0, TT))
+    NPB <- iauPnm06a(DJMJD0, TT)
 
-    theta <- iauRz(iauGst06(iauCal2jd$DJMJD0, UT1, iauCal2jd$DJMJD0, TT, NPB), diag(3))
+    theta <- iauRz(iauGst06(DJMJD0, UT1, DJMJD0, TT, NPB), diag(3))
     
-    E <- PMM * theta * NPB
+    E <- PMM %*% theta %*% NPB
     
     MJD_TDB <- Mjday_TDB(TT)
     JPL_ephemerides <- JPL_Eph_DE436(MJD_TDB)
@@ -356,8 +381,8 @@ accel <- function(t, Y, MJD_UTC, satelliteMass, satelliteArea, Cr, Cd) {
     # Acceleration due to Earth, with harmonic effects
     a <- elasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSunGeocentric,
                                   JPL_ephemerides$positionMoon, Y[1:3], E,
-                                  IERS_results$UT1_UTC, timeDiffs_results$TT_UTC,
-                                  IERS_results$x_pole, IERS_results$y_pole)
+                                  UT1_UTC, TT_UTC,
+                                  x_pole, y_pole)
     # Acceleration due to Sun
     a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionSunGeocentric,GM_Sun)
     # Acceleration due to Moon
@@ -376,13 +401,13 @@ accel <- function(t, Y, MJD_UTC, satelliteMass, satelliteArea, Cr, Cd) {
                                         JPL_ephemerides$positionMoon, 
                                         JPL_ephemerides$positionSunGeocentric,
                                         JPL_ephemerides$positionSunBarycentric, 
-                                        satelliteArea,
+                                        solarArea,
                                         satelliteMass,
                                         Cr, solarPressureConst, AU, "geometrical")
     # Acceleration due to atmospheric drag
-    Omega <- omegaEarth - 8.43994809e-10*IERS_results$LOD
-    dens <- NRLMSISE00(MJD_UTC, E*Y[1:3], timeDiffs_results$UT1_UTC,
-                      timeDiffs_results$TT_UTC)
+    Omega <- omegaEarth - 8.43994809e-10*LOD
+    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC,
+                      TT_UTC)
     a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], NPB, satelliteArea, 
                               satelliteMass, Cd, Omega)
     # Relativistic effects
@@ -390,6 +415,7 @@ accel <- function(t, Y, MJD_UTC, satelliteMass, satelliteArea, Cr, Cd) {
     ##### ATENCION: ESTA ES LA CLAVE, VERIFICAR QUE EL VALOR DE a PARA LA PRIMERA
     ##### LLAMADA A ESTA FUNCION SEA EL MISMO QUE EN MATLAB
     dY <- matrix(c(Y[4:6], a), byrow=TRUE, ncol=3, nrow=2)
+    browser()
     return(dY)
 }
 

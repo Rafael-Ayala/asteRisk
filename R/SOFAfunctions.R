@@ -140,12 +140,12 @@ iauNut00a <- function(date1, date2){
     #  Summation of luni-solar nutation series (in reverse order). 
     for (i in NLS:1) {
         # argument and its sine and cosine
-        arg <- (xls(i,1)*el+xls(i,2)*elp+xls(i,3)*f+xls(i,4)*d+xls(i,5)*om)%%2*pi
+        arg <- (xls[i,1]*el+xls[i,2]*elp+xls[i,3]*f+xls[i,4]*d+xls[i,5]*om)%%(2*pi)
         sarg <- sin(arg)
         carg <- cos(arg)
         # term
-        dp <- dp + (xls(i,6) + xls(i,7) * t) * sarg + xls(i,8) * carg
-        de <- de + (xls(i,9) + xls(i,10) * t) * carg + xls(i,11) * sarg
+        dp <- dp + (xls[i,6] + xls[i,7] * t) * sarg + xls[i,8] * carg
+        de <- de + (xls[i,9] + xls[i,10] * t) * carg + xls[i,11] * sarg
     }
     # Convert from decimes microarcseconds to radians
     dpsils <- dp * U2R
@@ -165,7 +165,7 @@ iauNut00a <- function(date1, date2){
     # Mean elongation of the Moon from the Sun (MHB2000)
     ad <- (5.198466741 + 7771.3771468121 * t) %% (2*pi)
     # Mean longitude of the ascending node of the Moon (MHB2000)
-    aom <- (2.18243920 - 33.757045 * t) (2*pi)
+    aom <- (2.18243920 - 33.757045 * t) %% (2*pi)
     # General accumulated precession in longitude (IERS 2003)
     apa <- iauFapa03(t)
     # Mean longitude of Mercury (IERS Conventions 2003)
@@ -189,15 +189,15 @@ iauNut00a <- function(date1, date2){
     de <- 0
     for (i in NPL:1) {
         # Argument and its sine and cosine
-        arg <- (xpl(i,1) * al + xpl(i,2) * af + xpl(i,3) * ad + xpl(i,4) * aom +
-                xpl(i,5) * alme + xpl(i,6) * alve +xpl(i,7) * alea +
-                xpl(i,8) * alma + xpl(i,9) * alju +xpl(i,10) * alsa + 
-                xpl(i,11) * alur + xpl(i,12) * alne +xpl(i,13) * apa) %% (2*pi)
+        arg <- (xpl[i,1] * al + xpl[i,2] * af + xpl[i,3] * ad + xpl[i,4] * aom +
+                xpl[i,5] * alme + xpl[i,6] * alve +xpl[i,7] * alea +
+                xpl[i,8] * alma + xpl[i,9] * alju +xpl[i,10] * alsa + 
+                xpl[i,11] * alur + xpl[i,12] * alne +xpl[i,13] * apa) %% (2*pi)
         sarg <- sin(arg)
         carg <- cos(arg)
         # Update terms
-        dp <- dp + xpl(i,14) * sarg + xpl(i,15) * carg
-        de <- de + xpl(i,16) * sarg + xpl(i,17) * carg
+        dp <- dp + xpl[i,14] * sarg + xpl[i,15] * carg
+        de <- de + xpl[i,16] * sarg + xpl[i,17] * carg
     }
     # Convert from 0.1 microarcsecs  to radians
     dpsipl <- dp * U2R
@@ -237,7 +237,7 @@ iauRz <- function(psi, r) {
                   cos_psi*r[2,2] - sin_psi*r[1,2], 
                   cos_psi*r[2,3] - sin_psi*r[1,3],
                   r[3,1], r[3,2], r[3,3]), 
-                byrow=TRUE)
+                byrow=TRUE, nrow=3)
     return(r)
 }
 
@@ -251,7 +251,7 @@ iauRx <- function(phi, r) {
                   cos_phi*r[3,1] - sin_phi*r[2,1], # start new row 3
                   cos_phi*r[3,2] - sin_phi*r[2,2], 
                   cos_phi*r[3,3] - sin_phi*r[2,3]),
-                byrow=TRUE)
+                byrow=TRUE, nrow=3)
     return(r)
 }
 
@@ -265,7 +265,7 @@ iauRy <- function(theta, r) {
                   cos_theta*r[3,1] + sin_theta*r[1,1], # start new row 3
                   cos_theta*r[3,2] + sin_theta*r[1,2], 
                   cos_theta*r[3,3] + sin_theta*r[1,3]),
-                byrow=TRUE)
+                byrow=TRUE, nrow=3)
     return(r)
 }
 
@@ -375,13 +375,13 @@ iauEra00 <- function(dj1, dj2) {
 }
 
 iauEors <- function(rnpb, s) {
-    x <- rnpb(3,1)
-    ax <-  x / (1 + rnpb(3,3))
+    x <- rnpb[3,1]
+    ax <-  x / (1 + rnpb[3,3])
     xs <- 1 - ax * x
-    ys <- -ax * rnpb(3,2)
+    ys <- -ax * rnpb[3,2]
     zs <- -x
-    p <- rnpb(1,1) * xs + rnpb(1,2) * ys + rnpb(1,3) * zs
-    q <- rnpb(2,1) * xs + rnpb(2,2) * ys + rnpb(2,3) * zs
+    p <- rnpb[1,1] * xs + rnpb[1,2] * ys + rnpb[1,3] * zs
+    q <- rnpb[2,1] * xs + rnpb[2,2] * ys + rnpb[2,3] * zs
     eo <- if (p != 0 | q != 0) (s - atan2(q, p)) else s
     return(eo)
 }

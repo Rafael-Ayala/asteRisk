@@ -211,10 +211,10 @@ cheb3D <- function(t, N, Ta, Tb, Cx, Cy, Cz) {
     f2 <- f1
     for(i in N:2) {
         old_f1 <- f1
-        f1 <- 2*tau*f1-f2+c(Cx[i],Cy[i],Cz[i])
+        f1 <- 2*tau*f1-f2+c(Cx[[i]],Cy[[i]],Cz[[i]])
         f2 <- old_f1
     }
-    cheb_approximation <- tau*f1-f2+c(Cx[1],Cy[1],Cz[1])
+    cheb_approximation <- tau*f1-f2+c(Cx[[1]],Cy[[1]],Cz[[1]])
     return(cheb_approximation)
 }
 
@@ -224,7 +224,7 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     JD <- Mjd_TDB + 2400000.5
     i <- which(JD > DE436coeffs[, 1] & JD <= DE436coeffs[, 2])[1]
     current_DE436coeffs <- DE436coeffs[i, ]
-    t1 <- current_DE436coeffs - 2400000.5
+    t1 <- current_DE436coeffs[[1]] - 2400000.5
     dt <- Mjd_TDB - t1
     indexes <- c(231, 244, 257, 270)
     Cx_earth <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
@@ -245,9 +245,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1 + 16*j
     }
     r_earth <- 1000*cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+16, 
-                           Cx_earth[13*j+1:13*j+13], 
-                           Cy_earth[13*j+1:13*j+13], 
-                           Cz_earth[13*j+1:13*j+13])
+                           Cx_earth[(13*j+1):(13*j+13)], 
+                           Cy_earth[(13*j+1):(13*j+13)], 
+                           Cz_earth[(13*j+1):(13*j+13)])
     indexes <- c(441, 454, 467, 480)
     Cx_moon <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_moon <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -287,9 +287,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1+4*j
     }
     r_moon <- 1000*cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+4, 
-                          Cx_moon[13*j+1:13*j+13],
-                          Cy_moon[13*j+1:13*j+13], 
-                          Cz_moon[13*j+1:13*j+13])
+                          Cx_moon[(13*j+1):(13*j+13)],
+                          Cy_moon[(13*j+1):(13*j+13)], 
+                          Cz_moon[(13*j+1):(13*j+13)])
     indexes <- c(753, 764, 775, 786)
     Cx_sun <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_sun <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -309,9 +309,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1 + 16*j
     }
     r_sun <- 1000*cheb3D(Mjd_TDB, 11, Mjd0, Mjd0+16, 
-                         Cx_sun[11*j+1:11*j+11],
-                         Cy_sun[11*j+1:11*j+11], 
-                         Cz_sun[11*j+1:11*j+11])
+                         Cx_sun[(11*j+1):(11*j+11)],
+                         Cy_sun[(11*j+1):(11*j+11)], 
+                         Cz_sun[(11*j+1):(11*j+11)])
     indexes <- c(3, 17, 31, 45)
     Cx_mercury <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_mercury <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -339,9 +339,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1+8*j
     }
     r_mercury <- 1e3*cheb3D(Mjd_TDB, 14, Mjd0, Mjd0+8, 
-                            Cx_mercury[14*j+1:14*j+14],
-                            Cy_mercury[14*j+1:14*j+14], 
-                            Cz_mercury[14*j+1:14*j+14])
+                            Cx_mercury[(14*j+1):(14*j+14)],
+                            Cy_mercury[(14*j+1):(14*j+14)], 
+                            Cz_mercury[(14*j+1):(14*j+14)])
     indexes <- c(171, 181, 191, 201)
     Cx_venus <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_venus <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -361,9 +361,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1 + 16*j
     }
     r_venus <- 1000*cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+16, 
-                           Cx_venus[10*j+1:10*j+10],
-                           Cy_venus[10*j+1:10*j+10], 
-                           Cz_venus[10*j+1:10*j+10])
+                           Cx_venus[(10*j+1):(10*j+10)],
+                           Cy_venus[(10*j+1):(10*j+10)], 
+                           Cz_venus[(10*j+1):(10*j+10)])
     indexes <- c(309, 320, 331, 342)
     Cx_mars <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_mars <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -371,9 +371,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_mars = 1000*cheb3D(Mjd_TDB, 11, Mjd0, Mjd0+32, 
-                         Cx_mars[11*j+1:11*j+11],
-                         Cy_mars[11*j+1:11*j+11], 
-                         Cz_mars[11*j+1:11*j+11])
+                         Cx_mars[(11*j+1):(11*j+11)],
+                         Cy_mars[(11*j+1):(11*j+11)], 
+                         Cz_mars[(11*j+1):(11*j+11)])
     indexes <- c(342, 350, 358, 366)
     Cx_jupiter <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_jupiter <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -381,9 +381,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_jupiter <- 1000*cheb3D(Mjd_TDB, 8, Mjd0, Mjd0+32, 
-                             Cx_jupiter[8*j+1:8*j+8],
-                             Cy_jupiter[8*j+1:8*j+8], 
-                             Cz_jupiter[8*j+1:8*j+8])
+                             Cx_jupiter[(8*j+1):(8*j+8)],
+                             Cy_jupiter[(8*j+1):(8*j+8)], 
+                             Cz_jupiter[(8*j+1):(8*j+8)])
     indexes <- c(366, 373, 380, 387)
     Cx_saturn <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_saturn <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -391,9 +391,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_saturn <- 1000*cheb3D(Mjd_TDB, 7, Mjd0, Mjd0+32, 
-                            Cx_saturn[7*j+1:7*j+7],
-                            Cy_saturn[7*j+1:7*j+7], 
-                            Cz_saturn[7*j+1:7*j+7])
+                            Cx_saturn[(7*j+1):(7*j+7)],
+                            Cy_saturn[(7*j+1):(7*j+7)], 
+                            Cz_saturn[(7*j+1):(7*j+7)])
     indexes <- c(387, 393, 399, 405)
     Cx_uranus <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_uranus <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -401,9 +401,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_uranus <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                            Cx_uranus(6*j+1:6*j+6),
-                            Cy_uranus(6*j+1:6*j+6),
-                            Cz_uranus(6*j+1:6*j+6))
+                            Cx_uranus[(6*j+1):(6*j+6)],
+                            Cy_uranus[(6*j+1):(6*j+6)],
+                            Cz_uranus[(6*j+1):(6*j+6)])
     indexes <- c(405, 411, 417, 423)
     Cx_neptune <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_neptune <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -411,9 +411,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_neptune <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                             Cx_neptune[6*j+1:6*j+6],
-                             Cy_neptune[6*j+1:6*j+6], 
-                             Cz_neptune[6*j+1:6*j+6])
+                             Cx_neptune[(6*j+1):(6*j+6)],
+                             Cy_neptune[(6*j+1):(6*j+6)], 
+                             Cz_neptune[(6*j+1):(6*j+6)])
     indexes <- c(423, 429, 435, 441)
     Cx_pluto <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_pluto <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -421,9 +421,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     j <- 0
     Mjd0 <- t1
     r_pluto <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                           Cx_pluto[6*j+1:6*j+6],
-                           Cy_pluto[6*j+1:6*j+6], 
-                           Cz_pluto[6*j+1:6*j+6])
+                           Cx_pluto[(6*j+1):(6*j+6)],
+                           Cy_pluto[(6*j+1):(6*j+6)], 
+                           Cz_pluto[(6*j+1):(6*j+6)])
     indexes <- c(819, 829, 839)
     Cx_nutations <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
     Cy_nutations <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
@@ -448,8 +448,8 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1+8*j
     }
     nutations <- cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+8, 
-                        Cx_nutations(10*j+1:10*j+10),
-                        Cy_nutations(10*j+1:10*j+10),
+                        Cx_nutations[(10*j+1):(10*j+10)],
+                        Cy_nutations[(10*j+1):(10*j+10)],
                         rep(0,10))
     indexes <- c(899, 909, 919, 929)
     Cx_libration <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
@@ -478,9 +478,9 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
         Mjd0 <- t1+8*j
     }
     librations <- cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+8, 
-                         Cx_libration[10*j+1:10*j+10], 
-                         Cy_libration[10*j+1:10*j+10], 
-                         Cz_libration[10*j+1:10*j+10])
+                         Cx_libration[(10*j+1):(10*j+10)], 
+                         Cy_libration[(10*j+1):(10*j+10)], 
+                         Cz_libration[(10*j+1):(10*j+10)])
     r_earth <- r_earth-EMRAT1*r_moon
     r_mercury <- -r_earth+r_mercury
     r_venus <- -r_earth+r_venus

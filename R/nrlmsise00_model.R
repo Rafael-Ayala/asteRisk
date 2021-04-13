@@ -52,7 +52,7 @@ ccor2 <- function(alt, r, h1, zh, h2) {
 
 scalh <- function(alt, xm, temp, gsurf) {
     rgas <- 831.4
-    g <- gsurf / ((1 + alt/re)^2)
+    g <- gsurf / ((1 + alt/re_)^2)
     g <- rgas * temp / (g * xm)
     return(g)
 }
@@ -90,7 +90,7 @@ dnet <- function(dd, dm, zhm, xmm, xm) {
 }
 
 zeta <- function(zz, zl) {
-    result <- ((zz - zl) * (re + zl))/ (re + zz)
+    result <- ((zz - zl) * (re_ + zl))/ (re_ + zz)
     return(result)
 }
 
@@ -125,14 +125,18 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
         #     xs[k] <- zeta(zn2[k], z1)/zgdif
         #     ys[k] <- 1/tn2[k]
         # }
-        cubicspline <- splinefun(xs, ys)
+        yd1 <- -tgn2[1] / (t1*t1) * zgdif
+        yd2 <- -tgn2[2] / (t2*t2) * zgdif *  (((re_+z2)/(re_+z1))^2)
+        # Calculate spline coefficients
+        y2out <- spline(xs, ys, mn, yd1, yd2)
         x <- zg/zgdif
-        y <- cubicspline(x)
+        y <- splint(xs, ys, y2out, mn, x)
+        # Temperature at altitude
         tz <- 1/y
         if (xm != 0) {
-            glb <- gsurf/((1 + z1/re)^2)
+            glb <- gsurf/((1 + z1/re_)^2)
             gamm <- xm*glb*zgdif/rgas
-            yi <- integrate(cubicspline, xs[1], x)
+            yi <- splini(xs, ys, y2out, mn, x)
             expl <- gamm*yi
             expl <- min(expl, 50)
             densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
@@ -153,16 +157,16 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
             # set up spline nodes
             xs <- zeta(zn3[1:mn], z1)/zgdif
             ys <- 1/tn3[1:mn]
-            xs <- xs[xs!=0]
-            ys <- ys[ys!=0]
-            cubicspline <- splinefun(xs, ys)
+            yd1 <- -tgn3[1] / (t1*t1) * zgdif
+            yd2 <- -tgn3[2] / (t2*t2) * zgdif * (((re_+z2)/(re_+z1))^2)
+            y2out <- spline(xs, ys, mn, yd1, yd2)
             x <- zg/zgdif
-            y <- cubicspline(x)
+            y <- splint(xs, ys, y2out, mn, x)
             tz <- 1/y
             if (xm != 0) {
-                glb <- gsurf/((1 + z1/re)^2)
+                glb <- gsurf/((1 + z1/re_)^2)
                 gamm <- xm*glb*zgdif/rgas
-                yi <- integrate(cubicspline, xs[1], x)
+                yi <- splini(xs, ys, y2out, mn, x)
                 expl <- gamm*yi
                 expl <- min(expl, 50)
                 densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
@@ -190,7 +194,7 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
     tz <- tt
     densu_temp <- tz
     if (alt < za) { # calculate temperature profile below ZA
-        dta <- (tinf - ta) * s2 * ((re + zlb)/(re + za))^2
+        dta <- (tinf - ta) * s2 * ((re_ + zlb)/(re_ + za))^2
         tgn1[1] <- dta
         tn1[1] <- ta
         z <- max(alt, zn1[mn1])
@@ -203,24 +207,26 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
         zgdif <- zeta(z2, z1)
         xs <- zeta(zn1[1:mn], z1)/zgdif
         ys <- 1/tn1[1:mn]
-        xs <- xs[xs!=0]
-        ys <- ys[ys!=0]
-        cubicspline <- splinefun(xs, ys)
+        yd1 <- -tgn1[1] / (t1*t1) * zgdif
+        yd2 <- -tgn1[2] / (t2*t2) * zgdif * ((re_+z2)/(re_+z1))^2
+        y2out <- spline(xs, ys, mn, yd1, yd2)
         x <- zg/zgdif
-        y <- cubicspline(x)
+        y <- splint(xs, ys, y2out, mn, x)
         tz <- 1/y
         densu_temp <- tz
-    } else if (xm != 0) {
-        glb <- gsurf/((1+zlb/re)^2)
+    }  
+    if (xm != 0) {
+        glb <- gsurf/((1+zlb/re_)^2)
         gamma <- xm * glb / (s2 * rgas * tinf)
         expl <- exp(-s2 * gamma * zg2)
         if(expl > 50 | tt <= 0) expl <- 50
         densa <- dlb * (tlb/tt)^(1+alpha+gamma) * expl
         densu_temp <- densa
         if (alt < za) {
-            glb <- gsurf/((1+z1/re)^2)
+            glb <- gsurf/((1+z1/re_)^2)
             gamm <- xm * glb * zgdif / rgas
-            yi <- integrate(cubicspline, xs[1], x)
+            # Por alguna razon el valor es ligeramente diferente. En matlab 0.001779185... Aquí, 0.00177921
+            yi <- splini(xs, ys, y2out, mn, x)
             expl <- gamm * yi
             if(expl > 50 | tt <= 0) expl <- 50
             densu_temp <- densu_temp * (t1 / tz)^(1 + alpha) * exp(-expl)
@@ -232,6 +238,7 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
 }
 
 g0 <- function(a, p) {
+    a <- a[[1]]
     result <- (a - 4 + (p[26] - 1) * (a - 4 + (exp(-abs(p[25]) * (a - 4)) - 1) / sqrt(p[25]*p[25])))
     return(result)
 }
@@ -337,13 +344,14 @@ globe7 <- function(p, input, flags) {
             exp1 <- exp(-10800*sqrt(p[52]*p[52])/(1+p[139]*(45-abs(input$g_lat))))
             exp1 <- min(exp1, 0.99999)
             p[25] <- max(p[25], 1e-4)
-        }
-        apt[1] <<- sg0(exp1, p, ap$a)
-        if(flags$sw[10]) {
-            t[9] <- apt[1]*(p[51] + p[97]*plg[1,3] + p[55]*plg[1,5] +  
-                                (p[126]*plg[1,2] + p[127]*plg[1,4] + p[128]*plg[1,6])*cd14*flags$swc[6] +  
-                                (p[129]*plg[2,2] + p[130]*plg[2,4] + p[131]*plg[2,6])*flags$swc[8]* 
-                                cos(hr*(tloc - p[132])))
+            apt[1] <<- sg0(exp1, p, ap)
+            
+            if(flags$sw[10]) {
+                t[9] <- apt[1]*(p[51] + p[97]*plg[1,3] + p[55]*plg[1,5] +  
+                                    (p[126]*plg[1,2] + p[127]*plg[1,4] + p[128]*plg[1,6])*cd14*flags$swc[6] +  
+                                    (p[129]*plg[2,2] + p[130]*plg[2,4] + p[131]*plg[2,6])*flags$swc[8]* 
+                                    cos(hr*(tloc - p[132])))
+            }
         }
     } else {
         apd <- input$ap - 4
@@ -365,11 +373,11 @@ globe7 <- function(p, input, flags) {
             t[11] <- (1 + p[81]*dfa*flags$swc[2])*((p[65]*plg[2,3]+p[66]*plg[2,5]+p[67]*plg[2,7] +
                         p[104]*plg[2,2]+p[105]*plg[2,4]+p[106]*plg[2,6] +
                         flags$swc[6]*(p[110]*plg[2,2]+p[111]*plg[2,4] + 
-                                          p[112]*plg[2,6])*cd14)* cos(dgtr*flags$input$g_long)
+                                          p[112]*plg[2,6])*cd14)* cos(dgtr*input$g_long)
                         + (p[91]*plg[2,3]+p[92]*plg[2,5]+p[93]*plg[2,7] + 
                                p[107]*plg[2,2]+p[108]*plg[2,4]+p[109]*plg[2,6] + 
                                flags$swc[6]*(p[113]*plg[2,2]+p[114]*plg[2,4] + 
-                                                 p[115]*plg[2,6])*cd14)*sin(dgtr*flags$input$g_long))
+                                                 p[115]*plg[2,6])*cd14)*sin(dgtr*input$g_long))
         }
         # ut and mixed ut, longitude
         if (flags$sw[13]) {
@@ -385,11 +393,11 @@ globe7 <- function(p, input, flags) {
         if (flags$sw[14]) {
             if (flags$sw[10] == -1) {
                 if(p[52]) {
-                    t[13] <- apt(1)*flags$swc[12]*(1.+p[133]*plg[1,2])*
+                    t[13] <- apt[1]*flags$swc[12]*(1.+p[133]*plg[1,2])*
                         ((p[53]*plg[2,3]+p[99]*plg[2,5]+p[68]*plg[2,7])*
-                        cos(dgtr*(input$g_long-p[98])))+ apt(1)*flags$swc[12]*
+                        cos(dgtr*(input$g_long-p[98])))+ apt[1]*flags$swc[12]*
                         flags$swc[6]*(p[134]*plg[2,2]+p[135]*plg[2,4]+p[136]*plg[2,6])*
-                        cd14*cos(dgtr*(input$g_long-p[137]))+apt(1)*flags$swc[13]*
+                        cd14*cos(dgtr*(input$g_long-p[137]))+apt[1]*flags$swc[13]*
                         (p[56]*plg[1,2]+p[57]*plg[1,4]+p[58]*plg[1,6])*cos(sr*(input$sec-p[59]))
                 }
             } else {
@@ -405,7 +413,7 @@ globe7 <- function(p, input, flags) {
     }
     tinf <- p[31]
     for (i in 1:14) {
-        tinf <- tinf + abs(flags$sw[i+1])*t[i]
+        tinf <- tinf + abs(flags$sw[i+1])*t[[i]]
     }
     return(tinf)
 }
@@ -454,9 +462,9 @@ glob7s <- function(p, input, flags) {
     }
     # magnetic activity
     if (flags$sw[10]) {
-        if (flags.sw[10] == 1) {
+        if (flags$sw[10] == 1) {
             t[9] <- apdf * (p[33] + p[46] * plg[1, 3] * flags$swc[3])
-        } else if (flags.sw[10] == -1) {
+        } else if (flags$sw[10] == -1) {
             t[9] <- (p[51]*apt[1] + p[97]*plg[1,3] * apt[1]*flags$swc[3])
         }
     }
@@ -474,7 +482,7 @@ glob7s <- function(p, input, flags) {
     }
     tt <- 0
     for (i in 1:14) {
-        tt <- tt + abs(flags$sw[i+1])*t[i]
+        tt <- tt + abs(flags$sw[i+1])*t[[i]]
     }
     return(tt)
 }
@@ -500,9 +508,9 @@ gts7 <- function(input, flags) {
     }
     output$t[1] <- tinf
     if (input$alt > zn1[5]) { # gradient variations not important below zn1[5]
-        g0 <- ptm[4] * ps(1) * (1 + flags$sw[20] * globe7(ps,input,flags))
+        g0 <- ptm[4] * ps[1] * (1 + flags$sw[20] * globe7(ps,input,flags))
     } else {
-        g0 <- ptm[4] * ps(1)
+        g0 <- ptm[4] * ps[1]
     }
     tlb <- ptm[2] * (1 + flags$sw[18] * globe7(pd[4, ], input, flags)) * pd[4, 1]
     s <- g0 / (tinf - tlb)
@@ -531,8 +539,8 @@ gts7 <- function(input, flags) {
     z <- input$alt
     # N2 density
     db28 <- pdm[3,1] * exp(g28) * pd[3, 1]
-    densu_output <- densu(z,db28,tinf,tlb,28,alpha(3),
-                          output$t[2],ptm(6),s,mn1,zn1,
+    densu_output <- densu(z,db28,tinf,tlb,28,alpha[3],
+                          output$t[2],ptm[6],s,mn1,zn1,
                           meso_tn1,meso_tgn1)
     output$d[3] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
@@ -540,7 +548,7 @@ gts7 <- function(input, flags) {
     zh28 <- pdm[3, 3] * zhf
     zhm28 <- pdm[3, 4] * pdl[2, 6] 
     xmd <- 28 - xmm
-    densu_output <- densu(zh28,db28,tinf,tlb,xmd,(alpha(3)-1),
+    densu_output <- densu(zh28,db28,tinf,tlb,xmd,(alpha[3]-1),
                           tz,ptm[6],s,mn1, zn1,
                           meso_tn1,meso_tgn1)
     b28 <- densu_output$densu_temp
@@ -577,12 +585,12 @@ gts7 <- function(input, flags) {
         rl <- log(b28*pdm[1,2]/b04)
         zc04 <- pdm[1,5]*pdl[2,1]
         hc04 <- pdm[1,6]*pdl[2,2]
-        output$d[1] <- output$d[1]*ccor(z,rl,hc04,zc04)
+        output$d[1] <- output$d[[1]]*ccor(z,rl,hc04,zc04)
     }
     # O density
-    g16 <- flags.sw[22] * globe7(pd[2, ], input, flags)
+    g16 <- flags$sw[22] * globe7(pd[2, ], input, flags)
     db16 <- pdm[2,1] * exp(g16) * pd[2, 1]
-    densu_output <- ensu(z,db16,tinf,tlb, 16,alpha[2],
+    densu_output <- densu(z,db16,tinf,tlb, 16,alpha[2],
                          output$t[2],ptm[6],s,mn1,zn1,
                          meso_tn1,meso_tgn1)
     output$d[2] <- densu_output$densu_temp
@@ -602,15 +610,15 @@ gts7 <- function(input, flags) {
         output$t[2] <- densu_output$tz
         zhm16 <- zhm28
         output$d[2] <- dnet(output$d[2],dm16,zhm16,xmm,16)
-        rl <- pdm[2,2]*pdl[2,17]*(1+flags.sw[2]*pdl[1,24]*(input$f107A-150))
+        rl <- pdm[2,2]*pdl[2,17]*(1+flags$sw[2]*pdl[1,24]*(input$f107A-150))
         hc16 <- pdm[2,6]*pdl[2,4]
         zc16 <- pdm[2,5]*pdl[2,3]
         hc216 <- pdm[2,6]*pdl[2,5]
-        output$d[2] <- output$d[2]*ccor2(z,rl,hc16,zc16,hc216)
+        output$d[2] <- output$d[[2]]*ccor2(z,rl,hc16,zc16,hc216)
         hcc16 <- pdm[2,8]*pdl[2,14]
         zcc16 <- pdm[2,7]*pdl[2,13]
         rc16 <- pdm[2,4]*pdl[2,15]
-        output$d[2] <- output$d[2]*ccor(z,rc16,hcc16,zcc16)
+        output$d[2] <- output$d[[2]]*ccor(z,rc16,hcc16,zcc16)
     }
     # O2 density
     g32 <- flags$sw[22]*globe7(pd[5, ], input, flags)
@@ -618,6 +626,8 @@ gts7 <- function(input, flags) {
     densu_output <- densu(z,db32,tinf,tlb,32,alpha[4],
                           output$t[2],ptm[6],s,mn1,zn1,
                           meso_tn1,meso_tgn1)
+    output$d[4] <- densu_output$densu_temp
+    output$t[4] <- densu_output$tz
     dd <<- output$d[4]
     if (flags$sw[16]) {
         if (z <= altl[4]) {
@@ -637,13 +647,13 @@ gts7 <- function(input, flags) {
             rl <- log(b28*pdm[4,2]/b32)
             hc32 <- pdm[4,6]*pdl[2,8]
             zc32 <- pdm[4,5]*pdl[2,7]
-            output$d[4] <- output$d[4]*ccor(z,rl,hc32,zc32)
+            output$d[4] <- output$d[[4]]*ccor(z,rl,hc32,zc32)
         }
         hcc32 <- pdm[4,8]*pdl[2,23]
         hcc232 <- pdm[4,8]*pdl[1,23]
         zcc32 <- pdm[4,7]*pdl[2,22]
-        rc32 <- pdm[4,4]*pdl[2,24]*(1+flags$sw(2)*pdl[1,24]*(input$f107A - 150))
-        output$d[4] <- output$d[4]*ccor2(z,rc32,hcc32,zcc32,hcc232)
+        rc32 <- pdm[4,4]*pdl[2,24]*(1+flags$sw[2]*pdl[1,24]*(input$f107A - 150))
+        output$d[4] <- output$d[[4]]*ccor2(z,rc32,hcc32,zcc32,hcc232)
     }
     # Ar density
     g40 <- flags$sw[22] * globe7(pd[6, ],input,flags)
@@ -652,7 +662,7 @@ gts7 <- function(input, flags) {
                           output$t[2],ptm[6],s,mn1,zn1,
                           meso_tn1,meso_tgn1)
     output$d[5] <- densu_output$densu_temp
-    outpu$t[2] <- densu_output$tz
+    output$t[2] <- densu_output$tz
     dd <<- output$d[5]
     if ((flags$sw[16]) & (z <= altl[5])) {
         zh40 <- pdm[5, 3]
@@ -671,7 +681,7 @@ gts7 <- function(input, flags) {
         rl <- log(b28*pdm[5,2]/b40)
         hc40 <- pdm[5, 6] * pdl[2, 10]
         zc40 <- pdm[5, 5] * pdl[2, 9]
-        output$d[5] <- output$d[5] * ccor(z,rl,hc40,zc40)
+        output$d[5] <- output$d[[5]] * ccor(z,rl,hc40,zc40)
     }
     # H density
     g1 <- flags$sw[22] * globe7(pd[7, ], input, flags)
@@ -698,11 +708,11 @@ gts7 <- function(input, flags) {
         rl <- log(b28*pdm[6,2]*sqrt(pdl[2,18]*pdl[2,18])/b01)
         hc01 <- pdm[6,6]*pdl[2,12]
         zc01 <- pdm[6,5]*pdl[2,11]
-        output$d[7] <- output$d[7]*ccor(z,rl,hc01,zc01)
+        output$d[7] <- output$d[[7]]*ccor(z,rl,hc01,zc01)
         hcc01 <- pdm[6,8]*pdl[1,20]
         zcc01 <- pdm[6,7]*pdl[2,19]
         rc01 <- pdm[6,4]*pdl[2,21]
-        output$d[7] <- output$d[7]*ccor(z,rc01,hcc01,zcc01)
+        output$d[7] <- output$d[[7]]*ccor(z,rc01,hcc01,zcc01)
     }
     # Atomic nitrogen (N) density
     g14 <- flags$sw[22]*globe7(pd[8, ],input,flags)
@@ -730,11 +740,11 @@ gts7 <- function(input, flags) {
         rl <- log(b28*pdm[7,2]*sqrt(pdl[1,3]*pdl[1,3])/b14)
         hc14 <- pdm[7,6]*pdl[1,2]
         zc14 <- pdm[7,5]*pdl[1,1]
-        output$d[8] <- output$d[8]*ccor(z,rl,hc14,zc14)
+        output$d[8] <- output$d[[8]]*ccor(z,rl,hc14,zc14)
         hcc14 <- pdm[7,8]*pdl[1,5]
         zcc14 <- pdm[7,7]*pdl[1,4]
         rc14 <- pdm[7,4]*pdl[1,6]
-        output$d[8] <- output$d[8]*ccor(z,rc14,hcc14,zcc14)
+        output$d[8] <- output$d[[8]]*ccor(z,rc14,hcc14,zcc14)
     }
     # Anomalous oxygen density
     g16h <- flags$sw[22]*globe7(pd[9, ],input,flags)
@@ -750,7 +760,7 @@ gts7 <- function(input, flags) {
     zsho <- scalh(zmho,16,tho,gsurf)
     output$d[9] <- dd*exp(-zsht/zsho*(exp(-(z-zmho)/zsht)-1))
     # Total density (atomic mass-weighted sums)
-    output$d[6] <- 1.66e-24*(4*output$d[1]+16*output$d[2]+28*output$d[3]+32*output$d[4]+40*output$d[5]+ output$d[7]+14*output$d[8])
+    output$d[6] <- 1.66e-24*(4*output$d[[1]]+16*output$d[[2]]+28*output$d[[3]]+32*output$d[[4]]+40*output$d[[5]]+ output$d[[7]]+14*output$d[[8]])
     # Temperature
     z <- abs(input$alt)
     densu_output <- densu(z,1,tinf,tlb,0,0,
@@ -759,9 +769,9 @@ gts7 <- function(input, flags) {
     output$t[2] <- densu_output$tz
     if (flags$sw[1]) {
         for(i in 1:9) {
-            output$d[i] <- output$d[i]*1e6;
+            output$d[i] <- output$d[[i]]*1e6;
         }
-        output$d[6] <- output$d[6]/1000
+        output$d[6] <- output$d[[6]]/1000
     }
     return(output)
 }
@@ -769,11 +779,11 @@ gts7 <- function(input, flags) {
 gtd7 <- function(input, flags) {
     for (i in 1:24) {
         if (i == 10) {
-            flags$sw[i] <<- flags$switches[i]
-            flags$swc[i] <<- flags$switches[i]
+            flags$sw[i] <- flags$switches[i]
+            flags$swc[i] <- flags$switches[i]
         } else {
-            flags$sw[i] <<- if(flags$switches[i] == 1) 1 else 0
-            flags$swc[i] <<- if(flags$switches[i] > 0) 1 else 0
+            flags$sw[i] <- if(flags$switches[i] == 1) 1 else 0
+            flags$swc[i] <- if(flags$switches[i] > 0) 1 else 0
         }
     }
     mn3 <- 5
@@ -789,7 +799,7 @@ gtd7 <- function(input, flags) {
     xlat <- if(flags$sw[3] == 0) 45 else input$g_lat
     glatf_results <- glatf(xlat)
     gsurf <<- glatf_results[[1]]
-    re <<- glatf_results[[2]]
+    re_ <<- glatf_results[[2]]
     xmm <- pdm[3,5]
     altt <- max(input$alt, zn2[1])
     tmp <- input$alt
@@ -831,34 +841,34 @@ gtd7 <- function(input, flags) {
         }
         dz28 <- soutput$d[3]
         ## N2 density 
-        dmr <- soutput$d[3] / dm28m - 1
+        dmr <- soutput$d[[3]] / dm28m - 1
         densm_results <- densm(input$alt, dm28m, xmm, tz, mn3, zn3, 
                                meso_tn3, meso_tgn3, mn2, zn2, 
                                meso_tn2, meso_tgn2)
         output$d[3] <- densm_results$densm_tmp
         tz < densm_results$tz
-        output$d[3] <- output$d[3] * (1 + dmr*dmc)
+        output$d[3] <- output$d[[3]] * (1 + dmr*dmc)
         ## He density
         dmr <- soutput$d[1] / (dz28 * pdm[1,2]) - 1
-        output$d[1] <- output$d[3] * pdm[1,2] * (1 + dmr*dmc)
+        output$d[1] <- output$d[[3]] * pdm[1,2] * (1 + dmr*dmc)
         ## O density
         output$d[c(2, 9)] <- 0
         ## O2 density
-        dmr <- soutput$d[4] / (dz28 * pdm[4,2]) - 1
-        output$d[4] <- output$d[3] * pdm[4,2] * (1 + dmr*dmc)
+        dmr <- soutput$d[[4]] / (dz28 * pdm[4,2]) - 1
+        output$d[4] <- output$d[[3]] * pdm[4,2] * (1 + dmr*dmc)
         # Ar density
         dmr <- soutput$d[5] / (dz28 * pdm[5,2]) - 1
-        output$d[5] <- output$d[3] * pdm[5,2] * (1 + dmr*dmc)
+        output$d[5] <- output$d[[3]] * pdm[5,2] * (1 + dmr*dmc)
         # H density
         output$d[7] <- 0
         # Atomic nitrogen (N) density
         output$d[8] <- 0
         # Total mass density
-        output$d[6] <- 1.66e-24 * (4 * output$d[1] + 16 * output$d[2] + 
-                                   28 * output$d[3] + 32 * output$d[4] + 40 * 
-                                   output$d[5] + output$d[7] + 14 * output$d[8])
+        output$d[6] <- 1.66e-24 * (4 * output$d[[1]] + 16 * output$d[[2]] + 
+                                   28 * output$d[[3]] + 32 * output$d[[4]] + 40 * 
+                                   output$d[[5]] + output$d[[7]] + 14 * output$d[[8]])
         if (flags$sw[1]) {
-            output$d[6] <- output$d[6]/1000
+            output$d[6] <- output$d[[6]]/1000
         }
         densm_results <- densm(input$alt, 1, 0, tz, mn3, zn3, 
                                meso_tn3, meso_tgn3, mn2, zn2, 
@@ -872,19 +882,19 @@ gtd7 <- function(input, flags) {
 
 gtd7d <- function(input, flags) {
     output <- gtd7(input, flags)
-    output$d[6] <- 1.66e-24 * (4 * output$d[1] + 16 * output$d[2] + 
-                               28 * output$d[3] + 32 * output$d[4] + 
-                               40 * output$d[5] + output$d[7] + 
-                               14 * output$d[8] + 16 * output$d[9])
+    output$d[6] <- 1.66e-24 * (4 * output$d[[1]] + 16 * output$d[[2]] + 
+                               28 * output$d[[3]] + 32 * output$d[[4]] + 
+                               40 * output$d[[5]] + output$d[[7]] + 
+                               14 * output$d[[8]] + 16 * output$d[[9]])
     if (flags$sw[1]) {
-        output$d[6] <- output$d[6]/1000
+        output$d[6] <- output$d[[6]]/1000
     }
     return(output)
 }
 
 NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     gsurf <<- 0
-    # re <- 6367.088132098377173
+    re_ <<- re
     dd <<- 0
     dm04 <<- 0
     dm16 <<- 0
@@ -939,12 +949,12 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     input$year <- 0
     input$sec <- invjday_results$hour*3600 + invjday_results$min*60 + invjday_results$sec
     geodetic_results <- ECEFtoGeodetic(r_ECEF)
-    input$alt <- geodetic_results$height/1000
+    input$alt <- geodetic_results$h/1000
     input$g_lat <- geodetic_results$lat*(180/pi)
     input$g_long <- geodetic_results$lon*(180/pi)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
 
-    TIME <- (60*(60*invjday_results$hour + invjday_results$minute) + invjday_results$sec)/86400
+    TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
     UTC <- iauCal2jd_results$DATE + TIME
     TT <- UTC + TT_UTC/86400
     TUT <- TIME + UT1_UTC/86400
@@ -952,7 +962,7 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     rnpb <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
     lst <- geodetic_results$lon + iauGst06(iauCal2jd_results$DJMJD0, UT1, 
                                            iauCal2jd_results$DJMJD0, TT, rnpb)
-    lst <- lst %% 2*pi
+    lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)
     input$lst <- lst
     i <- which(((invjday_results$year == spaceWeather[, 1]) & 
@@ -978,8 +988,88 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
           sw_2[15] + sw_3[22] + sw_3[21] + sw_3[20]
     input$ap_a[7] <- sum/8
     input$f107 <- sw[31]  
-    input.f107A <- sw[33]   
+    input$f107A <- sw[33]   
     output <- gtd7d(input, flags)
-    dens <- 1e3*output$d(6)
+    dens <- 1e3*output$d[[6]]
     return(dens)
 }
+
+spline <- function(x, y, n, yp1, ypn){
+    u <- numeric(5)
+    y2 <- numeric(5)
+    
+    if(yp1 > 0.99e30){
+        y2[1] <- 0
+        u[1] <- 0
+    } else {
+        y2[1] <- -0.5
+        u[1] <- (3/(x[2]-x[1]))*((y[2]-y[1])/(x[2]-x[1])-yp1)
+    }
+    for(i in 2:(n-1)){
+        sig <- (x[i]-x[i-1])/(x[i+1]-x[i-1])
+        p <- sig * y2[i-1] + 2
+        y2[i] <- (sig-1) / p
+        u[i] <- (6*((y[i+1] - y[i])/(x[i+1] - x[i]) - (y[i] - y[i-1]) / (x[i] - x[i-1]))/(x[i+1] - x[i-1]) - sig * u[i-1])/p
+    }
+    if(ypn > 0.99e30){
+        qn <- 0
+        un <- 0
+    } else {
+        qn <- 0.5
+        un <- (3 / (x[n] - x[n-1])) * (ypn - (y[n] - y[n-1])/(x[n] - x[n-1]))
+    }
+    y2[n] <- (un - qn * u[n-1]) / (qn * y2[n-1] + 1)
+    for(k in (n-1):1){
+        y2[k] = y2[k] * y2[k+1] + u[k]
+    }
+    return(y2)
+}
+
+splint <- function(xa, ya, y2a, n, x){
+    klo <- 0;
+    khi <- n-1
+    while((khi-klo)>1){
+        k <- as.integer((khi+klo)/2)
+        if(xa[k+1]>x){
+            khi <- k
+        } else {
+            klo <- k
+        }
+    }
+    h <- xa[khi+1] - xa[klo+1]
+    if(h==0){
+        print("Bad XA input to splint")
+    }
+    a <- (xa[khi+1] - x)/h
+    b <- (x - xa[klo+1])/h
+    yi <- a * ya[klo+1] + b * ya[khi+1] + ((a*a*a - a) * y2a[klo+1] + (b*b*b - b) * y2a[khi+1]) * h * h/6
+    y <- yi
+    return(y)
+}
+
+splini <- function(xa, ya, y2a, n, x){
+    yi <- 0
+    klo <- 0
+    khi <- 1
+    while((x > xa[klo+1]) && (khi<n)){
+        xx <- x
+        if(khi < (n-1)){
+            if(x<xa[khi+1]){
+                xx <- x
+            } else {
+                xx <- xa[khi+1]
+            }
+        }
+        h <- xa[khi+1] - xa[klo+1]
+        a <- (xa[khi+1] - xx)/h
+        b <- (xx - xa[klo+1])/h
+        a2 <- a*a
+        b2 <- b*b
+        yi <- yi + ((1 - a2) * ya[klo+1] / 2 + b2 * ya[khi+1] / 2 + ((-(1+a2*a2)/4 + a2/2) * y2a[klo+1] + (b2*b2/4 - b2/2) * y2a[khi+1]) * h * h / 6) * h
+        klo <- klo + 1
+        khi <- khi + 1
+    }
+    y <- yi
+    return(y)
+}
+
