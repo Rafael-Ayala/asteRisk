@@ -52,8 +52,7 @@ ccor2 <- function(alt, r, h1, zh, h2) {
 
 scalh <- function(alt, xm, temp, gsurf) {
     rgas <- 831.4
-    g <- gsurf / ((1 + alt/re_)^2)
-    g <- rgas * temp / (g * xm)
+    g <- rgas * temp / (gsurf / ((1 + alt/re_)^2) * xm)
     return(g)
 }
 
@@ -67,13 +66,13 @@ dnet <- function(dd, dm, zhm, xmm, xm) {
     # XM  - species molecular weight
     # Outputs DNET - combined density
     a <- zhm / (xmm-xm)
-    if (!((dm > 0) & (dd > 0))) {
+    if ((dm <= 0) | (dd <= 0)) {
         warning(paste("dnet log error", dm, dd, xm, sep=" "))
-        if (dd == 0 & dm == 0) {
-            dd <- 1
-        }
         if (dm == 0) {
             dnet <- dd
+            if (dd == 0){
+                dd <- 1
+            }
         } else if (dd == 0) {
             dnet <- dm
         }
@@ -119,24 +118,28 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
         # set up spline nodes
         xs <- zeta(zn2[1:mn], z1)/zgdif
         ys <- 1/tn2[1:mn]
-        xs <- xs[xs!=0]
-        ys <- ys[ys!=0]
+        pos <- xs != 0
+        xs <- xs[pos]
+        ys <- ys[pos]
         # for (k in 1:mn) {
         #     xs[k] <- zeta(zn2[k], z1)/zgdif
         #     ys[k] <- 1/tn2[k]
         # }
-        yd1 <- -tgn2[1] / (t1*t1) * zgdif
-        yd2 <- -tgn2[2] / (t2*t2) * zgdif *  (((re_+z2)/(re_+z1))^2)
+        #yd1 <- -tgn2[1] / (t1*t1) * zgdif
+        #yd2 <- -tgn2[2] / (t2*t2) * zgdif *  (((re_+z2)/(re_+z1))^2)
         # Calculate spline coefficients
-        y2out <- spline(xs, ys, mn, yd1, yd2)
+        #y2out <- spline(xs, ys, mn, yd1, yd2)
+        cubicspline <- splinefun(xs, ys)
         x <- zg/zgdif
-        y <- splint(xs, ys, y2out, mn, x)
+        #y <- splint(xs, ys, y2out, mn, x)
+        y <- cubicspline(x)
         # Temperature at altitude
         tz <- 1/y
         if (xm != 0) {
             glb <- gsurf/((1 + z1/re_)^2)
             gamm <- xm*glb*zgdif/rgas
-            yi <- splini(xs, ys, y2out, mn, x)
+            # yi <- splini(xs, ys, y2out, mn, x)
+            yi <- integrate(cubicspline, xs[1], x)
             expl <- gamm*yi
             expl <- min(expl, 50)
             densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
@@ -157,16 +160,22 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
             # set up spline nodes
             xs <- zeta(zn3[1:mn], z1)/zgdif
             ys <- 1/tn3[1:mn]
-            yd1 <- -tgn3[1] / (t1*t1) * zgdif
-            yd2 <- -tgn3[2] / (t2*t2) * zgdif * (((re_+z2)/(re_+z1))^2)
-            y2out <- spline(xs, ys, mn, yd1, yd2)
+            pos <- xs != 0
+            xs <- xs[pos]
+            ys <- ys[pos]
+            cubicspline <- splinefun(xs, ys)
+            # yd1 <- -tgn3[1] / (t1*t1) * zgdif
+            # yd2 <- -tgn3[2] / (t2*t2) * zgdif * (((re_+z2)/(re_+z1))^2)
+            # y2out <- spline(xs, ys, mn, yd1, yd2)
             x <- zg/zgdif
-            y <- splint(xs, ys, y2out, mn, x)
+            y <- cubicspline(x)
+            # y <- splint(xs, ys, y2out, mn, x)
             tz <- 1/y
             if (xm != 0) {
                 glb <- gsurf/((1 + z1/re_)^2)
                 gamm <- xm*glb*zgdif/rgas
-                yi <- splini(xs, ys, y2out, mn, x)
+                # yi <- splini(xs, ys, y2out, mn, x)
+                yi <- integrate(cubicspline, xs[1], x)
                 expl <- gamm*yi
                 expl <- min(expl, 50)
                 densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
@@ -207,11 +216,16 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
         zgdif <- zeta(z2, z1)
         xs <- zeta(zn1[1:mn], z1)/zgdif
         ys <- 1/tn1[1:mn]
-        yd1 <- -tgn1[1] / (t1*t1) * zgdif
-        yd2 <- -tgn1[2] / (t2*t2) * zgdif * ((re_+z2)/(re_+z1))^2
-        y2out <- spline(xs, ys, mn, yd1, yd2)
+        pos <- xs != 0
+        xs <- xs[pos]
+        ys <- ys[pos]
+        cubicspline <- splinefun(xs, ys)
+        # yd1 <- -tgn1[1] / (t1*t1) * zgdif
+        # yd2 <- -tgn1[2] / (t2*t2) * zgdif * ((re_+z2)/(re_+z1))^2
+        # y2out <- spline(xs, ys, mn, yd1, yd2)
         x <- zg/zgdif
-        y <- splint(xs, ys, y2out, mn, x)
+        # y <- splint(xs, ys, y2out, mn, x)
+        y <- cubicspline(x)
         tz <- 1/y
         densu_temp <- tz
     }  
@@ -225,9 +239,9 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
         if (alt < za) {
             glb <- gsurf/((1+z1/re_)^2)
             gamm <- xm * glb * zgdif / rgas
-            # Por alguna razon el valor es ligeramente diferente. En matlab 0.001779185... Aquí, 0.00177921
-            yi <- splini(xs, ys, y2out, mn, x)
-            expl <- gamm * yi
+            # yi <- splini(xs, ys, y2out, mn, x)
+            yi <- integrate(cubicspline, xs[1], x)
+            expl <- gamm * yi$value
             if(expl > 50 | tt <= 0) expl <- 50
             densu_temp <- densu_temp * (t1 / tz)^(1 + alpha) * exp(-expl)
         }
@@ -305,7 +319,7 @@ globe7 <- function(p, input, flags) {
     df <- input$f107 - input$f107A
     dfa <- input$f107A - 150
     t[1] <-  p[20]*df*(1+p[60]*dfa) + p[21]*df*df + p[22]*dfa + p[30]*(dfa^2)
-    f1 <- 1 + (p[48]*dfa +p[20]*df+p[21]*df*df)*flags$swc[2]
+    f1 <- 1 + (p[48]*dfa+p[20]*df+p[21]*df*df)*flags$swc[2]
     f2 <- 1 + (p[50]*dfa+p[20]*df+p[21]*df*df)*flags$swc[2]
     # time independent
     t[2] = (p[2]*plg[1,3] + p[3]*plg[1,5] + p[23]*plg[1,7]) + 

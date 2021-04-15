@@ -136,90 +136,55 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     legendre_moonTheta <- legendre(6, 6, moon_polar[2])
     legendre_sunTheta <- legendre(6, 6, sun_polar[2])
     
-    dCnm20 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.3075)/5*( (GM_Moon/gm)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,1] + (GM_Sun/gm)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,1] )
-    dCnm21 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.3075)/5*( (GM_Moon/gm)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,2]*cos(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,2]*cos(sun_polar[1]) )
+    c1 <- 
+    
     dSnm21 <- -0.3075/5*( (GM_Moon/gm)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,2]*sin(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,2]*sin(sun_polar[1]) )
-    dCnm22 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.3075)/5*( (GM_Moon/gm)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,3]*cos(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,3]*cos(2*sun_polar[1]) )
     dSnm22 <- -0.3075/5*( (GM_Moon/gm)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,3]*sin(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,3]*sin(2*sun_polar[1]) )
-    dCnm30 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.195)/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,1] + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,1] )
-    dCnm31 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.195)/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,2]*cos(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,2]*cos(sun_polar[1]) )
     dSnm31 <- -0.195/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,2]*sin(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,2]*sin(sun_polar[1]) )
-    dCnm32 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.195)/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,3]*cos(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,3]*cos(2*sun_polar[1]) )
     dSnm32 <- -0.195/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,3]*sin(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,3]*sin(2*sun_polar[1]) )
-    dCnm33 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.195)/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,4]*cos(3*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,4]*cos(3*sun_polar[1]) )
     dSnm33 <- -0.195/7*( (GM_Moon/gm)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,4]*sin(3*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,4]*sin(3*sun_polar[1]) )
-    dCnm40 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.132)/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,1] + (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,1] )
-    dCnm41 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.132)/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,2]*cos(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,2]*cos(sun_polar[1]) )
     dSnm41 <- -0.132/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,2]*sin(moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,2]*sin(sun_polar[1]) )
-    dCnm42 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.132)/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,3]*cos(2*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,3]*cos(2*sun_polar[1]) )
     dSnm42 <- -0.132/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,3]*sin(2*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,3]*sin(2*sun_polar[1]) )
-    dCnm43 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.132)/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,4]*cos(3*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,4]*cos(3*sun_polar[1]) )
     dSnm43 <- -0.132/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,4]*sin(3*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,4]*sin(3*sun_polar[1]) )
-    dCnm44 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.132)/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,5]*cos(4*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,5]*cos(4*sun_polar[1]) )
     dSnm44 <- -0.132/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,5]*sin(4*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,5]*sin(4*sun_polar[1]) )
-    dCnm50 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,1]+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,1] )
-    dCnm51 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,2]*cos(moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,2]*cos(sun_polar[1]) )
     dSnm51 <- -0.1032/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,2]*sin(moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,2]*sin(sun_polar[1]) )
-    dCnm52 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,3]*cos(2*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,3]*cos(2*sun_polar[1]) )
     dSnm52 <- -0.1032/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,3]*sin(2*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,3]*sin(2*sun_polar[1]) )
-    dCnm53 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,4]*cos(3*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,4]*cos(3*sun_polar[1]) )
     dSnm53 <- -0.1032/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,4]*sin(3*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,4]*sin(3*sun_polar[1]) )
-    dCnm54 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,5]*cos(4*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,5]*cos(4*sun_polar[1]) )
     dSnm54 <- -0.1032/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,5]*sin(4*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,5]*sin(4*sun_polar[1]) )
-    dCnm55 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.1032)/11*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,6]*cos(5*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,6]*cos(5*sun_polar[1]) )
     dSnm55 <- -0.1032/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,6]*sin(5*moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,6]*sin(5*sun_polar[1]) )
-    dCnm60 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,1]+ (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,1] )
-    dCnm61 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,2]*cos(moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,2]*cos(sun_polar[1]) )
     dSnm61 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,2]*sin(moon_polar[1])+ (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,2]*sin(sun_polar[1]) )
-    dCnm62 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,3]*cos(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,3]*cos(2*sun_polar[1]) )
     dSnm62 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,3]*sin(2*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,3]*sin(2*sun_polar[1]) )
-    dCnm63 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,4]*cos(3*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,4]*cos(3*sun_polar[1]) )
     dSnm63 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,4]*sin(3*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,4]*sin(3*sun_polar[1]) )
-    dCnm64 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,5]*cos(4*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,5]*cos(4*sun_polar[1]) )
     dSnm64 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,5]*sin(4*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,5]*sin(4*sun_polar[1]) )
-    dCnm65 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,6]*cos(5*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,6]*cos(5*sun_polar[1]) )
     dSnm65 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,6]*sin(5*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,6]*sin(5*sun_polar[1]) )
-    dCnm66 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.0892)/13*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,7]*cos(6*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,7]*cos(6*sun_polar[1]) )
     dSnm66 <- -0.0892/9*( (GM_Moon/gm)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,7]*sin(6*moon_polar[1]) + (GM_Sun/gm)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,7]*sin(6*sun_polar[1]) )
-    C[3,1] <- C[3,1] + dCnm20
-    C[3,2] <- C[3,2] + dCnm21
-    C[3,3] <- C[3,3] + dCnm22
+    
+    c1 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.3075)
+    c2 <- GM_Moon/gm
+    c3 <- (r_ref/moon_polar[3])
+    c4 <- GM_Sun/gm
+    c5 <- r_ref/sun_polar[3]
+    for(i in 3:7){
+        for (j in 1:i){
+            addition <- c1 / (3+2*(i-2)) * ( c2 * c3^i * legendre_moonTheta$normLegendreValues[i,j] * cos((j-1)*moon_polar[1]) + c4 * c5^i * legendre_sunTheta$normLegendreValues[i,j] * cos((j-1)*sun_polar[1]))
+            C[i,j] <- C[i,j] + addition
+        }
+    }
+    
     S[3,2] <- S[3,2] + dSnm21
     S[3,3] <- S[3,3] + dSnm22
-    C[4,1] <- C[4,1] + dCnm30
-    C[4,2] <- C[4,2] + dCnm31
-    C[4,3] <- C[4,3] + dCnm32
-    C[4,4] <- C[4,4] + dCnm33
     S[4,2] <- S[4,2] + dSnm31
     S[4,3] <- S[4,3] + dSnm32
     S[4,4] <- S[4,4] + dSnm33
-    C[5,1] <- C[5,1] + dCnm40
-    C[5,2] <- C[5,2] + dCnm41
-    C[5,3] <- C[5,3] + dCnm42
-    C[5,4] <- C[5,4] + dCnm43
-    C[5,5] <- C[5,5] + dCnm44
     S[5,2] <- S[5,2] + dSnm41
     S[5,3] <- S[5,3] + dSnm42
     S[5,4] <- S[5,4] + dSnm43
     S[5,5] <- S[5,5] + dSnm44
-    C[6,1] <- C[6,1] + dCnm50
-    C[6,2] <- C[6,2] + dCnm51
-    C[6,3] <- C[6,3] + dCnm52
-    C[6,4] <- C[6,4] + dCnm53
-    C[6,5] <- C[6,5] + dCnm54
-    C[6,6] <- C[6,6] + dCnm55
     S[6,2] <- S[6,2] + dSnm51
     S[6,3] <- S[6,3] + dSnm52
     S[6,4] <- S[6,4] + dSnm53
     S[6,5] <- S[6,5] + dSnm54
     S[6,6] <- S[6,6] + dSnm55
-    C[7,1] <- C[7,1] + dCnm60
-    C[7,2] <- C[7,2] + dCnm61
-    C[7,3] <- C[7,3] + dCnm62
-    C[7,4] <- C[7,4] + dCnm63
-    C[7,5] <- C[7,5] + dCnm64
-    C[7,6] <- C[7,6] + dCnm65
-    C[7,7] <- C[7,7] + dCnm66
     S[7,2] <- S[7,2] + dSnm61
     S[7,3] <- S[7,3] + dSnm62
     S[7,4] <- S[7,4] + dSnm63
@@ -412,10 +377,7 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                               satelliteMass, Cd, Omega)
     # Relativistic effects
     a <- a + relativity(Y[1:3], Y[4:6])
-    ##### ATENCION: ESTA ES LA CLAVE, VERIFICAR QUE EL VALOR DE a PARA LA PRIMERA
-    ##### LLAMADA A ESTA FUNCION SEA EL MISMO QUE EN MATLAB
     dY <- matrix(c(Y[4:6], a), byrow=TRUE, ncol=3, nrow=2)
-    browser()
     return(dY)
 }
 
