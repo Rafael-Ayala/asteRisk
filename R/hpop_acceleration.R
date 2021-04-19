@@ -207,12 +207,16 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
         b1 <- (-gm/d^2)*(r_ref/d)^n*(n+1)
         b2 <-  (gm/d)*(r_ref/d)^n
         b3 <-  (gm/d)*(r_ref/d)^n
-        for(m in 0:m) {
-            q1 <- q1 + legendre_latgc$normLegendreValues[n+1,m+1]*(C[n+1,m+1]*cos(m*lon)+S[n+1,m+1]*sin(m*lon))
-            q2 <- q2 + legendre_latgc$normLegendreDerivativeValues[n+1,m+1]*
-                (C[n+1,m+1]*cos(m*lon)+S[n+1,m+1]*sin(m*lon))
-            q3 <- q3 + m*legendre_latgc$normLegendreValues[n+1,m+1]*(S[n+1,m+1]*cos(m*lon)-C[n+1,m+1]*sin(m*lon));
-        }
+        q1 <- q1 + sum(legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
+        q2 <- q2 + sum(legendre_latgc$normLegendreDerivativeValues[n+1,1:(m+1)]*
+                           (C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
+        q3 <- q3 + sum((0:m) * legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(S[n+1,1:(m+1)]*cos((0:m)*lon)-C[n+1,1:(m+1)]*sin((0:m)*lon)))
+        # for(m in 0:m) {
+        #     q1 <- q1 + legendre_latgc$normLegendreValues[n+1,m+1]*(C[n+1,m+1]*cos(m*lon)+S[n+1,m+1]*sin(m*lon))
+        #     q2 <- q2 + legendre_latgc$normLegendreDerivativeValues[n+1,m+1]*
+        #         (C[n+1,m+1]*cos(m*lon)+S[n+1,m+1]*sin(m*lon))
+        #     q3 <- q3 + m*legendre_latgc$normLegendreValues[n+1,m+1]*(S[n+1,m+1]*cos(m*lon)-C[n+1,m+1]*sin(m*lon))
+        # }
         dUdr <- dUdr + q1*b1
         dUdlatgc <- dUdlatgc + q2*b2
         dUdlon <- dUdlon + q3*b3

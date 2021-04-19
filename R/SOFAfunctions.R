@@ -118,10 +118,11 @@ iauNut00a <- function(date1, date2){
     # nl,nlp,nf,nd,nom:   coefficients of l,l',F,D,Om
     #  sp,spt,cp:          longitude sin, t*sin, cos coefficients
     #  ce,cet,se:          obliquity cos, t*cos, sin coefficients
-    xls <- read.csv("R/hpop_files/iauNut00a_xls.csv", header=FALSE)
-    NLS <- nrow(xls)
-    xpl <- read.csv("R/hpop_files/iauNut00a_xpl.csv", header=FALSE)
-    NPL <- nrow(xpl)
+    #  moved the following 4 lines to constants definitions
+    # xls <- read.csv("R/hpop_files/iauNut00a_xls.csv", header=FALSE)
+    # NLS <- nrow(xls)
+    # xpl <- read.csv("R/hpop_files/iauNut00a_xpl.csv", header=FALSE)
+    # NPL <- nrow(xpl)
     # Interval between fundamental date J2000.0 and given date (JC). 
     t <- ((date1 - DJ00) + date2) / DJC
     # Mean anomaly of the Moon (IERS 2003)
@@ -134,19 +135,23 @@ iauNut00a <- function(date1, date2){
     d <- iauFad03(t)
     # Mean longitude of the ascending node of the Moon (IERS 2003).
     om <- iauFaom03(t)
-    # Initialize the nutation values.
-    dp <- 0.0
-    de <- 0.0
-    #  Summation of luni-solar nutation series (in reverse order). 
-    for (i in NLS:1) {
-        # argument and its sine and cosine
-        arg <- (xls[i,1]*el+xls[i,2]*elp+xls[i,3]*f+xls[i,4]*d+xls[i,5]*om)%%(2*pi)
-        sarg <- sin(arg)
-        carg <- cos(arg)
-        # term
-        dp <- dp + (xls[i,6] + xls[i,7] * t) * sarg + xls[i,8] * carg
-        de <- de + (xls[i,9] + xls[i,10] * t) * carg + xls[i,11] * sarg
-    }
+    #  Summation of luni-solar nutation series (in reverse order).
+    #  replaced by vectorized code
+    arg <- (xls[NLS:1,1]*el+xls[NLS:1,2]*elp+xls[NLS:1,3]*f+xls[NLS:1,4]*d+xls[NLS:1,5]*om)%%(2*pi)
+    sarg <- sin(arg)
+    carg <- cos(arg)
+    dp <- sum((xls[NLS:1, 6] + xls[NLS:1, 7] * t) * sarg + xls[NLS:1, 8] * carg)
+    de <- sum((xls[NLS:1, 9] + xls[NLS:1, 10] * t) * carg + xls[NLS:1, 11] * sarg)
+    # Old non vectorized code
+    # for (i in NLS:1) {
+    #     # argument and its sine and cosine
+    #     arg <- (xls[i,1]*el+xls[i,2]*elp+xls[i,3]*f+xls[i,4]*d+xls[i,5]*om)%%(2*pi)
+    #     sarg <- sin(arg)
+    #     carg <- cos(arg)
+    #     # term
+    #     dp <- dp + (xls[i,6] + xls[i,7] * t) * sarg + xls[i,8] * carg
+    #     de <- de + (xls[i,9] + xls[i,10] * t) * carg + xls[i,11] * sarg
+    # }
     # Convert from decimes microarcseconds to radians
     dpsils <- dp * U2R
     depsls <- de * U2R
@@ -157,7 +162,6 @@ iauNut00a <- function(date1, date2){
     #  reproduced here.  Use of the IERS 2003 expressions for both 
     #  cases leads to negligible changes, well below 
     #  0.1 microarcsecond. 
-    
     # Mean anomaly of the Moon (MHB2000). 
     al <- (2.35555598 + 8328.6914269554 * t) %% (2*pi)
     # Mean longitude of the Moon minus that of the ascending node (MHB2000). 
@@ -184,21 +188,28 @@ iauNut00a <- function(date1, date2){
     alur <- (5.481293872 + 7.4781598567 * t) %% (2*pi)
     # Neptune longitude (MHB2000). 
     alne <- (5.321159000 + 3.8127774000 * t) %% (2*pi)
-    ## Initialize again nutation values (temporary variables)
-    dp <- 0
-    de <- 0
-    for (i in NPL:1) {
-        # Argument and its sine and cosine
-        arg <- (xpl[i,1] * al + xpl[i,2] * af + xpl[i,3] * ad + xpl[i,4] * aom +
-                xpl[i,5] * alme + xpl[i,6] * alve +xpl[i,7] * alea +
-                xpl[i,8] * alma + xpl[i,9] * alju +xpl[i,10] * alsa + 
-                xpl[i,11] * alur + xpl[i,12] * alne +xpl[i,13] * apa) %% (2*pi)
-        sarg <- sin(arg)
-        carg <- cos(arg)
-        # Update terms
-        dp <- dp + xpl[i,14] * sarg + xpl[i,15] * carg
-        de <- de + xpl[i,16] * sarg + xpl[i,17] * carg
-    }
+    ## Calculate again nutation values (temporary variables)
+    arg <- (xpl[NPL:1, 1] * al + xpl[NPL:1, 2] * af + xpl[NPL:1, 3] * ad + xpl[NPL:1, 4] * aom +
+                xpl[NPL:1, 5] * alme + xpl[NPL:1, 6] * alve + xpl[NPL:1, 7] * alea +
+                xpl[NPL:1, 8] * alma + xpl[NPL:1, 9] * alju + xpl[NPL:1, 10] * alsa + 
+                xpl[NPL:1, 11] * alur + xpl[NPL:1, 12] * alne + xpl[NPL:1, 13] * apa) %% (2*pi)
+    sarg <- sin(arg)
+    carg <- cos(arg)
+    dp <- sum(xpl[NPL:1, 14] * sarg + xpl[NPL:1, 15] * carg)
+    de <- sum(xpl[NPL:1, 16] * sarg + xpl[NPL:1, 17] * carg)
+    # old non-vectorized code
+    # for (i in NPL:1) {
+    #     # Argument and its sine and cosine
+    #     arg <- (xpl[i,1] * al + xpl[i,2] * af + xpl[i,3] * ad + xpl[i,4] * aom +
+    #             xpl[i,5] * alme + xpl[i,6] * alve +xpl[i,7] * alea +
+    #             xpl[i,8] * alma + xpl[i,9] * alju +xpl[i,10] * alsa + 
+    #             xpl[i,11] * alur + xpl[i,12] * alne +xpl[i,13] * apa) %% (2*pi)
+    #     sarg <- sin(arg)
+    #     carg <- cos(arg)
+    #     # Update terms
+    #     dp <- dp + xpl[i,14] * sarg + xpl[i,15] * carg
+    #     de <- de + xpl[i,16] * sarg + xpl[i,17] * carg
+    # }
     # Convert from 0.1 microarcsecs  to radians
     dpsipl <- dp * U2R
     depspl <- de * U2R
@@ -293,13 +304,20 @@ iauPnm06a <- function(date1, date2) {
 }
 
 iauS06 <- function(date1, date2, x, y) {
-    sp <- c(94.00e-6, 3808.65e-6, -122.68e-6, -72574.11e-6, 27.98e-6, 15.62e-6)
-    s_xyD2_coefs <- read.csv("R/hpop_files/s_xyD2_terms.csv", header=FALSE)
-    s0 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER0", -1]
-    s1 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER1", -1]
-    s2 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER2", -1]
-    s3 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER3", -1]
-    s4 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER4", -1]
+    # All of the following have been moved to constants definitions
+    # sp <- c(94.00e-6, 3808.65e-6, -122.68e-6, -72574.11e-6, 27.98e-6, 15.62e-6)
+    # s_xyD2_coefs <- read.csv("R/hpop_files/s_xyD2_terms.csv", header=FALSE)
+    # s0 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER0", -1]
+    # s1 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER1", -1]
+    # s2 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER2", -1]
+    # s3 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER3", -1]
+    # s4 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER4", -1]
+    # w0 <- sp[1]
+    # w1 <- sp[2]
+    # w2 <- sp[3]
+    # w3 <- sp[4]
+    # w4 <- sp[5]
+    # w5 <- sp[6]
     t <- ((date1 - DJ00) + date2) / DJC
     meanAnomalyMoon <- iauFal03(t)
     meanAnomalySun <- iauFalp03(t)
@@ -312,17 +330,12 @@ iauS06 <- function(date1, date2, x, y) {
     fundamentalArguments <- c(meanAnomalyMoon, meanAnomalySun, meanLongitudeMoonMinusAN,
                               meanElongationMoonSun, meanLongitudeMoonAN, meanLongitudeVenus,
                               meanLongitudeEarth, generalLongitudeAccumulatedPrecesion)
-    w0 <- sp[1]
-    w1 <- sp[2]
-    w2 <- sp[3]
-    w3 <- sp[4]
-    w4 <- sp[5]
-    w5 <- sp[6]
     for (i in nrow(s0):1) {
-        a <- 0
-        for (j in 1:8) {
-            a <- a + s0[i, j] * fundamentalArguments[j]
-        }
+        # a <- 0
+        a <- sum(s0[i, 1:8] * fundamentalArguments)
+        # for (j in 1:8) {
+        #     a <- a + s0[i, j] * fundamentalArguments[j]
+        # }
         w0 <-  w0 + s0[i, 9] * sin(a) + s0[i, 10] * cos(a)
     }
     for (i in nrow(s1):1) {

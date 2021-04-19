@@ -15,6 +15,7 @@ Description: Provides basic functionalities to calculate the position of
     David Vallado, Paul Crawford, Richard Hujsak and T.S. Kelso (2012) <doi:10.2514/6.2006-6753>.
     Felix R. Hoots, Paul W. Schumacher Jr. and Robert A. Glover (2014) <doi:10.2514/1.9161>.
 License: GPL-3
+Imports: deSolve
 Suggests: knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap
 VignetteBuilder: knitr
 Encoding: UTF-8

@@ -281,28 +281,45 @@ globe7 <- function(p, input, flags) {
     c2 <- c^2
     c4 <- c^4
     s2 <- s^2
-    plg[1,2] <<- c
-    plg[1,3] <<- 0.5*(3*c2 -1)
-    plg[1,4] <<- 0.5*(5*c*c2-3*c)
-    plg[1,5] <<- (35*c4 - 30*c2 + 3)/8
-    plg[1,6] <<- (63*c2*c2*c - 70*c2*c + 15*c)/8
-    plg[1,7] <<- (11*c*plg[1,6] - 5*plg[1,5])/6
-    plg[2,2] <<- s
-    plg[2,3] <<- 3*c*s
-    plg[2,4] <<- 1.5*(5*c2-1)*s
-    plg[2,5] <<- 2.5*(7*c2*c-3*c)*s
-    plg[2,6] <<- 1.875*(21*c4 - 14*c2 +1)*s
-    plg[2,7] <<- (11*c*plg[2,6]-6*plg[2,5])/5
-    plg[3,3] <<- 3*s2
-    plg[3,4] <<- 15*s2*c
-    plg[3,5] <<- 7.5*(7*c2 -1)*s2
-    plg[3,6] <<- 3*c*plg[3,5]-2*plg[3,4]
-    plg[3,7] <<- (11*c*plg[3,6]-7*plg[3,5])/4
-    plg[3,8] <<- (13*c*plg[3,7]-8*plg[3,6])/5
-    plg[4,4] <<- 15*s2*s
-    plg[4,5] <<- 105*s2*s*c 
-    plg[4,6] <<- (9*c*plg[4,5]-7.*plg[4,4])/2
-    plg[4,7] <<- (11*c*plg[4,6]-8.*plg[4,5])/3
+    new_plg_values <- c(0, c, 0.5*(3*c2 -1), 0.5*(5*c*c2-3*c), (35*c4 - 30*c2 + 3)/8,
+                        (63*c2*c2*c - 70*c2*c + 15*c)/8, (11*c*((63*c2*c2*c - 70*c2*c + 15*c)/8) - 
+                                                          5*((35*c4 - 30*c2 + 3)/8))/6, 
+                        0, 0, # end of row 1
+                        0, s, 3*c*s, 1.5*(5*c2-1)*s, 2.5*(7*c2*c-3*c)*s,
+                        1.875*(21*c4 - 14*c2 +1)*s, (11*c*(1.875*(21*c4 - 14*c2 +1)*s)-
+                                                         6*(2.5*(7*c2*c-3*c)*s))/5, 
+                        0, 0, # end of row 2
+                        0, 0, 3*s2, 15*s2*c, 7.5*(7*c2 -1)*s2, 
+                        3*c*(7.5*(7*c2 -1)*s2)-2*(15*s2*c),
+                        (11*c*(3*c*(7.5*(7*c2 -1)*s2)-2*(15*s2*c))-7*(7.5*(7*c2 -1)*s2))/4,
+                        (13*c*(11*c*(3*c*(7.5*(7*c2 -1)*s2)-2*(15*s2*c))-7*(7.5*(7*c2 -1)*s2))/4 -
+                             8*(3*c*(7.5*(7*c2 -1)*s2)-2*(15*s2*c)))/5, 0, # end of row 3
+                        0, 0, 0, 15*s2*s, 105*s2*s*c, 
+                        (9*c*(105*s2*s*c)-7*(15*s2*s))/2, 
+                        (11*c*((9*c*(105*s2*s*c)-7*(15*s2*s))/2)-8*(105*s2*s*c))/3, 0, 0) # end of row 4
+    plg <<- matrix(new_plg_values, nrow=4, ncol=9, byrow=TRUE)
+    # plg[1,2] <<- c
+    # plg[1,3] <<- 0.5*(3*c2 -1)
+    # plg[1,4] <<- 0.5*(5*c*c2-3*c)
+    # plg[1,5] <<- (35*c4 - 30*c2 + 3)/8
+    # plg[1,6] <<- (63*c2*c2*c - 70*c2*c + 15*c)/8
+    # plg[1,7] <<- (11*c*plg[1,6] - 5*plg[1,5])/6
+    # plg[2,2] <<- s
+    # plg[2,3] <<- 3*c*s
+    # plg[2,4] <<- 1.5*(5*c2-1)*s
+    # plg[2,5] <<- 2.5*(7*c2*c-3*c)*s
+    # plg[2,6] <<- 1.875*(21*c4 - 14*c2 +1)*s
+    # plg[2,7] <<- (11*c*plg[2,6]-6*plg[2,5])/5
+    # plg[3,3] <<- 3*s2
+    # plg[3,4] <<- 15*s2*c
+    # plg[3,5] <<- 7.5*(7*c2 -1)*s2
+    # plg[3,6] <<- 3*c*plg[3,5]-2*plg[3,4]
+    # plg[3,7] <<- (11*c*plg[3,6]-7*plg[3,5])/4
+    # plg[3,8] <<- (13*c*plg[3,7]-8*plg[3,6])/5
+    # plg[4,4] <<- 15*s2*s
+    # plg[4,5] <<- 105*s2*s*c 
+    # plg[4,6] <<- (9*c*plg[4,5]-7.*plg[4,4])/2
+    # plg[4,7] <<- (11*c*plg[4,6]-8.*plg[4,5])/3
     if (!(((flags$sw[8] == 0) & (flags$sw[9] == 0)) & (flags$sw[15] == 0))) {
         stloc <- sin(hr*tloc)
         ctloc <- cos(hr*tloc)
@@ -316,8 +333,8 @@ globe7 <- function(p, input, flags) {
     cd14 <- cos(dr*(input$doy-p[14]))
     cd39 <- cos(2*dr*(input$doy-p[39]))
     # F10.7 effect
-    df <- input$f107 - input$f107A
-    dfa <- input$f107A - 150
+    df <- as.numeric(input$f107 - input$f107A)
+    dfa <- as.numeric(input$f107A - 150)
     t[1] <-  p[20]*df*(1+p[60]*dfa) + p[21]*df*df + p[22]*dfa + p[30]*(dfa^2)
     f1 <- 1 + (p[48]*dfa+p[20]*df+p[21]*df*df)*flags$swc[2]
     f2 <- 1 + (p[50]*dfa+p[20]*df+p[21]*df*df)*flags$swc[2]
@@ -376,9 +393,9 @@ globe7 <- function(p, input, flags) {
         end
         apdf <- apd + (p45-1)*(apd + (exp(-p44 * apd) - 1)/p44)
         if (flags$sw[10])
-            t[9] <- apdf*(p[33] + p[46]*plg(1,3) + p[35]*plg(1,5) +  ...
-                       (p[101]*plg(1,2) + p[102]*plg(1,4) + p[103]*plg(1,6))*cd14*flags$swc[6] +  
-                       (p[122]*plg(2,2) + p[123]*plg(2,4) + p[124]*plg(2,6))*flags$swc[8]* 
+            t[9] <- apdf*(p[33] + p[46]*plg[1,3] + p[35]*plg[1,5] +  
+                       (p[101]*plg[1,2] + p[102]*plg[1,4] + p[103]*plg[1,6])*cd14*flags$swc[6] +  
+                       (p[122]*plg[2,2] + p[123]*plg[2,4] + p[124]*plg[2,6])*flags$swc[8]* 
                        cos(hr*(tloc-p[125])))
     }
     if (((flags$sw[11]) & (input$g_long > -1000))) {
@@ -995,7 +1012,7 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     input$ap_a[5] <- sw_1[20] 
     sum <- sw_1[19]+sw_1[18]+sw_1[17]+sw_1[16]+sw_1[15]
     sw_2 <- spaceWeather[i-2, ]
-    sum <- sum+sw_2[22]+sw_2[21]+sw_2[20]
+    sum <- sum + sw_2[22] + sw_2[21]  +sw_2[20]
     input$ap_a[6] <- sum/8 
     sw_3 <- spaceWeather[i-3, ]
     sum <- sw_2[19] + sw_2[18] + sw_2[17] + sw_2[16] + 

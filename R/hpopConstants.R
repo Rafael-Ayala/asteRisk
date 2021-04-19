@@ -16,7 +16,7 @@ for(n in 1:181) {
     }
 } # verified Cnm[103, 30] = 7.629580795415e-10 , Snm[103, 30] = 1.68949165464e-09
 
-earthPositions <- read.table("R/hpop_files/EOP-All.txt")
+earthPositions <- as.matrix(read.table("R/hpop_files/EOP-All.txt"))
 colnames(earthPositions) <- c("Date(year)-0h UTC",
                               "Date(month)-0h UTC",
                               "Date(day)-0h UTC",
@@ -26,7 +26,7 @@ colnames(earthPositions) <- c("Date(year)-0h UTC",
                               "LOD", "dPsi", "dEpsilon",
                               "dX", "dY", "DAT (TAI-UTC)")
 
-spaceWeather <- read.table("R/hpop_files/SW-All.txt")
+spaceWeather <- as.matrix(read.table("R/hpop_files/SW-All.txt"))
 colnames(spaceWeather) <- c("Date(year)",
                             "Date(month)",
                             "Date(day)",
@@ -83,13 +83,13 @@ DJC <- 36525.0
 MJD_J2000 <- 51544.5 # MJD for J2000.0
 
 # Acceleration equations constants
-DE436coeffs <- read.csv(unz("R/hpop_files/DE436Coeff.zip", "DE436Coeff.csv"), header=FALSE, sep = ",", dec = ".")
+DE436coeffs <- as.matrix(read.csv(unz("R/hpop_files/DE436Coeff.zip", "DE436Coeff.csv"), header=FALSE, sep = ",", dec = "."))
 # Table 6.5a IERS 2010
-solidEarthTides_dC21dS21 <- read.csv("R/hpop_files/solidEarthTides_dC21dS21.csv", header=FALSE) 
+solidEarthTides_dC21dS21 <- as.matrix(read.csv("R/hpop_files/solidEarthTides_dC21dS21.csv", header=FALSE))
 # Table 6.5b IERS 2010
-solidEarthTides_dC22dS22 <- read.csv("R/hpop_files/solidEarthTides_dC22dS22.csv", header=FALSE)
+solidEarthTides_dC22dS22 <- as.matrix(read.csv("R/hpop_files/solidEarthTides_dC22dS22.csv", header=FALSE))
 # Table 6.5c IERS 2010
-solidEarthTides_dC20 <- read.csv("R/hpop_files/solidEarthTides_dC20.csv", header=FALSE)
+solidEarthTides_dC20 <- as.matrix(read.csv("R/hpop_files/solidEarthTides_dC20.csv", header=FALSE))
 gm <- 398600.4415e9 # GGM03S
 r_ref <- 6378.1363e3 # radius of Earth in m
 R_sun <- 696000e3 # radius of Sun in m
@@ -119,4 +119,25 @@ EMRAT1 = 1/(1+EMRAT)
 # CHANGE THIS TO USER DEFINABLE VALUES
 n <- 70
 m <- 70
+
+# constants for iauNut00a
+xls <- as.matrix(read.csv("R/hpop_files/iauNut00a_xls.csv", header=FALSE))
+NLS <- nrow(xls)
+xpl <- as.matrix(read.csv("R/hpop_files/iauNut00a_xpl.csv", header=FALSE))
+NPL <- nrow(xpl)
+
+# constants for iauS06
+sp <- c(94.00e-6, 3808.65e-6, -122.68e-6, -72574.11e-6, 27.98e-6, 15.62e-6)
+s_xyD2_coefs <- read.csv("R/hpop_files/s_xyD2_terms.csv", header=FALSE)
+s0 <- as.matrix(s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER0", -1])
+s1 <- as.matrix(s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER1", -1])
+s2 <- as.matrix(s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER2", -1])
+s3 <- as.matrix(s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER3", -1])
+s4 <- as.matrix(s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER4", -1])
+w0 <- sp[1]
+w1 <- sp[2]
+w2 <- sp[3]
+w3 <- sp[4]
+w4 <- sp[5]
+w5 <- sp[6]
 
