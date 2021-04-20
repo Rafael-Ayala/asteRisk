@@ -178,11 +178,11 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
                   0, 0, 0),
                 nrow = 3, byrow = TRUE)
     omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
-    dTheta <- omega*S*theta
-    U <- PMM*theta*NPB
-    dU <- PMM*dTheta*NPB
-    r <- t(U)*Y0[1:3]
-    v <- t(U)*t(Y0[4:6]) + t(dU)*t(Y0[1:3])
+    dTheta <- omega*S%*%theta
+    U <- PMM%*%theta%*%NPB
+    dU <- PMM%*%dTheta%*%NPB
+    r <- t(U)%*%Y0[1:3]
+    v <- t(U)%*%Y0[4:6] + t(dU)%*%Y0[1:3]
     return (list(
         position=r,
         velocity=v
@@ -205,13 +205,13 @@ ECItoECEF <- function(MJD_UTC, Y0) {
     S <- matrix(c(0, 1, 0,
                   -1, 0, 0,
                   0, 0, 0),
-                nrow = TRUE, byrow = TRUE)
+                nrow = 3, byrow = TRUE)
     omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
-    dTheta <- omega*S*theta
-    U <- PMM*theta*NPB
-    dU <- PMM*dTheta*NPB
-    r <- U*t(Y0[1:3])
-    v <- U*t(Y0[4:6]) + dU*t(Y0[1:3])
+    dTheta <- omega*S%*%theta
+    U <- PMM%*%theta%*%NPB
+    dU <- PMM%*%dTheta%*%NPB
+    r <- U%*%Y0[1:3]
+    v <- U%*%Y0[4:6] + dU%*%Y0[1:3]
     return (list(
         position=r,
         velocity=v
