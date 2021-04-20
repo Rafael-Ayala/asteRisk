@@ -10,11 +10,14 @@ the Earth surface as it rotates. This function converts Cartesian coordinates
 in the ECEF frame to geodetic latitude, longitude and altitude.
 }
 \usage{
-ECEFtoLATLON(position_ECEF)
+ECEFtoLATLON(position_ECEF, degreesOutput=TRUE)
 }
 \arguments{
   \item{position_ECEF}{Vector with the X, Y and Z components of the position
   of an object in ECEF frame, in km.
+  }
+  \item{degreesOutput}{Logical indicating if the output should be in sexagesimal
+  degrees. If \code{degreesOutput=FALSE}, the output will be in radians.
   }
 }
 \value{
@@ -42,7 +45,8 @@ epochDateTime <- "2006-06-26 00:58:29.34"
 state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA0,
                          Bstar=Bstar, initialDateTime=epochDateTime, targetTime=1440)
 
-# We can now convert the results in TEME frame to ECEF frame
+# We can now convert the results in TEME frame to ECEF frame, previously
+# multiplying by 1000 to convert the km output of sgdp4 to m
 
 state_1day_ECEF <- TEMEtoECEF(state_1day_TEME$position, state_1day_TEME$velocity,
                               "2006-06-27 00:58:29.34")

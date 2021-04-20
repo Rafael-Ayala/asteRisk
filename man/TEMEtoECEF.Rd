@@ -19,10 +19,10 @@ TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
 }
 \arguments{
   \item{position_TEME}{Vector with the X, Y and Z components of the position
-  of an object in TEME frame, in km.
+  of an object in TEME frame, in m.
   }
   \item{velocity_TEME}{Vector with the X, Y and Z components of the velocity
-  of an object in TEME frame, in km/s.
+  of an object in TEME frame, in m/s.
   }
   \item{dateTime}{Date-time string with the date and time in UTC corresponding
   to the provided position and velocity vectors.
@@ -31,7 +31,7 @@ TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
 \value{
 A list with two elements representing the position and velocity of the satellite
 in the ECEF (Earth Centered, Earth Fixed) frame of reference. Position values
-are in km, and velocity values are in km/s. Each of the two elements contains
+are in m, and velocity values are in m/s. Each of the two elements contains
 three values, corresponding to the X, Y and Z components of position and
 velocity in this order.
 }
@@ -56,8 +56,10 @@ epochDateTime <- "2006-06-26 00:58:29.34"
 state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA0,
                          Bstar=Bstar, initialDateTime=epochDateTime, targetTime=1440)
 
-# We can now convert the results in TEME frame to ECEF frame
+# We can now convert the results in TEME frame to ECEF frame, previously
+# multiplying by 1000 to convert the km output of sgdp4 to m
 
-state_1day_ECEF <- TEMEtoECEF(state_1day_TEME$position, state_1day_TEME$velocity,
+state_1day_ECEF <- TEMEtoECEF(state_1day_TEME$position*1000, 
+                              state_1day_TEME$velocity*1000,
                               "2006-06-27 00:58:29.34")
 }

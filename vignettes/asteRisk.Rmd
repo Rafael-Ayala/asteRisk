@@ -53,7 +53,10 @@ implementations were introduced in FORTRAN IV in 1988. <b>asteRisk</b> aims
 to constitute the basis for astrodynamics analysis in R. To that extent, it 
 provides a native R implementation of the SGP4 and SDP4 models and utilities to
 parse and read TLE files and to convert coordinates between different reference
-frames.
+frames. Additionally, a high-precision orbital propagator is also provided.
+High-precision propagators model a set of forces that act on satellites to
+calculate the resulting acceleration, and propagate the orbit by numerically
+solving the resulting differential equation for the position. 
 
 # Installation instructions
 
@@ -264,7 +267,7 @@ geodetic_matrix <- matrix(nrow=nrow(results_position_matrix), ncol=3)
 
 for(i in 1:nrow(geodetic_matrix)) {
     new_dateTime <- as.character(as.POSIXct(molniya$dateTime, tz="UTC") + 60*targetTimes[i])
-    new_geodetic <- TEMEtoLATLON(results_position_matrix[i, 1:3],
+    new_geodetic <- TEMEtoLATLON(results_position_matrix[i, 1:3]*1000,
                                  new_dateTime)
     geodetic_matrix[i,] <- new_geodetic
 }
@@ -284,6 +287,53 @@ ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
   geom_point(data=as.data.frame(geodetic_matrix), aes(x=longitude, y=latitude), 
              color="blue", size=0.3, alpha=0.8)
 ```
+
+# High-precision orbital propagator
+
+The high-precision orbital propagator implemented in <b>asteRisk</b> etc etc
+
+```{r tidy = TRUE}
+# Element 11 of the set of test TLE contains an orbital state vector for
+# satellite MOLNIYA 1-83, launched from the USSR in 1992 and decayed in 2007
+
+molniyaMass <- 1600
+molniyaCrossSection <- 15
+molniyaCr <- 1.2
+molniyaCd <- 2.2
+
+targetTimes <- seq(0, 43200, by=60)
+
+initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
+initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806)
+
+hpop_results <- asteRisk:::hpop(initialPosition, initialVelocity, molniyaCrossSection,
+                                molniyaCrossSection, molniyaMass, molniyaCr, 
+                                molniyaCd, 2006, 6, 25, 0, 33, 42.835, targetTimes)
+
+geodetic_matrix_hpop <- matrix(nrow=nrow(hpop_results), ncol=3)
+
+for(i in 1:nrow(geodetic_matrix_hpop)) {
+    new_dateTime <- as.character(as.POSIXct(molniya$dateTime, tz="UTC") + targetTimes[i])
+    new_geodetic <- TEMEtoLATLON(hpop_results[i, 2:4],
+                                 new_dateTime)
+    geodetic_matrix_hpop[i,] <- new_geodetic
+}
+
+colnames(geodetic_matrix_hpop) <- c("latitude", "longitude", "altitude")
+
+library(ggmap)
+
+ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
+  geom_segment(data=as.data.frame(geodetic_matrix_hpop), 
+               aes(x=longitude, y=latitude, 
+                   xend=c(tail(longitude, n=-1), NA), 
+                   yend=c(tail(latitude, n=-1), NA)), 
+               na.rm=TRUE) +
+  geom_point(data=as.data.frame(geodetic_matrix_hpop), aes(x=longitude, y=latitude), 
+             color="blue", size=0.3, alpha=0.8)
+
+```
+  
 
 # References
 

@@ -140,7 +140,7 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
             gamm <- xm*glb*zgdif/rgas
             # yi <- splini(xs, ys, y2out, mn, x)
             yi <- integrate(cubicspline, xs[1], x)
-            expl <- gamm*yi
+            expl <- gamm*yi$value
             expl <- min(expl, 50)
             densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
         }
@@ -176,7 +176,7 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
                 gamm <- xm*glb*zgdif/rgas
                 # yi <- splini(xs, ys, y2out, mn, x)
                 yi <- integrate(cubicspline, xs[1], x)
-                expl <- gamm*yi
+                expl <- gamm*yi$value
                 expl <- min(expl, 50)
                 densm_tmp <- densm_tmp * (t1/tz) * exp(-expl)
             } else {
@@ -855,7 +855,7 @@ gtd7 <- function(input, flags) {
                                             glob7s(pma[10, ], input, flags))*
                         meso_tn2[4]*meso_tn2[4]/((pma[3,1]*pavgm[3])^2)
         meso_tn3[1] <- meso_tn2[4]
-        if (input.alt<zn3(1)) { # lower stratosphere/troposphere (below zn3[1])
+        if (input$alt<zn3[1]) { # lower stratosphere/troposphere (below zn3[1])
             meso_tgn3[1] <- meso_tgn2[2]
             meso_tn3[2] <- pma[4,1]*pavgm[4]/(1-flags $sw[23]*glob7s(pma[4, ], input, flags))
             meso_tn3[3] <- pma[5,1]*pavgm[5]/(1-flags $sw[23]*glob7s(pma[5, ], input, flags))
@@ -979,10 +979,10 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     input$doy <- floor(days)
     input$year <- 0
     input$sec <- invjday_results$hour*3600 + invjday_results$min*60 + invjday_results$sec
-    geodetic_results <- ECEFtoGeodetic(r_ECEF)
-    input$alt <- geodetic_results$h/1000
-    input$g_lat <- geodetic_results$lat*(180/pi)
-    input$g_long <- geodetic_results$lon*(180/pi)
+    geodetic_results <- ECEFtoLATLON(r_ECEF, degreesOutput=FALSE)
+    input$alt <- geodetic_results["altitude"]/1000
+    input$g_lat <- geodetic_results["latitude"]*(180/pi)
+    input$g_long <- geodetic_results["longitude"]*(180/pi)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
 
     TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
@@ -991,7 +991,7 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     TUT <- TIME + UT1_UTC/86400
     UT1 <- iauCal2jd_results$DATE + TUT
     rnpb <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
-    lst <- geodetic_results$lon + iauGst06(iauCal2jd_results$DJMJD0, UT1, 
+    lst <- geodetic_results["longitude"] + iauGst06(iauCal2jd_results$DJMJD0, UT1, 
                                            iauCal2jd_results$DJMJD0, TT, rnpb)
     lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)

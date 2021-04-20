@@ -165,7 +165,7 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
-    TIME <- (60*(60*invjday_results$hour + invjday_results$minute) + invjday_results$sec)/86400
+    TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
     UTC <- iauCal2jd_results$DATE + TIME
     TT <- UTC + timeDiffs_results$TT_UTC/86400
     TUT <- TIME + IERS_results$UT1_UTC/86400
@@ -174,15 +174,44 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
     theta <- iauRz(iauGst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT, NPB), diag(3))
     PMM <- iauPom00(IERS_results$x_pole, IERS_results$y_pole, iauSp00(iauCal2jd_results$DJMJD0, TT))
     S <- matrix(c(0, 1, 0,
-                  1, 0, 0,
+                  -1, 0, 0,
                   0, 0, 0),
-                byrow = TRUE)
+                nrow = 3, byrow = TRUE)
     omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
     dTheta <- omega*S*theta
     U <- PMM*theta*NPB
     dU <- PMM*dTheta*NPB
-    r <- t(U)*t(Y0(1:3))
-    v <- t(U)*t(Y0(4:6)) + t(dU)*t(Y0(1:3))
+    r <- t(U)*Y0[1:3]
+    v <- t(U)*t(Y0[4:6]) + t(dU)*t(Y0[1:3])
+    return (list(
+        position=r,
+        velocity=v
+    ))
+}
+
+ECItoECEF <- function(MJD_UTC, Y0) {
+    IERS_results <- IERS(earthPositions, MJD_UTC)
+    timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
+    invjday_results <- invjday(MJD_UTC+2400000.5)
+    iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
+    TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
+    UTC <- iauCal2jd_results$DATE + TIME
+    TT <- UTC + timeDiffs_results$TT_UTC/86400
+    TUT <- TIME + IERS_results$UT1_UTC/86400
+    UT1 <- iauCal2jd_results$DATE + TUT
+    NPB <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
+    theta <- iauRz(iauGst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT, NPB), diag(3))
+    PMM <- iauPom00(IERS_results$x_pole, IERS_results$y_pole, iauSp00(iauCal2jd_results$DJMJD0, TT))
+    S <- matrix(c(0, 1, 0,
+                  -1, 0, 0,
+                  0, 0, 0),
+                nrow = TRUE, byrow = TRUE)
+    omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
+    dTheta <- omega*S*theta
+    U <- PMM*theta*NPB
+    dU <- PMM*dTheta*NPB
+    r <- U*t(Y0[1:3])
+    v <- U*t(Y0[4:6]) + dU*t(Y0[1:3])
     return (list(
         position=r,
         velocity=v
@@ -676,40 +705,4 @@ fractionalDays <- function(year, month, day, hour, min, sec) {
     }
     days <- sum(monthDays[1:(month - 1)]) + day + hour/24 + min/1440 + sec/86400
     return(days)
-}
-
-ECEFtoGeodetic <- function(r) { # Verify why it gives different results than other function
-    R_equ <- 6378.1363e3
-    f <- 1/298.257223563
-    epsRequ <- 2.2204e-16*R_equ
-    e2 <- f*(2 - f)
-    X <- r[1]
-    Y <- r[2]
-    Z <- r[3]
-    rho2 <- X^2 + Y^2
-    dZ <- e2*Z
-    dZ_new <- dZ + 10*epsRequ
-    while(TRUE) {
-        ZdZ <- Z + dZ
-        Nh <- sqrt(rho2 + ZdZ^2);
-        SinPhi <- ZdZ/Nh
-        N <- R_equ / sqrt(1-e2*SinPhi^2)
-        dZ_new <- N*e2*SinPhi
-        if (abs(dZ-dZ_new) < epsRequ) {
-            break
-        }
-        dZ <- dZ_new
-    }
-    lon <- atan2(Y, X)
-    lat <- atan2(ZdZ, sqrt(rho2))
-    h <- Nh - N
-    return(list(
-        lon = lon,
-        lat = lat,
-        h = h
-    ))
-}
-
-ephemeris <- function(Y0, n_step, step) {
-    
 }

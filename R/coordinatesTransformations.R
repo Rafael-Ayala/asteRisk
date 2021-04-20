@@ -35,18 +35,27 @@ TEMEtoECEF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     ))
 }
 
-ECEFtoLATLON <- function(position_ECEF) {
-    # based on the 2015 C++ port by Grady Hillhouse of the 
-    # 2007 Matlab implementation by David Vallado
-    tolerance <- 1e-8
-    position_mag <- sqrt(sum(position_ECEF^2))
-    tmp <- sqrt(position_ECEF[1]^2 + position_ECEF[2]^2)
-    if (abs(tmp) < tolerance) {
-        rtasc <- sign(position_ECEF[3]) * pi * 0.5
-    } else {
-        rtasc <- atan2(position_ECEF[2], position_ECEF[1])
-    }
-    lon <- rtasc
+ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
+    a <- 6378137.0
+    a2 <- a^2
+    f <- 1/298.257223563
+    b <- a*(1-f)
+    b2 <- b^2
+    e <- sqrt((a2 - b2)/a2)
+    eprime <- sqrt((a2 - b2)/b2)
+    X <- position_ECEF[1]
+    Y <- position_ECEF[2]
+    Z <- position_ECEF[3]
+    p <- sqrt(X^2 + Y^2)
+    theta <- atan2(a*Z, b*p)
+    sintheta <- sin(theta)
+    costheta <- cos(theta)
+    num <- Z + eprime^2 * b * sintheta^3
+    denom <- p - e^2 * a * costheta^3
+    lat <- atan2(num, denom)
+    lon <- atan2(Y, X)
+    N <- a/(sqrt(1 - e^2 * (sin(lat))^2))
+    alt <- p / cos(lat) - N
     if(abs(lon) >= pi) {
         if(lon < 0) {
             lon <- lon + 2*pi
@@ -54,24 +63,7 @@ ECEFtoLATLON <- function(position_ECEF) {
             lon <- lon - 2*pi
         }
     }
-    lat <- asin(position_ECEF[3]/position_mag)
-    i <- 1
-    olddelta <- lat + 10
-    sintemp <- 0
-    c <- 0
-    while ((abs(olddelta - lat) >=  tolerance) & (i < 10)) {
-        olddelta <- lat
-        sintemp <- sin(lat)
-        c <- XKMPER / sqrt(1 - earthEccentricity^2 * sintemp^2)
-        lat <- atan( (position_ECEF[3] + c*earthEccentricity^2*sintemp) / tmp )
-        i <- i+1
-    }
-    if ((0.5 * pi - abs(lat)) > pi/180) {
-        alt <- (tmp/cos(lat)) - c
-    } else {
-        alt <- position_ECEF[3]/sin(lat) - c * (1 - earthEccentricity^2)
-    }
-    LATLONALT <- c(rad2deg(lat), rad2deg(lon), alt)
+    LATLONALT <- if(degreesOutput)  c(rad2deg(lat), rad2deg(lon), alt) else c(lat, lon, alt)
     names(LATLONALT) <- c("latitude", "longitude", "altitude")
     return(LATLONALT)
 }
@@ -79,4 +71,30 @@ ECEFtoLATLON <- function(position_ECEF) {
 TEMEtoLATLON <- function(position_TEME, dateTime) {
     ECEFcoords <- TEMEtoECEF(position_TEME=position_TEME, dateTime=dateTime)
     return(ECEFtoLATLON(ECEFcoords$position))
+}
+
+ECEFtoICRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
+    date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
+    year <- date$year + 1900
+    month <- date$mon + 1
+    day <- date$mday
+    hour <- date$hour
+    minute <- date$min
+    second <- date$sec
+    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    results <- ECEFtoECI(Mjd_UTC, c(position_ECEF, velocity_ECEF))
+    return(results)
+}
+
+ICRFtoECEF <- function(position_ICRF, velocity_ICRF=c(0, 0, 0), dateTime) {
+    date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
+    year <- date$year + 1900
+    month <- date$mon + 1
+    day <- date$mday
+    hour <- date$hour
+    minute <- date$min
+    second <- date$sec
+    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    results <- ECItoECEF(Mjd_UTC, c(position_ICRF, velocity_ICRF))
+    return(results)
 }

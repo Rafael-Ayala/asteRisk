@@ -34,6 +34,11 @@
 # test_radau <- ode(y=Y, times=times, func=asteRisk:::odeModel, parms=parameters, method="radau", maxsteps=100, rtol=1e-13, atol=1e-16, hini=0.01)
 # 
 # #test_ode2 <- profvis(ode(y=Y, times=times, func=asteRisk:::odeModel, parms=parameters))
+# asteRisk:::hpop(c(-7136143.23821097, -415951.978574370, -505103.379544365), c(-575.578554821520, 1079.95441989431, 7358.26105845415), 110.5, 62.500000000000000, 8000, 1, 2.2, 2002, 4, 24, 21, 55, 28, times=seq(0, by=60, length.out=10))
+# 
+# asteRisk:::hpop(initialPosition, initialVelocity, molniyaCrossSection,
+#                 molniyaCrossSection, molniyaMass, molniyaCr,
+#                 molniyaCd, 2006, 6, 25, 0, 33, 42.835, targetTimes)
 # 
 # x <- test_radau[,2]
 # y <- test_radau[,3]
