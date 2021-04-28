@@ -1,5 +1,7 @@
 odeModel <- function(t, state, parameters) {
-    print(t)
+    if(t %% 10000 == 0){
+        print(t)
+    }
     with(as.list(c(state, parameters)), {
         state_vector <- state
         acceleration <- accel(t, state_vector, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd)
