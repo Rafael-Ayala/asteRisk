@@ -134,3 +134,4 @@ WGS84_HMIN <- 2.25010182030430273673e-14
 # Other constants
 
 inv_cbr_2 <- 1/(2^(1/3))
+earth_mu <- 3.986004418e14

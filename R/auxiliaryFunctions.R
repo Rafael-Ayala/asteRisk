@@ -123,3 +123,15 @@ rem <- function(x, y) {
     remainder <- x - trunc(x/y)*y
     return(remainder)
 }
+
+meanMotionToSemiMajorAxis <- function(meanMotion) {
+    a <- (earth_mu)^(1/3) / ((2*pi*meanMotion/86400)^(2/3))
+    return(a)
+}
+
+vectorCrossProduct3D <- function(u, v) {
+    w <- c(u[2]*v[3] - u[3]*v[2],
+           u[3]*v[1] - u[1]*v[3],
+           u[1]*v[2] - u[2]*v[1])
+    return(w)
+}
