@@ -10,13 +10,18 @@ Description: Provides basic functionalities to calculate the position of
     satellites given a known state vector. The package includes implementations
     of the SGP4 and SDP4 simplified perturbation models to propagate orbital
     state vectors, as well as utilities to read TLE files and convert coordinates
-    between different frames of reference.
+    between different frames of reference. Several of the functionalities of the
+    package (including the high-precision numerical orbit propagator) require
+    the coefficients and data included in the 'asteRiskData' package, available
+    in a 'drat' repository. To install this data package, run 
+    'install.packages("asteRiskData", repos="https://rafael-ayala.github.io/drat/")'.
     Felix R. Hoots, Ronald L. Roehrich and T.S. Kelso (1988) <https://celestrak.com/NORAD/documentation/spacetrk.pdf>.
     David Vallado, Paul Crawford, Richard Hujsak and T.S. Kelso (2012) <doi:10.2514/6.2006-6753>.
     Felix R. Hoots, Paul W. Schumacher Jr. and Robert A. Glover (2014) <doi:10.2514/1.9161>.
 License: GPL-3
-Imports: deSolve
-Suggests: knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown
+Imports: deSolve, stats
+Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown
+Additional_repositories: https://rafael-ayala.github.io/drat/
 VignetteBuilder: knitr
 Encoding: UTF-8
 LazyData: true

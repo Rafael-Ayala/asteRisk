@@ -13,7 +13,7 @@ latitude, longitude and altitude, which can be considered to be a non-inertial,
 Earth-centered frame of reference.
 }
 \usage{
-TEMEtoLATLON(position_TEME, dateTime, degreesOutput=FALSE)
+TEMEtoLATLON(position_TEME, dateTime, degreesOutput=TRUE)
 }
 \arguments{
   \item{position_TEME}{Vector with the X, Y and Z components of the position

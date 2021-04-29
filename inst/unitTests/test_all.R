@@ -48,4 +48,4 @@ testECEF <- TEMEtoECEF(testSGDP4_2$position,
                        testSGDP4_2$velocity,
                        "2006-06-27 00:58:29")
 
-checkEqualsNumeric(testECEF$position[1], 41021.5990, tolerance=0.0001)
+checkEqualsNumeric(testECEF$position[1], -37325.97, tolerance=0.0001)

@@ -68,9 +68,9 @@ ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
     return(LATLONALT)
 }
 
-TEMEtoLATLON <- function(position_TEME, dateTime) {
+TEMEtoLATLON <- function(position_TEME, dateTime, degreesOutput=TRUE) {
     ECEFcoords <- TEMEtoECEF(position_TEME=position_TEME, dateTime=dateTime)
-    return(ECEFtoLATLON(ECEFcoords$position))
+    return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
 }
 
 ECEFtoICRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {

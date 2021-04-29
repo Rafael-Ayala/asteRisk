@@ -18,6 +18,7 @@ odeModel <- function(t, state, parameters) {
 hpop <- function(position, velocity, radiationArea, dragArea, satMass,
                  radiationCoefficient, dragCoefficient, year, month, day,
                  hour, minute, second, times, ...) {
+    hasData()
     initial_state <- c(position, velocity)
     Mjd_UTC <- MJday(year, month, day, hour, minute, second)
     parameters = list(
@@ -27,7 +28,7 @@ hpop <- function(position, velocity, radiationArea, dragArea, satMass,
         satelliteArea = dragArea,
         Cr = radiationCoefficient,
         Cd = dragCoefficient)
-    integration_results <- ode(y=initial_state, times=times, func=asteRisk:::odeModel, 
+    integration_results <- ode(y=initial_state, times=times, func=odeModel, 
                       parms=parameters, method="radau", maxsteps=100, rtol=1e-13, 
                       atol=1e-16, hini=0.01)
     return(integration_results)

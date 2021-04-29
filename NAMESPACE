@@ -1,4 +1,5 @@
 import('deSolve')
+importFrom('stats', 'integrate', 'splinefun')
 export('sgp4')
 export('sdp4')
 export('sgdp4')

@@ -18,6 +18,19 @@ vignette: |
 
 ```{r setup, echo=FALSE}
 knitr::opts_chunk$set(message=FALSE, fig.path='figures/')
+hasData <- requireNamespace("asteRiskData", quietly = TRUE)
+if (!hasData) {                                                                     
+  evaluateExtraChunks <- FALSE                                             
+  msg <- strwrap("Note: some examples in this vignette require that the
+                 `asteRiskData` package be installed. The system
+                  currently running this vignette does not have that package
+                  installed, so code examples will not be evaluated.")
+  msg <- paste(msg, collapse="\n")
+  message(msg)                                                                    
+} else {
+  evaluateExtraChunks <- TRUE
+  library(asteRiskData)
+}
 ```
 
 <!-- Title block -->
@@ -292,7 +305,7 @@ ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
 
 The high-precision orbital propagator implemented in <b>asteRisk</b> etc etc
 
-```{r tidy = TRUE}
+```{r tidy = TRUE, eval = evaluateExtraChunks}
 # Element 11 of the set of test TLE contains an orbital state vector for
 # satellite MOLNIYA 1-83, launched from the USSR in 1992 and decayed in 2007
 
