@@ -30,5 +30,32 @@ globalVariables(c("earthPositions", "DE436coeffs", "gsurf", "re_", "re", "spaceW
                   "ctloc", "stloc", "c2tloc", "s2tloc", "c3tloc", "s3tloc", "apdf",
                   "apt", "end", "pdm", "dm28", "meso_tgn1", "meso_tn1", "pma",
                   "pavgm", "pdl", "ptm", "pt", "ps", "pd", "ptl", "solidEarthTides_dC22dS22",
-                  "dm04", "dm16", "dm32", "dm40", "dm01", "dm14", "dd", "xls", 
+                  "dm04", "dm16", "dm32", "dm40", "dm01", "dm14", "dd", "xls",
                   "NLS", "xpl", "NPL", "s0", "s1", "s2", "s3", "s4", "w5"))
+NRLMSISE00.env <- new.env(parent=emptyenv())
+NRLMSISE00.env$gsurf <- NULL
+NRLMSISE00.env$re_ <- NULL
+NRLMSISE00.env$dd <- NULL
+NRLMSISE00.env$dm04 <- NULL
+NRLMSISE00.env$dm16 <- NULL
+NRLMSISE00.env$dm28 <- NULL
+NRLMSISE00.env$dm32 <- NULL
+NRLMSISE00.env$dm40 <- NULL
+NRLMSISE00.env$dm01 <- NULL
+NRLMSISE00.env$dm14 <- NULL
+NRLMSISE00.env$meso_tn1 <- NULL
+NRLMSISE00.env$meso_tn2 <- NULL
+NRLMSISE00.env$meso_tn3 <- NULL
+NRLMSISE00.env$meso_tgn1 <- NULL
+NRLMSISE00.env$meso_tgn2 <- NULL
+NRLMSISE00.env$meso_tgn3 <- NULL
+NRLMSISE00.env$dfa <- NULL
+NRLMSISE00.env$plg <- NULL
+NRLMSISE00.env$ctloc <- NULL
+NRLMSISE00.env$stloc <- NULL
+NRLMSISE00.env$c2tloc <- NULL
+NRLMSISE00.env$s2tloc <- NULL
+NRLMSISE00.env$s3tloc <- NULL
+NRLMSISE00.env$c3tloc <- NULL
+NRLMSISE00.env$apdf <- NULL
+NRLMSISE00.env$apt <- NULL

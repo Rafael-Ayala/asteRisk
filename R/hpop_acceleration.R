@@ -373,8 +373,7 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                                         Cr, solarPressureConst, AU, "geometrical")
     # Acceleration due to atmospheric drag
     Omega <- omegaEarth - 8.43994809e-10*LOD
-    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC,
-                      TT_UTC)
+    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC, TT_UTC)
     a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], NPB, satelliteArea, 
                               satelliteMass, Cd, Omega)
     # Relativistic effects
