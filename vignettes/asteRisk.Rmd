@@ -306,15 +306,12 @@ ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
 The high-precision orbital propagator implemented in <b>asteRisk</b> etc etc
 
 ```{r tidy = TRUE, eval = evaluateExtraChunks}
-# Element 11 of the set of test TLE contains an orbital state vector for
-# satellite MOLNIYA 1-83, launched from the USSR in 1992 and decayed in 2007
-
 molniyaMass <- 1600
 molniyaCrossSection <- 15
 molniyaCr <- 1.2
 molniyaCd <- 2.2
 
-targetTimes <- seq(0, 43200, by=60)
+targetTimes <- seq(0, 10800, by=120)
 
 initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
 initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806)

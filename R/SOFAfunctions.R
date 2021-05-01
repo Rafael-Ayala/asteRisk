@@ -119,10 +119,10 @@ iauNut00a <- function(date1, date2){
     #  sp,spt,cp:          longitude sin, t*sin, cos coefficients
     #  ce,cet,se:          obliquity cos, t*cos, sin coefficients
     #  moved the following 4 lines to constants definitions
-    # xls <- read.csv("R/hpop_files/iauNut00a_xls.csv", header=FALSE)
-    # NLS <- nrow(xls)
-    # xpl <- read.csv("R/hpop_files/iauNut00a_xpl.csv", header=FALSE)
-    # NPL <- nrow(xpl)
+    # asteRiskData:::xls <- read.csv("R/hpop_files/iauNut00a_asteRiskData:::xls.csv", header=FALSE)
+    # asteRiskData:::NLS <- nrow(asteRiskData:::xls)
+    # asteRiskData:::xpl <- read.csv("R/hpop_files/iauNut00a_asteRiskData:::xpl.csv", header=FALSE)
+    # asteRiskData:::NPL <- nrow(asteRiskData:::xpl)
     # Interval between fundamental date J2000.0 and given date (JC). 
     t <- ((date1 - DJ00) + date2) / DJC
     # Mean anomaly of the Moon (IERS 2003)
@@ -137,20 +137,20 @@ iauNut00a <- function(date1, date2){
     om <- iauFaom03(t)
     #  Summation of luni-solar nutation series (in reverse order).
     #  replaced by vectorized code
-    arg <- (xls[NLS:1,1]*el+xls[NLS:1,2]*elp+xls[NLS:1,3]*f+xls[NLS:1,4]*d+xls[NLS:1,5]*om)%%(2*pi)
+    arg <- (asteRiskData:::xls[asteRiskData:::NLS:1,1]*el+asteRiskData:::xls[asteRiskData:::NLS:1,2]*elp+asteRiskData:::xls[asteRiskData:::NLS:1,3]*f+asteRiskData:::xls[asteRiskData:::NLS:1,4]*d+asteRiskData:::xls[asteRiskData:::NLS:1,5]*om)%%(2*pi)
     sarg <- sin(arg)
     carg <- cos(arg)
-    dp <- sum((xls[NLS:1, 6] + xls[NLS:1, 7] * t) * sarg + xls[NLS:1, 8] * carg)
-    de <- sum((xls[NLS:1, 9] + xls[NLS:1, 10] * t) * carg + xls[NLS:1, 11] * sarg)
+    dp <- sum((asteRiskData:::xls[asteRiskData:::NLS:1, 6] + asteRiskData:::xls[asteRiskData:::NLS:1, 7] * t) * sarg + asteRiskData:::xls[asteRiskData:::NLS:1, 8] * carg)
+    de <- sum((asteRiskData:::xls[asteRiskData:::NLS:1, 9] + asteRiskData:::xls[asteRiskData:::NLS:1, 10] * t) * carg + asteRiskData:::xls[asteRiskData:::NLS:1, 11] * sarg)
     # Old non vectorized code
-    # for (i in NLS:1) {
+    # for (i in asteRiskData:::NLS:1) {
     #     # argument and its sine and cosine
-    #     arg <- (xls[i,1]*el+xls[i,2]*elp+xls[i,3]*f+xls[i,4]*d+xls[i,5]*om)%%(2*pi)
+    #     arg <- (asteRiskData:::xls[i,1]*el+asteRiskData:::xls[i,2]*elp+asteRiskData:::xls[i,3]*f+asteRiskData:::xls[i,4]*d+asteRiskData:::xls[i,5]*om)%%(2*pi)
     #     sarg <- sin(arg)
     #     carg <- cos(arg)
     #     # term
-    #     dp <- dp + (xls[i,6] + xls[i,7] * t) * sarg + xls[i,8] * carg
-    #     de <- de + (xls[i,9] + xls[i,10] * t) * carg + xls[i,11] * sarg
+    #     dp <- dp + (asteRiskData:::xls[i,6] + asteRiskData:::xls[i,7] * t) * sarg + asteRiskData:::xls[i,8] * carg
+    #     de <- de + (asteRiskData:::xls[i,9] + asteRiskData:::xls[i,10] * t) * carg + asteRiskData:::xls[i,11] * sarg
     # }
     # Convert from decimes microarcseconds to radians
     dpsils <- dp * U2R
@@ -189,26 +189,26 @@ iauNut00a <- function(date1, date2){
     # Neptune longitude (MHB2000). 
     alne <- (5.321159000 + 3.8127774000 * t) %% (2*pi)
     ## Calculate again nutation values (temporary variables)
-    arg <- (xpl[NPL:1, 1] * al + xpl[NPL:1, 2] * af + xpl[NPL:1, 3] * ad + xpl[NPL:1, 4] * aom +
-                xpl[NPL:1, 5] * alme + xpl[NPL:1, 6] * alve + xpl[NPL:1, 7] * alea +
-                xpl[NPL:1, 8] * alma + xpl[NPL:1, 9] * alju + xpl[NPL:1, 10] * alsa + 
-                xpl[NPL:1, 11] * alur + xpl[NPL:1, 12] * alne + xpl[NPL:1, 13] * apa) %% (2*pi)
+    arg <- (asteRiskData:::xpl[asteRiskData:::NPL:1, 1] * al + asteRiskData:::xpl[asteRiskData:::NPL:1, 2] * af + asteRiskData:::xpl[asteRiskData:::NPL:1, 3] * ad + asteRiskData:::xpl[asteRiskData:::NPL:1, 4] * aom +
+                asteRiskData:::xpl[asteRiskData:::NPL:1, 5] * alme + asteRiskData:::xpl[asteRiskData:::NPL:1, 6] * alve + asteRiskData:::xpl[asteRiskData:::NPL:1, 7] * alea +
+                asteRiskData:::xpl[asteRiskData:::NPL:1, 8] * alma + asteRiskData:::xpl[asteRiskData:::NPL:1, 9] * alju + asteRiskData:::xpl[asteRiskData:::NPL:1, 10] * alsa + 
+                asteRiskData:::xpl[asteRiskData:::NPL:1, 11] * alur + asteRiskData:::xpl[asteRiskData:::NPL:1, 12] * alne + asteRiskData:::xpl[asteRiskData:::NPL:1, 13] * apa) %% (2*pi)
     sarg <- sin(arg)
     carg <- cos(arg)
-    dp <- sum(xpl[NPL:1, 14] * sarg + xpl[NPL:1, 15] * carg)
-    de <- sum(xpl[NPL:1, 16] * sarg + xpl[NPL:1, 17] * carg)
+    dp <- sum(asteRiskData:::xpl[asteRiskData:::NPL:1, 14] * sarg + asteRiskData:::xpl[asteRiskData:::NPL:1, 15] * carg)
+    de <- sum(asteRiskData:::xpl[asteRiskData:::NPL:1, 16] * sarg + asteRiskData:::xpl[asteRiskData:::NPL:1, 17] * carg)
     # old non-vectorized code
-    # for (i in NPL:1) {
+    # for (i in asteRiskData:::NPL:1) {
     #     # Argument and its sine and cosine
-    #     arg <- (xpl[i,1] * al + xpl[i,2] * af + xpl[i,3] * ad + xpl[i,4] * aom +
-    #             xpl[i,5] * alme + xpl[i,6] * alve +xpl[i,7] * alea +
-    #             xpl[i,8] * alma + xpl[i,9] * alju +xpl[i,10] * alsa + 
-    #             xpl[i,11] * alur + xpl[i,12] * alne +xpl[i,13] * apa) %% (2*pi)
+    #     arg <- (asteRiskData:::xpl[i,1] * al + asteRiskData:::xpl[i,2] * af + asteRiskData:::xpl[i,3] * ad + asteRiskData:::xpl[i,4] * aom +
+    #             asteRiskData:::xpl[i,5] * alme + asteRiskData:::xpl[i,6] * alve +asteRiskData:::xpl[i,7] * alea +
+    #             asteRiskData:::xpl[i,8] * alma + asteRiskData:::xpl[i,9] * alju +asteRiskData:::xpl[i,10] * alsa + 
+    #             asteRiskData:::xpl[i,11] * alur + asteRiskData:::xpl[i,12] * alne +asteRiskData:::xpl[i,13] * apa) %% (2*pi)
     #     sarg <- sin(arg)
     #     carg <- cos(arg)
     #     # Update terms
-    #     dp <- dp + xpl[i,14] * sarg + xpl[i,15] * carg
-    #     de <- de + xpl[i,16] * sarg + xpl[i,17] * carg
+    #     dp <- dp + asteRiskData:::xpl[i,14] * sarg + asteRiskData:::xpl[i,15] * carg
+    #     de <- de + asteRiskData:::xpl[i,16] * sarg + asteRiskData:::xpl[i,17] * carg
     # }
     # Convert from 0.1 microarcsecs  to radians
     dpsipl <- dp * U2R
@@ -307,17 +307,17 @@ iauS06 <- function(date1, date2, x, y) {
     # All of the following have been moved to constants definitions
     # sp <- c(94.00e-6, 3808.65e-6, -122.68e-6, -72574.11e-6, 27.98e-6, 15.62e-6)
     # s_xyD2_coefs <- read.csv("R/hpop_files/s_xyD2_terms.csv", header=FALSE)
-    # s0 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER0", -1]
-    # s1 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER1", -1]
-    # s2 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER2", -1]
-    # s3 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER3", -1]
-    # s4 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER4", -1]
-    # w0 <- sp[1]
-    # w1 <- sp[2]
-    # w2 <- sp[3]
-    # w3 <- sp[4]
-    # w4 <- sp[5]
-    # w5 <- sp[6]
+    # asteRiskData:::s0 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER0", -1]
+    # asteRiskData:::s1 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER1", -1]
+    # asteRiskData:::s2 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER2", -1]
+    # asteRiskData:::s3 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER3", -1]
+    # asteRiskData:::s4 <- s_xyD2_coefs[s_xyD2_coefs[, 1] == "ORDER4", -1]
+    w0 <- asteRiskData:::w0
+    w1 <- asteRiskData:::w1
+    w2 <- asteRiskData:::w2
+    w3 <- asteRiskData:::w3
+    w4 <- asteRiskData:::w4
+    w5 <- asteRiskData:::w5
     t <- ((date1 - DJ00) + date2) / DJC
     meanAnomalyMoon <- iauFal03(t)
     meanAnomalySun <- iauFalp03(t)
@@ -330,41 +330,41 @@ iauS06 <- function(date1, date2, x, y) {
     fundamentalArguments <- c(meanAnomalyMoon, meanAnomalySun, meanLongitudeMoonMinusAN,
                               meanElongationMoonSun, meanLongitudeMoonAN, meanLongitudeVenus,
                               meanLongitudeEarth, generalLongitudeAccumulatedPrecesion)
-    for (i in nrow(s0):1) {
+    for (i in nrow(asteRiskData:::s0):1) {
         # a <- 0
-        a <- sum(s0[i, 1:8] * fundamentalArguments)
+        a <- sum(asteRiskData:::s0[i, 1:8] * fundamentalArguments)
         # for (j in 1:8) {
-        #     a <- a + s0[i, j] * fundamentalArguments[j]
+        #     a <- a + asteRiskData:::s0[i, j] * fundamentalArguments[j]
         # }
-        w0 <-  w0 + s0[i, 9] * sin(a) + s0[i, 10] * cos(a)
+        w0 <-  w0 + asteRiskData:::s0[i, 9] * sin(a) + asteRiskData:::s0[i, 10] * cos(a)
     }
-    for (i in nrow(s1):1) {
+    for (i in nrow(asteRiskData:::s1):1) {
         a <- 0
         for (j in 1:8) {
-            a <- a + s1[i, j] * fundamentalArguments[j]
+            a <- a + asteRiskData:::s1[i, j] * fundamentalArguments[j]
         }
-        w1 <-  w1 + s1[i, 9] * sin(a) + s1[i, 10] * cos(a)
+        w1 <-  w1 + asteRiskData:::s1[i, 9] * sin(a) + asteRiskData:::s1[i, 10] * cos(a)
     }
-    for (i in nrow(s2):1) {
+    for (i in nrow(asteRiskData:::s2):1) {
         a <- 0
         for (j in 1:8) {
-            a <- a + s2[i, j] * fundamentalArguments[j]
+            a <- a + asteRiskData:::s2[i, j] * fundamentalArguments[j]
         }
-        w2 <-  w2 + s2[i, 9] * sin(a) + s2[i, 10] * cos(a)
+        w2 <-  w2 + asteRiskData:::s2[i, 9] * sin(a) + asteRiskData:::s2[i, 10] * cos(a)
     }
-    for (i in nrow(s3):1) {
+    for (i in nrow(asteRiskData:::s3):1) {
         a <- 0
         for (j in 1:8) {
-            a <- a + s3[i, j] * fundamentalArguments[j]
+            a <- a + asteRiskData:::s3[i, j] * fundamentalArguments[j]
         }
-        w3 <-  w3 + s3[i, 9] * sin(a) + s3[i, 10] * cos(a)
+        w3 <-  w3 + asteRiskData:::s3[i, 9] * sin(a) + asteRiskData:::s3[i, 10] * cos(a)
     }
-    for (i in nrow(s4):1) {
+    for (i in nrow(asteRiskData:::s4):1) {
         a <- 0
         for (j in 1:8) {
-            a <- a + s4[i, j] * fundamentalArguments[j]
+            a <- a + asteRiskData:::s4[i, j] * fundamentalArguments[j]
         }
-        w4 <- w4 + s4[i, 9] * sin(a) + s4[i, 10] * cos(a)
+        w4 <- w4 + asteRiskData:::s4[i, 9] * sin(a) + asteRiskData:::s4[i, 10] * cos(a)
     }
     s = (w0 + (w1 + (w2 + (w3 + (w4 + w5 * t) * t) * t) * t) * t) * DAS2R - x * y / 2.0
     return(s)

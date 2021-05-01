@@ -1,7 +1,4 @@
 odeModel <- function(t, state, parameters) {
-    if(t %% 10000 == 0){
-        print(t)
-    }
     with(as.list(c(state, parameters)), {
         state_vector <- state
         acceleration <- accel(t, state_vector, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd)
@@ -30,7 +27,7 @@ hpop <- function(position, velocity, radiationArea, dragArea, satMass,
         Cd = dragCoefficient)
     integration_results <- ode(y=initial_state, times=times, func=odeModel, 
                       parms=parameters, method="radau", maxsteps=100, rtol=1e-13, 
-                      atol=1e-16, hini=0.01)
+                      atol=1e-16, hini=0.01, ...)
     return(integration_results)
 }
 # 

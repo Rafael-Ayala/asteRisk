@@ -1,7 +1,7 @@
 elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
                                      TT_UTC, x_pole, y_pole) {
-    C <- Cnm
-    S <- Snm
+    C <- asteRiskData:::Cnm
+    S <- asteRiskData:::Snm
     r_moon <- E %*% r_moon
     moon_polar <- CartesianToPolar(r_moon)
     r_sun <- E %*% r_sun
@@ -93,16 +93,16 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     dC21 <- 0
     dS21 <- 0
     for (i in 1:48) {
-        dC21 <- dC21 + 1e-12*solidEarthTides_dC21dS21[i, 6]*sin(theta_g+pi)
-        dS21 <- dS21 + 1e-12*solidEarthTides_dC21dS21[i, 6]*cos(theta_g+pi)
+        dC21 <- dC21 + 1e-12*asteRiskData:::solidEarthTides_dC21dS21[i, 6]*sin(theta_g+pi)
+        dS21 <- dS21 + 1e-12*asteRiskData:::solidEarthTides_dC21dS21[i, 6]*cos(theta_g+pi)
     }
     dCnm21 <- dCnm21 + dC21
     dSnm21 <- dSnm21 + dS21
     dC22 <- 0
     dS22 <- 0
     for (i in 1:2) {
-        dC22 <- dC22 + 1e-12*solidEarthTides_dC22dS22[i, 6]*sin(theta_g+pi)
-        dS22 <- dS22 + 1e-12*solidEarthTides_dC22dS22[i, 6]*cos(theta_g+pi)
+        dC22 <- dC22 + 1e-12*asteRiskData:::solidEarthTides_dC22dS22[i, 6]*sin(theta_g+pi)
+        dS22 <- dS22 + 1e-12*asteRiskData:::solidEarthTides_dC22dS22[i, 6]*cos(theta_g+pi)
     }
     dCnm22 <- dCnm22 + dC22
     dSnm22 <- dSnm22 + dS22
@@ -205,10 +205,10 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
         b1 <- (-gm/d^2)*(r_ref/d)^n*(n+1)
         b2 <-  (gm/d)*(r_ref/d)^n
         b3 <-  (gm/d)*(r_ref/d)^n
-        q1 <- q1 + sum(legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
-        q2 <- q2 + sum(legendre_latgc$normLegendreDerivativeValues[n+1,1:(m+1)]*
+        q1 <- sum(legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
+        q2 <- sum(legendre_latgc$normLegendreDerivativeValues[n+1,1:(m+1)]*
                            (C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
-        q3 <- q3 + sum((0:m) * legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(S[n+1,1:(m+1)]*cos((0:m)*lon)-C[n+1,1:(m+1)]*sin((0:m)*lon)))
+        q3 <- sum((0:m) * legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(S[n+1,1:(m+1)]*cos((0:m)*lon)-C[n+1,1:(m+1)]*sin((0:m)*lon)))
         # for(m in 0:m) {
         #     q1 <- q1 + legendre_latgc$normLegendreValues[n+1,m+1]*(C[n+1,m+1]*cos(m*lon)+S[n+1,m+1]*sin(m*lon))
         #     q2 <- q2 + legendre_latgc$normLegendreDerivativeValues[n+1,m+1]*
@@ -298,7 +298,7 @@ relativity <- function(r, v) {
 
 accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd) {
     MJD_UTC <- MJD_UTC + t/86400
-    IERS_results <- IERS(earthPositions, MJD_UTC, "l")
+    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC, "l")
     x_pole <- IERS_results$x_pole[[1]]
     y_pole <- IERS_results$y_pole[[1]]
     UT1_UTC <- IERS_results$UT1_UTC[[1]]

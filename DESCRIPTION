@@ -24,4 +24,3 @@ Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics,
 Additional_repositories: https://rafael-ayala.github.io/drat/
 VignetteBuilder: knitr
 Encoding: UTF-8
-LazyData: true

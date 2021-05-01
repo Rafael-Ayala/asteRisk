@@ -40,8 +40,8 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
     if(interp == "l") {
         mjd <- floor(Mjd_UTC)
         i <- which(mjd == eop[, 4])[1]
-        preeop <- eop[i, ]
-        nexteop <- eop[i+1, ]
+        preeop <- as.numeric(eop[i, ])
+        nexteop <- as.numeric(eop[i+1, ])
         mfme <- 1440*(Mjd_UTC - floor(Mjd_UTC))
         fixf <- mfme/1440
         # setting IERS Earth rotation parameters 
@@ -65,7 +65,7 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
     } else if(interp == "n") {
         mjd = (floor(Mjd_UTC))
         i <- which(mjd == eop[, 4])[1]
-        eop <- eop[i, ]
+        eop <- as.numeric(eop[i, ])
         # setting IERS Earth rotation parameters 
         # (UT1-UTC [s], TAI-UTC [s], x ["], y ["])
         x_pole <- eop[5]/const_Arcs # Pole coordinate (rad)
@@ -161,7 +161,7 @@ invjday <- function(jd) {
 }
 
 ECEFtoECI <- function(MJD_UTC, Y0) {
-    IERS_results <- IERS(earthPositions, MJD_UTC)
+    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC)
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
@@ -190,7 +190,7 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
 }
 
 ECItoECEF <- function(MJD_UTC, Y0) {
-    IERS_results <- IERS(earthPositions, MJD_UTC)
+    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC)
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
@@ -251,8 +251,8 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     # calculate equatorial position of sun, moon, and nine major planets 
     # using JPL Ephemerides
     JD <- Mjd_TDB + 2400000.5
-    i <- which(JD > DE436coeffs[, 1] & JD <= DE436coeffs[, 2])[1]
-    current_DE436coeffs <- DE436coeffs[i, ]
+    i <- which(JD > asteRiskData:::DE436coeffs[, 1] & JD <= asteRiskData:::DE436coeffs[, 2])[1]
+    current_DE436coeffs <- asteRiskData:::DE436coeffs[i, ]
     t1 <- current_DE436coeffs[[1]] - 2400000.5
     dt <- Mjd_TDB - t1
     indexes <- c(231, 244, 257, 270)

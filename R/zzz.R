@@ -19,19 +19,18 @@
 hasData <- function(has_data = .pkgenv$has_data) {                                
     if (!has_data) {
         msg <- strwrap("To use this function, you must have the
-                       `asteriskData` package installed.")
+                       `asteriskData` package installed and loaded.")
         msg <- paste(msg, collapse="\n")
         stop(msg) 
     }
 }
 
-globalVariables(c("earthPositions", "DE436coeffs", "gsurf", "re_", "re", "spaceWeather",
-                  "rgas", "Cnm", "Snm", "solidEarthTides_dC21dS21", "dfa", "plg",
+globalVariables(c("gsurf", "re_", "re",
+                  "rgas", "dfa", "plg",
                   "ctloc", "stloc", "c2tloc", "s2tloc", "c3tloc", "s3tloc", "apdf",
                   "apt", "end", "pdm", "dm28", "meso_tgn1", "meso_tn1", "pma",
                   "pavgm", "pdl", "ptm", "pt", "ps", "pd", "ptl", "solidEarthTides_dC22dS22",
-                  "dm04", "dm16", "dm32", "dm40", "dm01", "dm14", "dd", "xls",
-                  "NLS", "xpl", "NPL", "s0", "s1", "s2", "s3", "s4", "w5"))
+                  "dm04", "dm16", "dm32", "dm40", "dm01", "dm14", "dd"))
 NRLMSISE00.env <- new.env(parent=emptyenv())
 NRLMSISE00.env$gsurf <- NULL
 NRLMSISE00.env$re_ <- NULL
