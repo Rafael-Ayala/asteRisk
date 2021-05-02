@@ -1,3 +1,8 @@
+Changes in version 1.0.0 (2021-05-02)
++ Added a high-precision numerical orbital propagator
++ Added support for more frames of reference: GCRF and Keplerian orbital elements
++ More functions to convert between the different coordinate frames are available
+
 Changes in version 0.99.1 (2021-03-22)
 + Fixed DESCRIPTION format
 + Fixed a bug in the conversion from TEME to ECEF frames of reference
