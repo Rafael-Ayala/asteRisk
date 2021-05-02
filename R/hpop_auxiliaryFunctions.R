@@ -161,7 +161,7 @@ invjday <- function(jd) {
 }
 
 ECEFtoECI <- function(MJD_UTC, Y0) {
-    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC)
+    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
@@ -190,7 +190,7 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
 }
 
 ECItoECEF <- function(MJD_UTC, Y0) {
-    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC)
+    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
@@ -251,8 +251,8 @@ JPL_Eph_DE436 <- function(Mjd_TDB) {
     # calculate equatorial position of sun, moon, and nine major planets 
     # using JPL Ephemerides
     JD <- Mjd_TDB + 2400000.5
-    i <- which(JD > asteRiskData:::DE436coeffs[, 1] & JD <= asteRiskData:::DE436coeffs[, 2])[1]
-    current_DE436coeffs <- asteRiskData:::DE436coeffs[i, ]
+    i <- which(JD > asteRiskData::DE436coeffs[, 1] & JD <= asteRiskData::DE436coeffs[, 2])[1]
+    current_DE436coeffs <- asteRiskData::DE436coeffs[i, ]
     t1 <- current_DE436coeffs[[1]] - 2400000.5
     dt <- Mjd_TDB - t1
     indexes <- c(231, 244, 257, 270)

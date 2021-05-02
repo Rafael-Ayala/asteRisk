@@ -51,7 +51,7 @@ ccor2 <- function(alt, r, h1, zh, h2) {
 }
 
 scalh <- function(alt, xm, temp, gsurf) {
-    rgas <- asteRiskData:::rgas
+    rgas <- asteRiskData::rgas
     g <- rgas * temp / (gsurf / ((1 + alt/NRLMSISE00.env$re_)^2) * xm)
     return(g)
 }
@@ -137,7 +137,7 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
         tz <- 1/y
         if (xm != 0) {
             glb <- NRLMSISE00.env$gsurf/((1 + z1/NRLMSISE00.env$re_)^2)
-            gamm <- xm*glb*zgdif/asteRiskData:::rgas
+            gamm <- xm*glb*zgdif/asteRiskData::rgas
             # yi <- splini(xs, ys, y2out, mn, x)
             yi <- integrate(cubicspline, xs[1], x)
             expl <- gamm*yi$value
@@ -169,7 +169,7 @@ densm <- function(alt, d0, xm, tz, mn3, zn3, tn3, tgn3, mn2, zn2, tn2, tgn2) {
             tz <- 1/y
             if (xm != 0) {
                 glb <- NRLMSISE00.env$gsurf/((1 + z1/NRLMSISE00.env$re_)^2)
-                gamm <- xm*glb*zgdif/asteRiskData:::rgas
+                gamm <- xm*glb*zgdif/asteRiskData::rgas
                 yi <- integrate(cubicspline, xs[1], x)
                 expl <- gamm*yi$value
                 expl <- min(expl, 50)
@@ -226,14 +226,14 @@ densu <- function(alt, dlb, tinf, tlb, xm, alpha, tz, zlb, s2, mn1, zn1, tn1, tg
     }  
     if (xm != 0) {
         glb <- NRLMSISE00.env$gsurf/((1+zlb/NRLMSISE00.env$re_)^2)
-        gamma <- xm * glb / (s2 * asteRiskData:::rgas * tinf)
+        gamma <- xm * glb / (s2 * asteRiskData::rgas * tinf)
         expl <- exp(-s2 * gamma * zg2)
         if(expl > 50 | tt <= 0) expl <- 50
         densa <- dlb * (tlb/tt)^(1+alpha+gamma) * expl
         densu_temp <- densa
         if (alt < za) {
             glb <- NRLMSISE00.env$gsurf/((1+z1/NRLMSISE00.env$re_)^2)
-            gamm <- xm * glb * zgdif / asteRiskData:::rgas
+            gamm <- xm * glb * zgdif / asteRiskData::rgas
             # yi <- splini(xs, ys, y2out, mn, x)
             yi <- integrate(cubicspline, xs[1], x)
             expl <- gamm * yi$value
@@ -498,277 +498,277 @@ gts7 <- function(input, flags) {
     dr <- 1.72142e-2
     alpha <- c(-0.38, 0.0, 0.0, 0.0, 0.17, 0.0, -0.38, 0.0, 0.0)
     altl <- c(200.0, 300.0, 160.0, 250.0, 240.0, 450.0, 320.0, 450.0)
-    za <- asteRiskData:::pdl[2, 16]
+    za <- asteRiskData::pdl[2, 16]
     zn1[1] <- za
     output <- list(
         d = numeric(9),
         t = numeric(2)
     )
     if (input$alt > zn1[1]) { # tinf variations not important below za or zn1[1]
-        tinf <- asteRiskData:::ptm[1] * asteRiskData:::pt[1] * (1 + flags$sw[17] * globe7(asteRiskData:::pt,input,flags))
+        tinf <- asteRiskData::ptm[1] * asteRiskData::pt[1] * (1 + flags$sw[17] * globe7(asteRiskData::pt,input,flags))
     } else {
-        tinf <- asteRiskData:::ptm[1] * asteRiskData:::pt[1]
+        tinf <- asteRiskData::ptm[1] * asteRiskData::pt[1]
     }
     output$t[1] <- tinf
     if (input$alt > zn1[5]) { # gradient variations not important below zn1[5]
-        g0 <- asteRiskData:::ptm[4] * asteRiskData:::ps[1] * (1 + flags$sw[20] * globe7(asteRiskData:::ps,input,flags))
+        g0 <- asteRiskData::ptm[4] * asteRiskData::ps[1] * (1 + flags$sw[20] * globe7(asteRiskData::ps,input,flags))
     } else {
-        g0 <- asteRiskData:::ptm[4] * asteRiskData:::ps[1]
+        g0 <- asteRiskData::ptm[4] * asteRiskData::ps[1]
     }
-    tlb <- asteRiskData:::ptm[2] * (1 + flags$sw[18] * globe7(asteRiskData:::pd[4, ], input, flags)) * asteRiskData:::pd[4, 1]
+    tlb <- asteRiskData::ptm[2] * (1 + flags$sw[18] * globe7(asteRiskData::pd[4, ], input, flags)) * asteRiskData::pd[4, 1]
     s <- g0 / (tinf - tlb)
     # Lower thermosphere temp variations not significant for density above 300 km
     if (input$alt < 300) {
         new_meso_tn1 <- c(0,
-                          asteRiskData:::ptm[7]*asteRiskData:::ptl[1,1]/(1-flags$sw[19]*glob7s(asteRiskData:::ptl[1,], input, flags)),
-                          asteRiskData:::ptm[3]*asteRiskData:::ptl[2,1]/(1-flags$sw[19]*glob7s(asteRiskData:::ptl[2,], input, flags)),
-                          asteRiskData:::ptm[8]*asteRiskData:::ptl[3,1]/(1-flags$sw[19]*glob7s(asteRiskData:::ptl[3,], input, flags)),
-                          asteRiskData:::ptm[5]*asteRiskData:::ptl[4,1]/(1-flags$sw[19]*flags$sw[21]*glob7s(asteRiskData:::ptl[4, ], input, flags)))
+                          asteRiskData::ptm[7]*asteRiskData::ptl[1,1]/(1-flags$sw[19]*glob7s(asteRiskData::ptl[1,], input, flags)),
+                          asteRiskData::ptm[3]*asteRiskData::ptl[2,1]/(1-flags$sw[19]*glob7s(asteRiskData::ptl[2,], input, flags)),
+                          asteRiskData::ptm[8]*asteRiskData::ptl[3,1]/(1-flags$sw[19]*glob7s(asteRiskData::ptl[3,], input, flags)),
+                          asteRiskData::ptm[5]*asteRiskData::ptl[4,1]/(1-flags$sw[19]*flags$sw[21]*glob7s(asteRiskData::ptl[4, ], input, flags)))
         assign("meso_tn1", new_meso_tn1, NRLMSISE00.env)
-        assign("meso_tgn1", c(0, asteRiskData:::ptm[9]*asteRiskData:::pma[9,1]*(1+flags$sw[19]*flags$sw[21]*
-                                                 glob7s(asteRiskData:::pma[9, ], input, flags))* 
-                   NRLMSISE00.env$meso_tn1[5]*NRLMSISE00.env$meso_tn1[5]/((asteRiskData:::ptm[5]*asteRiskData:::ptl[4,1])^2)),
+        assign("meso_tgn1", c(0, asteRiskData::ptm[9]*asteRiskData::pma[9,1]*(1+flags$sw[19]*flags$sw[21]*
+                                                 glob7s(asteRiskData::pma[9, ], input, flags))* 
+                   NRLMSISE00.env$meso_tn1[5]*NRLMSISE00.env$meso_tn1[5]/((asteRiskData::ptm[5]*asteRiskData::ptl[4,1])^2)),
                NRLMSISE00.env)
     } else {
         new_meso_tn1 <- c(0,
-                          asteRiskData:::ptm[7]*asteRiskData:::ptl[1,1],
-                          asteRiskData:::ptm[3]*asteRiskData:::ptl[2,1],
-                          asteRiskData:::ptm[8]*asteRiskData:::ptl[3,1],
-                          asteRiskData:::ptm[5]*asteRiskData:::ptl[4,1])
+                          asteRiskData::ptm[7]*asteRiskData::ptl[1,1],
+                          asteRiskData::ptm[3]*asteRiskData::ptl[2,1],
+                          asteRiskData::ptm[8]*asteRiskData::ptl[3,1],
+                          asteRiskData::ptm[5]*asteRiskData::ptl[4,1])
         assign("meso_tn1", new_meso_tn1, NRLMSISE00.env)
-        assign("meso_tgn1", c(0, asteRiskData:::ptm[9] * asteRiskData:::pma[9,1] * NRLMSISE00.env$meso_tn1[5]*
-                                  NRLMSISE00.env$meso_tn1[5]/((asteRiskData:::ptm[5]*asteRiskData:::ptl[4,1])^2)), 
+        assign("meso_tgn1", c(0, asteRiskData::ptm[9] * asteRiskData::pma[9,1] * NRLMSISE00.env$meso_tn1[5]*
+                                  NRLMSISE00.env$meso_tn1[5]/((asteRiskData::ptm[5]*asteRiskData::ptl[4,1])^2)), 
                NRLMSISE00.env)
     }
     # N2 variation factor at Zlb
-    g28 <- flags$sw[22] * globe7(asteRiskData:::pd[3, ], input, flags)
+    g28 <- flags$sw[22] * globe7(asteRiskData::pd[3, ], input, flags)
     # variation of turbopause height
-    zhf <- asteRiskData:::pdl[2, 25] * (1 + flags$sw[6] * asteRiskData:::pdl[1, 25] * sin(dgtr * input$g_lat) * 
-                             cos(dr * (input$doy-asteRiskData:::pt[14])))
+    zhf <- asteRiskData::pdl[2, 25] * (1 + flags$sw[6] * asteRiskData::pdl[1, 25] * sin(dgtr * input$g_lat) * 
+                             cos(dr * (input$doy-asteRiskData::pt[14])))
     ### output$t[1] <- tinf
-    xmm <- asteRiskData:::pdm[3, 5]
+    xmm <- asteRiskData::pdm[3, 5]
     z <- input$alt
     # N2 density
-    db28 <- asteRiskData:::pdm[3,1] * exp(g28) * asteRiskData:::pd[3, 1]
+    db28 <- asteRiskData::pdm[3,1] * exp(g28) * asteRiskData::pd[3, 1]
     densu_output <- densu(z,db28,tinf,tlb,28,alpha[3],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[3] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[3], NRLMSISE00.env)
-    zh28 <- asteRiskData:::pdm[3, 3] * zhf
-    zhm28 <- asteRiskData:::pdm[3, 4] * asteRiskData:::pdl[2, 6] 
+    zh28 <- asteRiskData::pdm[3, 3] * zhf
+    zhm28 <- asteRiskData::pdm[3, 4] * asteRiskData::pdl[2, 6] 
     xmd <- 28 - xmm
     densu_output <- densu(zh28,db28,tinf,tlb,xmd,(alpha[3]-1),
-                          tz,asteRiskData:::ptm[6],s,mn1, zn1,
+                          tz,asteRiskData::ptm[6],s,mn1, zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     b28 <- densu_output$densu_temp
     tz <- densu_output$tz
     if ((flags$sw[16]) & (z <= altl[3])) {
         assign("dm28", densu(z,b28,tinf,tlb,xmm,alpha[3],
-                             tz,asteRiskData:::ptm[6],s,mn1,zn1,
+                             tz,asteRiskData::ptm[6],s,mn1,zn1,
                              NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)$densu_temp, 
                NRLMSISE00.env)
         output$d[3] <- dnet(output$d[3], NRLMSISE00.env$dm28, zhm28, xmm, 28)
     }
     # He density
-    g4 <- flags$sw[22] * globe7(asteRiskData:::pd[1, ], input, flags)
-    db04 <- asteRiskData:::pdm[1, 1] * exp(g4) * asteRiskData:::pd[1,1]
+    g4 <- flags$sw[22] * globe7(asteRiskData::pd[1, ], input, flags)
+    db04 <- asteRiskData::pdm[1, 1] * exp(g4) * asteRiskData::pd[1,1]
     densu_output <- densu(z,db04,tinf,tlb, 4,alpha[1],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[1] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[1], NRLMSISE00.env)
     if ((flags$sw[16]) & ( z<altl[1]) ) {
-        zh04 <- asteRiskData:::pdm[1,3]
+        zh04 <- asteRiskData::pdm[1,3]
         densu_output <- densu(zh04,db04,tinf,tlb,4-xmm,alpha[1]-1.0,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         b04 <- densu_output$densu_temp
         output$t[2] <- densu_output$tz
         densu_output <- densu(z,b04,tinf,tlb,xmm,0,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         assign("dm04", densu_output$densu_temp, NRLMSISE00.env)
         output$t[2] <- densu_output$tz
         zhm04 <- zhm28
         output$d[1] <- dnet(output$d[1],NRLMSISE00.env$dm04,zhm04,xmm,4)
-        rl <- log(b28*asteRiskData:::pdm[1,2]/b04)
-        zc04 <- asteRiskData:::pdm[1,5]*asteRiskData:::pdl[2,1]
-        hc04 <- asteRiskData:::pdm[1,6]*asteRiskData:::pdl[2,2]
+        rl <- log(b28*asteRiskData::pdm[1,2]/b04)
+        zc04 <- asteRiskData::pdm[1,5]*asteRiskData::pdl[2,1]
+        hc04 <- asteRiskData::pdm[1,6]*asteRiskData::pdl[2,2]
         output$d[1] <- output$d[[1]]*ccor(z,rl,hc04,zc04)
     }
     # O density
-    g16 <- flags$sw[22] * globe7(asteRiskData:::pd[2, ], input, flags)
-    db16 <- asteRiskData:::pdm[2,1] * exp(g16) * asteRiskData:::pd[2, 1]
+    g16 <- flags$sw[22] * globe7(asteRiskData::pd[2, ], input, flags)
+    db16 <- asteRiskData::pdm[2,1] * exp(g16) * asteRiskData::pd[2, 1]
     densu_output <- densu(z,db16,tinf,tlb, 16,alpha[2],
-                         output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                         output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                          NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[2] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[2], NRLMSISE00.env)
     if ((flags$sw[16]) & ( z<=altl[2] )) {
-        zh16 <- asteRiskData:::pdm[2, 3]
+        zh16 <- asteRiskData::pdm[2, 3]
         densu_output <- densu(zh16,db16,tinf,tlb,16-xmm,(alpha[2]-1),
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         b16 <- densu_output$densu_temp
         output$t[2] <- densu_output$tz
         densu_output <- densu(z,b16,tinf,tlb,xmm,0,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         assign("dm16", densu_output$densu_temp, NRLMSISE00.env)
         output$t[2] <- densu_output$tz
         zhm16 <- zhm28
         output$d[2] <- dnet(output$d[2],NRLMSISE00.env$dm16,zhm16,xmm,16)
-        rl <- asteRiskData:::pdm[2,2]*asteRiskData:::pdl[2,17]*(1+flags$sw[2]*asteRiskData:::pdl[1,24]*(input$f107A-150))
-        hc16 <- asteRiskData:::pdm[2,6]*asteRiskData:::pdl[2,4]
-        zc16 <- asteRiskData:::pdm[2,5]*asteRiskData:::pdl[2,3]
-        hc216 <- asteRiskData:::pdm[2,6]*asteRiskData:::pdl[2,5]
+        rl <- asteRiskData::pdm[2,2]*asteRiskData::pdl[2,17]*(1+flags$sw[2]*asteRiskData::pdl[1,24]*(input$f107A-150))
+        hc16 <- asteRiskData::pdm[2,6]*asteRiskData::pdl[2,4]
+        zc16 <- asteRiskData::pdm[2,5]*asteRiskData::pdl[2,3]
+        hc216 <- asteRiskData::pdm[2,6]*asteRiskData::pdl[2,5]
         output$d[2] <- output$d[[2]]*ccor2(z,rl,hc16,zc16,hc216)
-        hcc16 <- asteRiskData:::pdm[2,8]*asteRiskData:::pdl[2,14]
-        zcc16 <- asteRiskData:::pdm[2,7]*asteRiskData:::pdl[2,13]
-        rc16 <- asteRiskData:::pdm[2,4]*asteRiskData:::pdl[2,15]
+        hcc16 <- asteRiskData::pdm[2,8]*asteRiskData::pdl[2,14]
+        zcc16 <- asteRiskData::pdm[2,7]*asteRiskData::pdl[2,13]
+        rc16 <- asteRiskData::pdm[2,4]*asteRiskData::pdl[2,15]
         output$d[2] <- output$d[[2]]*ccor(z,rc16,hcc16,zcc16)
     }
     # O2 density
-    g32 <- flags$sw[22]*globe7(asteRiskData:::pd[5, ], input, flags)
-    db32 <- asteRiskData:::pdm[4,1] * exp(g32) * asteRiskData:::pd[5,1]
+    g32 <- flags$sw[22]*globe7(asteRiskData::pd[5, ], input, flags)
+    db32 <- asteRiskData::pdm[4,1] * exp(g32) * asteRiskData::pd[5,1]
     densu_output <- densu(z,db32,tinf,tlb,32,alpha[4],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[4] <- densu_output$densu_temp
     output$t[4] <- densu_output$tz
     assign("dd", output$d[4], NRLMSISE00.env)
     if (flags$sw[16]) {
         if (z <= altl[4]) {
-            zh32 <- asteRiskData:::pdm[4,3]
+            zh32 <- asteRiskData::pdm[4,3]
             densu_output <- densu(zh32,db32,tinf,tlb,32-xmm,alpha[4]-1,
-                                  output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                                  output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                                   NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
             b32 <- densu_output$densu_temp
             output$t[2] <- densu_output$tz
             densu_output <- densu(z,b32,tinf,tlb,xmm,0,output$t[2],
-                                  asteRiskData:::ptm[6],s,mn1,zn1,
+                                  asteRiskData::ptm[6],s,mn1,zn1,
                                   NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
             assign("dm32", densu_output$densu_temp, NRLMSISE00.env)
             output$t[2] <- densu_output$tz
             zhm32 <- zhm28
             output$d[4] <- dnet(output$d[4],NRLMSISE00.env$dm32,zhm32,xmm,32)
-            rl <- log(b28*asteRiskData:::pdm[4,2]/b32)
-            hc32 <- asteRiskData:::pdm[4,6]*asteRiskData:::pdl[2,8]
-            zc32 <- asteRiskData:::pdm[4,5]*asteRiskData:::pdl[2,7]
+            rl <- log(b28*asteRiskData::pdm[4,2]/b32)
+            hc32 <- asteRiskData::pdm[4,6]*asteRiskData::pdl[2,8]
+            zc32 <- asteRiskData::pdm[4,5]*asteRiskData::pdl[2,7]
             output$d[4] <- output$d[[4]]*ccor(z,rl,hc32,zc32)
         }
-        hcc32 <- asteRiskData:::pdm[4,8]*asteRiskData:::pdl[2,23]
-        hcc232 <- asteRiskData:::pdm[4,8]*asteRiskData:::pdl[1,23]
-        zcc32 <- asteRiskData:::pdm[4,7]*asteRiskData:::pdl[2,22]
-        rc32 <- asteRiskData:::pdm[4,4]*asteRiskData:::pdl[2,24]*(1+flags$sw[2]*asteRiskData:::pdl[1,24]*(input$f107A - 150))
+        hcc32 <- asteRiskData::pdm[4,8]*asteRiskData::pdl[2,23]
+        hcc232 <- asteRiskData::pdm[4,8]*asteRiskData::pdl[1,23]
+        zcc32 <- asteRiskData::pdm[4,7]*asteRiskData::pdl[2,22]
+        rc32 <- asteRiskData::pdm[4,4]*asteRiskData::pdl[2,24]*(1+flags$sw[2]*asteRiskData::pdl[1,24]*(input$f107A - 150))
         output$d[4] <- output$d[[4]]*ccor2(z,rc32,hcc32,zcc32,hcc232)
     }
     # Ar density
-    g40 <- flags$sw[22] * globe7(asteRiskData:::pd[6, ],input,flags)
-    db40 <- asteRiskData:::pdm[5,1]*exp(g40)*asteRiskData:::pd[6, 1]
+    g40 <- flags$sw[22] * globe7(asteRiskData::pd[6, ],input,flags)
+    db40 <- asteRiskData::pdm[5,1]*exp(g40)*asteRiskData::pd[6, 1]
     densu_output <- densu(z,db40,tinf,tlb,40,alpha[5],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[5] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[5], NRLMSISE00.env)
     if ((flags$sw[16]) & (z <= altl[5])) {
-        zh40 <- asteRiskData:::pdm[5, 3]
+        zh40 <- asteRiskData::pdm[5, 3]
         densu_output <- densu(zh40,db40,tinf,tlb,40-xmm,alpha[5]-1,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         b40 <- densu_output$densu_temp
         output$t[2] <- densu_output$tz
         densu_output <- densu(z,b40,tinf,tlb,xmm,0,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         assign("dm40", densu_output$densu_temp, NRLMSISE00.env)
         output$t[2] <- densu_output$tz
         zhm40 <- zhm28
         output$d[5] <- dnet(output$d[5], NRLMSISE00.env$dm40, zhm40, xmm, 40)
-        rl <- log(b28*asteRiskData:::pdm[5,2]/b40)
-        hc40 <- asteRiskData:::pdm[5, 6] * asteRiskData:::pdl[2, 10]
-        zc40 <- asteRiskData:::pdm[5, 5] * asteRiskData:::pdl[2, 9]
+        rl <- log(b28*asteRiskData::pdm[5,2]/b40)
+        hc40 <- asteRiskData::pdm[5, 6] * asteRiskData::pdl[2, 10]
+        zc40 <- asteRiskData::pdm[5, 5] * asteRiskData::pdl[2, 9]
         output$d[5] <- output$d[[5]] * ccor(z,rl,hc40,zc40)
     }
     # H density
-    g1 <- flags$sw[22] * globe7(asteRiskData:::pd[7, ], input, flags)
-    db01 <- asteRiskData:::pdm[6, 1] * exp(g1) * asteRiskData:::pd[7, 1]
+    g1 <- flags$sw[22] * globe7(asteRiskData::pd[7, ], input, flags)
+    db01 <- asteRiskData::pdm[6, 1] * exp(g1) * asteRiskData::pd[7, 1]
     densu_output <- densu(z,db01,tinf,tlb,1,alpha[7],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[7] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[7], NRLMSISE00.env)
     if ((flags$sw[16]) & (z <= altl[7])) {
-        zh01 <- asteRiskData:::pdm[6, 3]
+        zh01 <- asteRiskData::pdm[6, 3]
         densu_output <- densu(zh01,db01,tinf,tlb,1-xmm,alpha[7]-1,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         b01 <- densu_output$densu_temp
         output$t[2] <- densu_output$tz
         densu_output <- densu(z,b01,tinf,tlb,xmm,0,output$t[2],
-                              asteRiskData:::ptm[6],s,mn1,zn1,
+                              asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         assign("dm01", densu_output$densu_temp, NRLMSISE00.env)
         output$t[2] <- densu_output$tz
         zhm01 <- zhm28
         output$d[7] <- dnet(output$d[7],NRLMSISE00.env$dm01,zhm01,xmm,1)
-        rl <- log(b28*asteRiskData:::pdm[6,2]*sqrt(asteRiskData:::pdl[2,18]*asteRiskData:::pdl[2,18])/b01)
-        hc01 <- asteRiskData:::pdm[6,6]*asteRiskData:::pdl[2,12]
-        zc01 <- asteRiskData:::pdm[6,5]*asteRiskData:::pdl[2,11]
+        rl <- log(b28*asteRiskData::pdm[6,2]*sqrt(asteRiskData::pdl[2,18]*asteRiskData::pdl[2,18])/b01)
+        hc01 <- asteRiskData::pdm[6,6]*asteRiskData::pdl[2,12]
+        zc01 <- asteRiskData::pdm[6,5]*asteRiskData::pdl[2,11]
         output$d[7] <- output$d[[7]]*ccor(z,rl,hc01,zc01)
-        hcc01 <- asteRiskData:::pdm[6,8]*asteRiskData:::pdl[1,20]
-        zcc01 <- asteRiskData:::pdm[6,7]*asteRiskData:::pdl[2,19]
-        rc01 <- asteRiskData:::pdm[6,4]*asteRiskData:::pdl[2,21]
+        hcc01 <- asteRiskData::pdm[6,8]*asteRiskData::pdl[1,20]
+        zcc01 <- asteRiskData::pdm[6,7]*asteRiskData::pdl[2,19]
+        rc01 <- asteRiskData::pdm[6,4]*asteRiskData::pdl[2,21]
         output$d[7] <- output$d[[7]]*ccor(z,rc01,hcc01,zcc01)
     }
     # Atomic nitrogen (N) density
-    g14 <- flags$sw[22]*globe7(asteRiskData:::pd[8, ],input,flags)
-    db14 <- asteRiskData:::pdm[7,1]*exp(g14)*asteRiskData:::pd[8,1]
+    g14 <- flags$sw[22]*globe7(asteRiskData::pd[8, ],input,flags)
+    db14 <- asteRiskData::pdm[7,1]*exp(g14)*asteRiskData::pd[8,1]
     densu_output <- densu(z,db14,tinf,tlb,14,alpha[8],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$d[8] <- densu_output$densu_temp
     output$t[2] <- densu_output$tz
     assign("dd", output$d[8], NRLMSISE00.env)
     if ((flags$sw[16]) & (z <= altl[8])) {
-        zh14 <- asteRiskData:::pdm[7, 3]
+        zh14 <- asteRiskData::pdm[7, 3]
         densu_output <- densu(zh14,db14,tinf,tlb,14-xmm,alpha[8]-1,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         b14 <- densu_output$densu_temp
         output$t[2] <- densu_output$tz
         densu_output <- densu(z,b14,tinf,tlb,xmm,0,
-                              output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                              output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                               NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
         assign("dm14", densu_output$densu_temp, NRLMSISE00.env)
         output$t[2] <- densu_output$tz
         zhm14 <- zhm28
         output$d[8] <- dnet(output$d[8],NRLMSISE00.env$dm14,zhm14,xmm,14)
-        rl <- log(b28*asteRiskData:::pdm[7,2]*sqrt(asteRiskData:::pdl[1,3]*asteRiskData:::pdl[1,3])/b14)
-        hc14 <- asteRiskData:::pdm[7,6]*asteRiskData:::pdl[1,2]
-        zc14 <- asteRiskData:::pdm[7,5]*asteRiskData:::pdl[1,1]
+        rl <- log(b28*asteRiskData::pdm[7,2]*sqrt(asteRiskData::pdl[1,3]*asteRiskData::pdl[1,3])/b14)
+        hc14 <- asteRiskData::pdm[7,6]*asteRiskData::pdl[1,2]
+        zc14 <- asteRiskData::pdm[7,5]*asteRiskData::pdl[1,1]
         output$d[8] <- output$d[[8]]*ccor(z,rl,hc14,zc14)
-        hcc14 <- asteRiskData:::pdm[7,8]*asteRiskData:::pdl[1,5]
-        zcc14 <- asteRiskData:::pdm[7,7]*asteRiskData:::pdl[1,4]
-        rc14 <- asteRiskData:::pdm[7,4]*asteRiskData:::pdl[1,6]
+        hcc14 <- asteRiskData::pdm[7,8]*asteRiskData::pdl[1,5]
+        zcc14 <- asteRiskData::pdm[7,7]*asteRiskData::pdl[1,4]
+        rc14 <- asteRiskData::pdm[7,4]*asteRiskData::pdl[1,6]
         output$d[8] <- output$d[[8]]*ccor(z,rc14,hcc14,zcc14)
     }
     # Anomalous oxygen density
-    g16h <- flags$sw[22]*globe7(asteRiskData:::pd[9, ],input,flags)
-    db16h <- asteRiskData:::pdm[8,1]*exp(g16h)*asteRiskData:::pd[9,1]
-    tho <- asteRiskData:::pdm[8,10]*asteRiskData:::pdl[1,7]
+    g16h <- flags$sw[22]*globe7(asteRiskData::pd[9, ],input,flags)
+    db16h <- asteRiskData::pdm[8,1]*exp(g16h)*asteRiskData::pd[9,1]
+    tho <- asteRiskData::pdm[8,10]*asteRiskData::pdl[1,7]
     densu_output <- densu(z,db16h,tho,tho,16,alpha[9],
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1,
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1,
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     assign("dd", densu_output$densu_temp, NRLMSISE00.env)
     output$t[2] <- densu_output$tz
-    zsht <- asteRiskData:::pdm[8,6]
-    zmho <- asteRiskData:::pdm[8,5]
+    zsht <- asteRiskData::pdm[8,6]
+    zmho <- asteRiskData::pdm[8,5]
     zsho <- scalh(zmho,16,tho,NRLMSISE00.env$gsurf)
     output$d[9] <- NRLMSISE00.env$dd*exp(-zsht/zsho*(exp(-(z-zmho)/zsht)-1))
     # Total density (atomic mass-weighted sums)
@@ -776,7 +776,7 @@ gts7 <- function(input, flags) {
     # Temperature
     z <- abs(input$alt)
     densu_output <- densu(z,1,tinf,tlb,0,0,
-                          output$t[2],asteRiskData:::ptm[6],s,mn1,zn1, 
+                          output$t[2],asteRiskData::ptm[6],s,mn1,zn1, 
                           NRLMSISE00.env$meso_tn1,NRLMSISE00.env$meso_tgn1)
     output$t[2] <- densu_output$tz
     if (flags$sw[1]) {
@@ -812,7 +812,7 @@ gtd7 <- function(input, flags) {
     glatf_results <- glatf(xlat)
     assign("gsurf", glatf_results[[1]], NRLMSISE00.env)
     assign("re_", glatf_results[[2]], NRLMSISE00.env)
-    xmm <- asteRiskData:::pdm[3,5]
+    xmm <- asteRiskData::pdm[3,5]
     altt <- max(input$alt, zn2[1])
     tmp <- input$alt
     input$alt <- altt
@@ -828,30 +828,30 @@ gtd7 <- function(input, flags) {
         output$d <- soutput$d
     } else { # lower mesosphere/upper stratosphere (between zn3[1] and zn2[1])
         new_meso_tn2 <- c(NRLMSISE00.env$meso_tn1[5],
-                          asteRiskData:::pma[1,1]*pavgm[1]/(1-flags$sw[21]*glob7s(asteRiskData:::pma[1, ], input, flags)),
-                          asteRiskData:::pma[2,1]*pavgm[2]/(1-flags$sw[21]*glob7s(asteRiskData:::pma[2, ], input, flags)),
-                          asteRiskData:::pma[3,1]*pavgm[3]/(1-flags$sw[21]*flags$sw[23]*glob7s(asteRiskData:::pma[3, ], input, flags)))
+                          asteRiskData::pma[1,1]*asteRiskData::pavgm[1]/(1-flags$sw[21]*glob7s(asteRiskData::pma[1, ], input, flags)),
+                          asteRiskData::pma[2,1]*asteRiskData::pavgm[2]/(1-flags$sw[21]*glob7s(asteRiskData::pma[2, ], input, flags)),
+                          asteRiskData::pma[3,1]*asteRiskData::pavgm[3]/(1-flags$sw[21]*flags$sw[23]*glob7s(asteRiskData::pma[3, ], input, flags)))
         assign("meso_tn2", new_meso_tn2, NRLMSISE00.env)
         new_meso_tgn2 <-
             c(
                 NRLMSISE00.env$meso_tgn1[2],
-                pavgm[9] * asteRiskData:::pma[10, 1] * (1 + flags$sw[21] * flags$sw[23] *
-                                             glob7s(asteRiskData:::pma[10,], input, flags)) *
+                asteRiskData::pavgm[9] * asteRiskData::pma[10, 1] * (1 + flags$sw[21] * flags$sw[23] *
+                                             glob7s(asteRiskData::pma[10,], input, flags)) *
                     NRLMSISE00.env$meso_tn2[4] * NRLMSISE00.env$meso_tn2[4] /
-                    ((asteRiskData:::pma[3, 1] * pavgm[3]) ^ 2)
+                    ((asteRiskData::pma[3, 1] * asteRiskData::pavgm[3]) ^ 2)
             )
         assign("meso_tgn2", new_meso_tgn2, NRLMSISE00.env)
         new_meso_tn3 <- c(NRLMSISE00.env$meso_tn2[4], NRLMSISE00.env$meso_tn3[2:5])
         if (input$alt<zn3[1]) { # lower stratosphere/troposphere (below zn3[1])
-            new_meso_tn3[2:5] <- c(asteRiskData:::pma[4,1]*pavgm[4]/(1-flags $sw[23]*glob7s(asteRiskData:::pma[4, ], input, flags)),
-                                   asteRiskData:::pma[5,1]*pavgm[5]/(1-flags $sw[23]*glob7s(asteRiskData:::pma[5, ], input, flags)),
-                                   asteRiskData:::pma[6,1]*pavgm[6]/(1-flags $sw[23]*glob7s(asteRiskData:::pma[6, ], input, flags)),
-                                   asteRiskData:::pma[7,1]*pavgm[7]/(1-flags $sw[23]*glob7s(asteRiskData:::pma[7, ], input, flags)))
+            new_meso_tn3[2:5] <- c(asteRiskData::pma[4,1]*asteRiskData::pavgm[4]/(1-flags $sw[23]*glob7s(asteRiskData::pma[4, ], input, flags)),
+                                   asteRiskData::pma[5,1]*asteRiskData::pavgm[5]/(1-flags $sw[23]*glob7s(asteRiskData::pma[5, ], input, flags)),
+                                   asteRiskData::pma[6,1]*asteRiskData::pavgm[6]/(1-flags $sw[23]*glob7s(asteRiskData::pma[6, ], input, flags)),
+                                   asteRiskData::pma[7,1]*asteRiskData::pavgm[7]/(1-flags $sw[23]*glob7s(asteRiskData::pma[7, ], input, flags)))
             assign("meso_tn3", new_meso_tn3, NRLMSISE00.env)
             new_meso_tgn3 <- c(NRLMSISE00.env$meso_tgn2[2],
-                               asteRiskData:::pma[8,1]*pavgm[8]*(1+flags $sw[23]* glob7s(asteRiskData:::pma[8, ], input, flags)) *
+                               asteRiskData::pma[8,1]*asteRiskData::pavgm[8]*(1+flags $sw[23]* glob7s(asteRiskData::pma[8, ], input, flags)) *
                                    NRLMSISE00.env$meso_tn3[5]*NRLMSISE00.env$meso_tn3[5]/
-                                   ((asteRiskData:::pma[7,1]*pavgm[7])^2))
+                                   ((asteRiskData::pma[7,1]*asteRiskData::pavgm[7])^2))
             assign("meso_tgn3", new_meso_tgn3, NRLMSISE00.env)
         } else {
             assign("meso_tn3", new_meso_tn3, NRLMSISE00.env)
@@ -871,16 +871,16 @@ gtd7 <- function(input, flags) {
         tz < densm_results$tz
         output$d[3] <- output$d[[3]] * (1 + dmr*dmc)
         ## He density
-        dmr <- soutput$d[1] / (dz28 * asteRiskData:::pdm[1,2]) - 1
-        output$d[1] <- output$d[[3]] * asteRiskData:::pdm[1,2] * (1 + dmr*dmc)
+        dmr <- soutput$d[1] / (dz28 * asteRiskData::pdm[1,2]) - 1
+        output$d[1] <- output$d[[3]] * asteRiskData::pdm[1,2] * (1 + dmr*dmc)
         ## O density
         output$d[c(2, 9)] <- 0
         ## O2 density
-        dmr <- soutput$d[[4]] / (dz28 * asteRiskData:::pdm[4,2]) - 1
-        output$d[4] <- output$d[[3]] * asteRiskData:::pdm[4,2] * (1 + dmr*dmc)
+        dmr <- soutput$d[[4]] / (dz28 * asteRiskData::pdm[4,2]) - 1
+        output$d[4] <- output$d[[3]] * asteRiskData::pdm[4,2] * (1 + dmr*dmc)
         # Ar density
-        dmr <- soutput$d[5] / (dz28 * asteRiskData:::pdm[5,2]) - 1
-        output$d[5] <- output$d[[3]] * asteRiskData:::pdm[5,2] * (1 + dmr*dmc)
+        dmr <- soutput$d[5] / (dz28 * asteRiskData::pdm[5,2]) - 1
+        output$d[5] <- output$d[[3]] * asteRiskData::pdm[5,2] * (1 + dmr*dmc)
         # H density
         output$d[7] <- 0
         # Atomic nitrogen (N) density
@@ -915,8 +915,9 @@ gtd7d <- function(input, flags) {
 }
 
 NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
+    hasData()
     assign("gsurf", 0, NRLMSISE00.env)
-    assign("re_", asteRiskData:::re, NRLMSISE00.env)
+    assign("re_", asteRiskData::re, NRLMSISE00.env)
     assign("dd", 0, NRLMSISE00.env)
     assign("dm04", 0, NRLMSISE00.env)
     assign("dm16", 0, NRLMSISE00.env)
@@ -987,28 +988,50 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)
     input$lst <- lst
-    i <- which(((invjday_results$year == asteRiskData:::spaceWeather[, 1]) & 
-                    (invjday_results$mon == asteRiskData:::spaceWeather[, 2]) & 
-                    (invjday_results$day == asteRiskData:::spaceWeather[, 3])))[1]
-    sw <- as.numeric(asteRiskData:::spaceWeather[i, ])
+    i <- which(((invjday_results$year == asteRiskData::spaceWeather[, 1]) & 
+                    (invjday_results$mon == asteRiskData::spaceWeather[, 2]) & 
+                    (invjday_results$day == asteRiskData::spaceWeather[, 3])))[1]
+    sw <- as.numeric(asteRiskData::spaceWeather[i, ])
     input$ap <- sw[23]
     input$ap_a[1] <- sw[23] 
     input$ap_a[2] <- sw[15] 
-    sw_1 <- as.numeric(asteRiskData:::spaceWeather[i-1, ])
+    sw_1 <- as.numeric(asteRiskData::spaceWeather[i-1, ])
     input$ap_a[3] <- sw_1[22] 
     input$ap_a[4] <- sw_1[21] 
     input$ap_a[5] <- sw_1[20] 
     sum <- sw_1[19]+sw_1[18]+sw_1[17]+sw_1[16]+sw_1[15]
-    sw_2 <- as.numeric(asteRiskData:::spaceWeather[i-2, ])
+    sw_2 <- as.numeric(asteRiskData::spaceWeather[i-2, ])
     sum <- sum + sw_2[22] + sw_2[21]  +sw_2[20]
     input$ap_a[6] <- sum/8 
-    sw_3 <- as.numeric(asteRiskData:::spaceWeather[i-3, ])
+    sw_3 <- as.numeric(asteRiskData::spaceWeather[i-3, ])
     sum <- sw_2[19] + sw_2[18] + sw_2[17] + sw_2[16] + 
           sw_2[15] + sw_3[22] + sw_3[21] + sw_3[20]
     input$ap_a[7] <- sum/8
     input$f107 <- sw[31]  
     input$f107A <- sw[33]   
     output <- gtd7d(input, flags)
-    dens <- 1e3*output$d[[6]]
-    return(dens)
+    output_densities <- output$d
+    #dens <- 1e3*output_densities[[6]]
+    output_densities[6] <- 1e3*output_densities[6]
+    names(output_densities) <- c("He", "O", "N2", "O2", "Ar", "Total", "H",
+                                 "N", "AnomalousO")
+    return(output_densities)
+}
+
+NRLMSISE00model <- function(position_ECEF, dateTime) {
+    date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
+    year <- date$year + 1900
+    month <- date$mon + 1
+    day <- date$mday
+    hour <- date$hour
+    minute <- date$min
+    second <- date$sec
+    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    IERS_results <- IERS(asteRiskData::earthPositions, Mjd_UTC, "l")
+    UT1_UTC <- IERS_results$UT1_UTC[[1]]
+    TAI_UTC <- IERS_results$TAI_UTC[[1]]
+    timeDiffs_results <- timeDiffs(UT1_UTC, TAI_UTC)
+    TT_UTC <- timeDiffs_results$TT_UTC[[1]]
+    densities <- NRLMSISE00(Mjd_UTC, position_ECEF, UT1_UTC, TT_UTC)
+    return(densities)
 }

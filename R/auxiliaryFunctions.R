@@ -135,3 +135,8 @@ vectorCrossProduct3D <- function(u, v) {
            u[1]*v[2] - u[2]*v[1])
     return(w)
 }
+
+getLatestSpaceData <- function() {
+    hasData()
+    asteRiskData::getLatestSpaceData()
+}

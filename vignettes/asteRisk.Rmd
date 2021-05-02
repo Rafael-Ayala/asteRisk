@@ -303,29 +303,69 @@ ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
 
 # High-precision orbital propagator
 
-The high-precision orbital propagator implemented in <b>asteRisk</b> etc etc
+The SGP4/SDP4 models provide a good accuracy at a low computational cost.
+However, higher precision can be achieved in orbit propagation by calculating
+at each instant the acceleration of the satellite resulting from the set of
+forces that are exerted on it, and solving the second-order ODE that expressed
+acceleration as the second time-derivative of position through numerical
+integration. Such propagators are often referred to as high-precision orbital
+propagators (HPOP). The HPOP implemented in <b>asteRisk</b> takes into
+consideration Earth gravtitational attraction (using a geopotential model
+based on spherical harmonics); the effects of Earth ocean and solid tides,
+the attraction of the Sun, Moon and planets; solar radiation pressure; 
+atmospheric drag, and relativistic effects. The HPOP can be used through the
+<b>hpop()</b> function. However, it should be kept in mind that, while the HPOP
+can achieve a much higher precision, it also has much higher computational cost. 
 
 ```{r tidy = TRUE, eval = evaluateExtraChunks}
+# The HPOP requires as input the satellite mass, the effective areas subjected
+# to solar radiation pressure and atmospheric drag, and the drag and
+# reflectivity coefficients. 
+# The mass and cross-section of Molniya satellites are approximately 1600 kg and
+# 15 m2, respectively. We will use the cross-section to approximate the
+# effective areafor both atmospheric drag and radiation pressure.
+# Regarding the drag and reflectivity coefficients, while their values vary
+# for each satellite and orbit, 2.2 and 1.2 respectively can be used as
+# approximations.
+
 molniyaMass <- 1600
 molniyaCrossSection <- 15
-molniyaCr <- 1.2
 molniyaCd <- 2.2
+molniyaCr <- 1.2
+
+# As initial conditions, we will use the initial conditions provided in the
+# same TLE for MOLNIYA 1-83 used previously for the SGP4/SDP4 propagator.
+# We first need to calculate the initial position and velocity in the GCRF
+# ECI frame of reference from the provided orbital elements. 
+# As an approximation, we will use the results obtained for t = 0 with the
+# SGP4/SDP4 propagator. We convert those into the GCRF frame of reference.
+# It should be noted that such an approximation introduces an error due to
+# a mismatch between the position derivative calculated at each propagation
+# point through SGP4/SDP4 and the actual velocity of the satellite.
+
+GCRF_coordinates <- TEMEtoGCRF(results_position_matrix[1,1:3],
+                               results_velocity_matrix[1,1:3], 
+                               molniya$dateTime)
+
+initialPosition <- GCRF_coordinates$position*1000
+initialVelocity <- GCRF_coordinates$velocity*1000
+
+# Let´s use the HPOP to calculate the position each 2 minutes during a period
+# of 3 hours
 
 targetTimes <- seq(0, 10800, by=120)
 
-initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
-initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806)
+hpop_results <- hpop(initialPosition, initialVelocity, molniya$dateTime,
+                     targetTimes, molniyaMass, molniyaCrossSection,
+                     molniyaCrossSection, molniyaCr, molniyaCd)
 
-hpop_results <- asteRisk:::hpop(initialPosition, initialVelocity, molniyaCrossSection,
-                                molniyaCrossSection, molniyaMass, molniyaCr, 
-                                molniyaCd, 2006, 6, 25, 0, 33, 42.835, targetTimes)
+# Now we can calculate and plot the corresponding geodetic coordinates
 
 geodetic_matrix_hpop <- matrix(nrow=nrow(hpop_results), ncol=3)
 
 for(i in 1:nrow(geodetic_matrix_hpop)) {
     new_dateTime <- as.character(as.POSIXct(molniya$dateTime, tz="UTC") + targetTimes[i])
-    new_geodetic <- TEMEtoLATLON(hpop_results[i, 2:4],
-                                 new_dateTime)
+    new_geodetic <- GCRFtoLATLON(hpop_results[i, 2:4], new_dateTime)
     geodetic_matrix_hpop[i,] <- new_geodetic
 }
 
@@ -344,7 +384,6 @@ ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
 
 ```
   
-
 # References
 
 https://celestrak.com/NORAD/documentation/spacetrk.pdf
@@ -356,3 +395,7 @@ https://juliapackages.com/p/satellitetoolbox
 https://celestrak.com/columns/v04n03/#FAQ01
 
 https://www.space-track.org
+
+Satellite Orbits: Models, Methods and Applications. Oliver Montenbruck and Eberhard Gill.
+
+Fundamentals of Astrodynamics and Applications. David Vallado.

@@ -1,22 +1,3 @@
-# Initial values of auxiliary parameters
-
-Mjd_UTC <- 0
-area_solar <- 0
-area_drag <- 0
-mass <- 0
-Cr <- 0
-Cd <- 0
-n <- 0
-m <- 0
-sun <- 0
-moon <- 0
-sRad <- 0
-drag <- 0
-planets <- 0
-SolidEarthTides <- 0
-OceanTides <- 0
-Relativity <- 0
-
 # Mathematical constants
 const_pi2 <- 2*pi                # 2pi
 const_Rad  <- pi/180              # Radians per degree
@@ -56,34 +37,6 @@ GM_Pluto <- 975.5011758767654e9
 EMRAT = 81.3005682168675747
 EMRAT1 = 1/(1+EMRAT)
 
-# CHANGE THIS TO USER DEFINABLE VALUES
+# Legendre polynomials
 n <- 70
 m <- 70
-
-# Initial values for auxiliary variables
-# gsurf <- NULL
-# re_ <- NULL
-# dd <- NULL
-# dm04 <- NULL
-# dm16 <- NULL
-# dm28 <- NULL
-# dm32 <- NULL
-# dm40 <- NULL
-# dm01 <- NULL
-# dm14 <- NULL
-# meso_tn1 <- NULL
-# meso_tn2 <- NULL
-# meso_tn3 <- NULL
-# meso_tgn1 <- NULL
-# meso_tgn2 <- NULL
-# meso_tgn3 <- NULL
-# dfa <- NULL
-# plg <- NULL
-# ctloc <- NULL
-# stloc <- NULL
-# cs2tloc <- NULL
-# s2tloc <- NULL
-# s3tloc <- NULL
-# c3tloc <- NULL
-# apdf <- NULL
-# apt <- NULL

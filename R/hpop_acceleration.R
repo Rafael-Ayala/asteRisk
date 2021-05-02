@@ -1,7 +1,7 @@
 elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
                                      TT_UTC, x_pole, y_pole) {
-    C <- asteRiskData:::Cnm
-    S <- asteRiskData:::Snm
+    C <- asteRiskData::Cnm
+    S <- asteRiskData::Snm
     r_moon <- E %*% r_moon
     moon_polar <- CartesianToPolar(r_moon)
     r_sun <- E %*% r_sun
@@ -93,16 +93,16 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     dC21 <- 0
     dS21 <- 0
     for (i in 1:48) {
-        dC21 <- dC21 + 1e-12*asteRiskData:::solidEarthTides_dC21dS21[i, 6]*sin(theta_g+pi)
-        dS21 <- dS21 + 1e-12*asteRiskData:::solidEarthTides_dC21dS21[i, 6]*cos(theta_g+pi)
+        dC21 <- dC21 + 1e-12*asteRiskData::solidEarthTides_dC21dS21[i, 6]*sin(theta_g+pi)
+        dS21 <- dS21 + 1e-12*asteRiskData::solidEarthTides_dC21dS21[i, 6]*cos(theta_g+pi)
     }
     dCnm21 <- dCnm21 + dC21
     dSnm21 <- dSnm21 + dS21
     dC22 <- 0
     dS22 <- 0
     for (i in 1:2) {
-        dC22 <- dC22 + 1e-12*asteRiskData:::solidEarthTides_dC22dS22[i, 6]*sin(theta_g+pi)
-        dS22 <- dS22 + 1e-12*asteRiskData:::solidEarthTides_dC22dS22[i, 6]*cos(theta_g+pi)
+        dC22 <- dC22 + 1e-12*asteRiskData::solidEarthTides_dC22dS22[i, 6]*sin(theta_g+pi)
+        dS22 <- dS22 + 1e-12*asteRiskData::solidEarthTides_dC22dS22[i, 6]*cos(theta_g+pi)
     }
     dCnm22 <- dCnm22 + dC22
     dSnm22 <- dSnm22 + dS22
@@ -298,7 +298,7 @@ relativity <- function(r, v) {
 
 accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd) {
     MJD_UTC <- MJD_UTC + t/86400
-    IERS_results <- IERS(asteRiskData:::earthPositions, MJD_UTC, "l")
+    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, "l")
     x_pole <- IERS_results$x_pole[[1]]
     y_pole <- IERS_results$y_pole[[1]]
     UT1_UTC <- IERS_results$UT1_UTC[[1]]
@@ -308,7 +308,6 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     dx_pole <- IERS_results$dx_pole[[1]]
     dy_pole <- IERS_results$dy_pole[[1]]
     TAI_UTC <- IERS_results$TAI_UTC[[1]]
-    
     timeDiffs_results <- timeDiffs(UT1_UTC, TAI_UTC)
     UT1_TAI <- timeDiffs_results$UT1_TAI[[1]]
     UTC_GPS <- timeDiffs_results$UTC_GPS[[1]]
@@ -373,12 +372,14 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                                         Cr, solarPressureConst, AU, "geometrical")
     # Acceleration due to atmospheric drag
     Omega <- omegaEarth - 8.43994809e-10*LOD
-    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC, TT_UTC)
+    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC, TT_UTC)["Total"]
     a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], NPB, satelliteArea, 
                               satelliteMass, Cd, Omega)
     # Relativistic effects
     a <- a + relativity(Y[1:3], Y[4:6])
     dY <- matrix(c(Y[4:6], a), byrow=TRUE, ncol=3, nrow=2)
+    colnames(dY) <- c("X", "Y", "Z")
+    rownames(dY) <- c("Velocity", "Acceleration")
     return(dY)
 }
 

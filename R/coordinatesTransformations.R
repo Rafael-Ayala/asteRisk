@@ -73,7 +73,8 @@ TEMEtoLATLON <- function(position_TEME, dateTime, degreesOutput=TRUE) {
     return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
 }
 
-ECEFtoICRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
+ECEFtoGCRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
+    hasData()
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
     year <- date$year + 1900
     month <- date$mon + 1
@@ -83,10 +84,14 @@ ECEFtoICRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
     second <- date$sec
     Mjd_UTC <- MJday(year, month, day, hour, minute, second)
     results <- ECEFtoECI(Mjd_UTC, c(position_ECEF, velocity_ECEF))
-    return(results)
+    return(list(
+        position=as.numeric(results$position),
+        velocity=as.numeric(results$velocity)
+    ))
 }
 
-ICRFtoECEF <- function(position_ICRF, velocity_ICRF=c(0, 0, 0), dateTime) {
+GCRFtoECEF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
+    hasData()
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
     year <- date$year + 1900
     month <- date$mon + 1
@@ -95,8 +100,24 @@ ICRFtoECEF <- function(position_ICRF, velocity_ICRF=c(0, 0, 0), dateTime) {
     minute <- date$min
     second <- date$sec
     Mjd_UTC <- MJday(year, month, day, hour, minute, second)
-    results <- ECItoECEF(Mjd_UTC, c(position_ICRF, velocity_ICRF))
-    return(results)
+    results <- ECItoECEF(Mjd_UTC, c(position_GCRF, velocity_GCRF))
+    return(list(
+        position=as.numeric(results$position),
+        velocity=as.numeric(results$velocity)
+    ))
+}
+
+TEMEtoGCRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
+    hasData()
+    ecef_results <- TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
+    GCRF_results <- ECEFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
+    return(GCRF_results)
+}
+
+GCRFtoLATLON <- function(position_GCRF, dateTime, degreesOutput=TRUE) {
+    hasData()
+    ECEFcoords <- GCRFtoECEF(position_GCRF=position_GCRF, dateTime=dateTime)
+    return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
 }
 
 KOEtoECI <- function(a, e, i, M, omega, OMEGA, keplerAccuracy=10e-8, maxKeplerIterations=100) {
@@ -125,7 +146,7 @@ KOEtoECI <- function(a, e, i, M, omega, OMEGA, keplerAccuracy=10e-8, maxKeplerIt
                        orbital_velocity[2] * (sin(omega) * cos(OMEGA) + cos(omega) * cos(i) * sin(OMEGA)),
                    orbital_velocity[1] * (cos(omega) * sin(OMEGA) + sin(omega) * cos(i) * cos(OMEGA)) +
                        orbital_velocity[2] * (cos(omega) * cos(i) * cos(OMEGA) - sin(omega) * sin(OMEGA)),
-                   orbital_velocity[1] * sin(omega) * sin(i) + orbital_position[2] * cos(omega) * sin(i))
+                   orbital_velocity[1] * sin(omega) * sin(i) + orbital_velocity[2] * cos(omega) * sin(i))
     return(list(
         position=eci_position,
         velocity=eci_speed
@@ -242,7 +263,7 @@ ECItoKOE <- function(position_ECI, velocity_ECI) {
             sine <- (sqrt(1-e^2)*sin(nu)) / (1 + e*cos(nu))
             cose <- (e + cos(nu)) / (1 + e*cos(nu))
             e0 <- atan2(sine, cose)
-            m <- e0 - c*sin(e0)
+            m <- e0 - e*sin(e0)
         } else if((e > 1 + eps) & (abs(nu) + 1e-5 < pi - acos(1/e))) { 
             # hyperbolic orbit
             sine <- (sqrt(-1+e^2)*sin(nu)) / (1 + e*cos(nu))
