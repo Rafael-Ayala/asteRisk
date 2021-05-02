@@ -15,6 +15,9 @@ stars (and therefore not fixed with respect to the Earth surface in its
 rotation). The X-axis is aligned with the mean equinox of Earth at 12:00
 Terrestrial Time on the 1st of January, 2000, and the Z-axis is aligned with
 the Earth´s rotation axis.
+
+This function requires the \code{asteRiskData} package, which can be installed 
+by running \code{install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')}
 }
 \usage{
 ECEFtoGCRF(position_ECEF, velocity_ECEF, dateTime)
@@ -41,6 +44,7 @@ velocity in this order.
 https://celestrak.com/columns/v02n01/
 }
 \examples{
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 # The following were the position and velocity of satellite MOLNIYA 1-83 
 # the 25th of June, 2006 at 00:33:43 UTC in the ECEF frame (in m and m/s).
 
@@ -50,4 +54,5 @@ velocity_ECEF <- c(1468.832, -3962.464, 4007.039)
 # Let´s convert them into the GCRF frame
 
 coordinates_GCRF <- ECEFtoGCRF(position_ECEF, velocity_ECEF, "2006-06-25 00:33:43")
+}
 }

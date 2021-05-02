@@ -16,6 +16,9 @@ while in the TEME frame they are aligned with the mean equinox and rotation
 axis at the time of the corresponding TLE. Due to the change of the direction
 of the vernal equinox and the rotation axis over time, coordinates in the two
 frames differ slightly.
+
+This function requires the \code{asteRiskData} package, which can be installed 
+by running \code{install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')}
 }
 \usage{
 TEMEtoGCRF(position_TEME, velocity_TEME, dateTime)
@@ -42,6 +45,7 @@ velocity in this order.
 https://celestrak.com/columns/v04n03/#FAQ01
 }
 \examples{
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 # The following orbital parameters correspond to an object with NORAD catalogue
 # number 24208 (Italsat 2) the 26th of June, 2006 at 00:58:29.34 UTC.
 
@@ -65,4 +69,5 @@ state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA
 state_1day_GCRF <- TEMEtoGCRF(state_1day_TEME$position*1000, 
                               state_1day_TEME$velocity*1000,
                               "2006-06-27 00:58:29.34")
+}
 }
