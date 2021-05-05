@@ -241,7 +241,7 @@ ECItoKOE <- function(position_ECI, velocity_ECI) {
         lonPer <- NaN
     }
     # true longitude - circular equatorial orbits
-    if((sqrt(sum(position_ECI)) > eps) & orbitType == "ce") {
+    if((sqrt(sum(position_ECI^2)) > eps) & orbitType == "ce") {
         cosTrueLon <- position_ECI[1] / sqrt(sum(position_ECI))
         if(abs(cosTrueLon) > 1) {
             cosTrueLon <- sign(cosTrueLon)
