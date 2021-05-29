@@ -176,6 +176,17 @@ parseNavigationRINEXlinesGLONASSv21 <- function(lines) {
     velocityZ <- as.numeric(substr(line4, 23, 41))
     accelZ <- as.numeric(substr(line4, 42, 60))
     informationAge <- as.numeric(substr(line4, 61, 79))
+    if (is.numeric(epochYearShort)) if(epochYearShort >= 56) {
+        epochYear <- 1900 + epochYearShort
+    } else {
+        epochYear <- 2000 + epochYearShort
+    }
+    dateTimeString <- paste(epochYear, "-", epochMonth, "-", epochDay, " ", 
+                            epochHour, ":", epochMinute, ":", epochSecond, 
+                            sep="")
+    dateTimePOSIXct <- as.POSIXct(dateTimeString)
+    UTCDateTimePOSIXct <- dateTimePOSIXct - 3*3600
+    UTCDateTimeString <- as.character(UTCDateTimePOSIXct) # In UTC
     return(list(
         satelliteNumber=satelliteNumber,
         epochYearShort=epochYearShort,
@@ -184,6 +195,7 @@ parseNavigationRINEXlinesGLONASSv21 <- function(lines) {
         epochHour=epochHour,
         epochMinute=epochMinute,
         epochSecond=epochSecond,
+        UTCepochDateTime=UTCDateTimeString,  # TODO consider clock bias difference GLONASS-UTC
         clockBias=clockBias,
         relativeFreqBias=relativeFreqBias,
         messageTimeFrame=messageTimeFrame,
