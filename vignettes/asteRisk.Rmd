@@ -230,7 +230,9 @@ colnames(results_position_matrix) <- c("x", "y", "z", "time")
 # Let´s verify that the SDP4 algorithm was automatically chosen
 
 last_molniya_propagation$algorithm
+```
 
+```{r tidy = TRUE, eval = FALSE}
 # We can visualize the resulting trajectory using a plotly animation to confirm
 # that indeed a full revolution was completed and that the orbit is highly
 # eccentric.
@@ -269,6 +271,8 @@ orbit_animation <- layout(orbit_animation, scene = list(
 
 orbit_animation
 ```
+
+![](./static_plots/molniya_orbit.png)
 
 # Conversion between reference frames
 
