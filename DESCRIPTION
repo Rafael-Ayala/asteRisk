@@ -1,11 +1,12 @@
 Package: asteRisk
 Type: Package
 Title: Computation of Satellite Position
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
     person("Rafael", "Ayala", email = "rafael.ayala@oist.jp", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9332-4623")),
     person("Daniel", "Ayala", email = "dayala1@us.es", role = "aut", comment = c(ORCID = "0000-0003-2095-1009")),
-    person("Lara", "Selles Vidal", email = "lara.selles12@imperial.ac.uk", role = "aut", comment = c(ORCID = "0000-0003-2537-6824")))
+    person("David", "Ruiz", email = "druiz@us.es", role = "aut", comment = c(ORCID = "0000-0003-4460-5493")),
+    person("Lara", "Selles Vidal", email = "lara.selles@oist.jp", role = "aut", comment = c(ORCID = "0000-0003-2537-6824")))
 Description: Provides basic functionalities to calculate the position of
     satellites given a known state vector. The package includes implementations
     of the SGP4 and SDP4 simplified perturbation models to propagate orbital
@@ -18,6 +19,9 @@ Description: Provides basic functionalities to calculate the position of
     Felix R. Hoots, Ronald L. Roehrich and T.S. Kelso (1988) <https://celestrak.com/NORAD/documentation/spacetrk.pdf>.
     David Vallado, Paul Crawford, Richard Hujsak and T.S. Kelso (2012) <doi:10.2514/6.2006-6753>.
     Felix R. Hoots, Paul W. Schumacher Jr. and Robert A. Glover (2014) <doi:10.2514/1.9161>.
+Acknowledgements: The development of this software is supported by the Spanish 
+    Ministry of Science and Innovation (grant code PID2019-105471RB-I00) and the
+    Regional Government of Andalusia (grant code P18-RT-1060).
 License: GPL-3
 Imports: deSolve, stats
 Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown

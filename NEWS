@@ -1,3 +1,6 @@
+Changes in version 1.1.0 (2021-07-05)
++ Added functions to read RINEX navigation files for GPS and GLONASS satellites
+
 Changes in version 1.0.0 (2021-05-02)
 + Added a high-precision numerical orbital propagator
 + Added support for more frames of reference: GCRF and Keplerian orbital elements

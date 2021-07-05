@@ -39,13 +39,106 @@ testSGDP4_2 <- sgdp4(
 
 checkEquals(testSGDP4_1$algorithm, "sgp4")
 checkEquals(testSGDP4_2$algorithm, "sdp4")
-checkEqualsNumeric(testSGDP4_1$position[1], 231.5594, tolerance=0.0001)
-checkEqualsNumeric(testSGDP4_2$position[1], 5501.081, tolerance=0.0001)
+checkEqualsNumeric(testSGDP4_1$position[1], 231.5594, tolerance=5e-7)
+checkEqualsNumeric(testSGDP4_2$position[1], 5501.081, tolerance=2e-7)
 
 # Test TEMEtoECEF
 
-testECEF <- TEMEtoECEF(testSGDP4_2$position,
-                       testSGDP4_2$velocity,
+testECEF <- TEMEtoECEF(testSGDP4_2$position*1000,
+                       testSGDP4_2$velocity*1000,
                        "2006-06-27 00:58:29")
 
-checkEqualsNumeric(testECEF$position[1], -37325.97, tolerance=0.0001)
+checkEqualsNumeric(testECEF$position[1], -37325973.4, tolerance=3e-9)
+
+# Test ECEFtoLATLON
+
+testLATLON1 <- ECEFtoLATLON(testECEF$position)
+
+checkEqualsNumeric(testLATLON1[1], 0.1891839, tolerance=6e-6)
+
+# Test TEMEtoLATLON
+
+testLATLON2 <- TEMEtoLATLON(testSGDP4_2$position*1000,
+                            "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testLATLON2[1], 0.1891839, tolerance=6e-6)
+
+# Test TEMEtoGCRF
+
+testGCRF <- TEMEtoGCRF(testSGDP4_2$position*1000,
+                       testSGDP4_2$velocity*1000,
+                       "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testGCRF$position[1], 5560876.4, tolerance=2e-8)
+
+# Test ECEFtoGCRF
+
+testGCRF2 <- ECEFtoGCRF(testECEF$position,
+                        testECEF$velocity,
+                        "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testGCRF2$position[1], 5560876.4, tolerance=2e-8)
+
+# Test GCRFtoECEF
+
+testECEF2 <- GCRFtoECEF(testGCRF$position,
+                        testGCRF$velocity,
+                        "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testECEF2$position[1], -37325973.4, tolerance=3e-9)
+
+# Test GCRFtoLATLON
+
+testLATLON3 <- GCRFtoLATLON(testGCRF$position,
+                            "2006-06-27 00:58:29")
+
+checkEqualsNumeric(testLATLON3[1], 0.1891839, tolerance=6e-6)
+
+# Test ECItoKOE
+
+testKOE <- ECItoKOE(testGCRF$position,
+                    testGCRF$velocity)
+
+checkEqualsNumeric(testKOE$argumentPerigee[1], 5.4, tolerance=0.02)
+
+# Test KOEtoECI
+
+testECI <- KOEtoECI(a=testKOE$semiMajorAxis,
+                    e=testKOE$eccentricity,
+                    i=testKOE$inclination,
+                    M=testKOE$meanAnomaly,
+                    omega=testKOE$argumentPerigee,
+                    OMEGA=testKOE$longitudeAscendingNode)
+
+checkEqualsNumeric(testECI$position[1], 5560876.4, tolerance=2e-8)
+
+# Test readGLONASSNavigationRINEX
+
+testGLONASSnav <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                                    "/testGLONASSRINEX.txt"))
+
+checkTrue(length(testGLONASSnav$messages) == 5)
+
+# Test readGPSNavigationRINEX
+
+testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                            "/testGPSRINEX.txt"))
+
+checkTrue(length(testGPSnav$messages) == 3)
+
+# Test hpop
+
+initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
+initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806) 
+initialTime <- "2006-06-25 00:33:43"
+molniyaMass <- 1600
+molniyaCrossSection <- 15
+molniyaCr <- 1.2
+molniyaCd <- 2.2
+targetTimes <- c(0, 1)
+
+testHpop <- hpop(initialPosition, initialVelocity, initialTime, targetTimes, 
+                 molniyaMass, molniyaCrossSection, molniyaCrossSection,
+                 molniyaCr, molniyaCd)
+
+checkEqualsNumeric(testHpop[2, "X"], -14572000, tolerance=1e-6)

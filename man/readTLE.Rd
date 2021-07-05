@@ -3,7 +3,7 @@
 \title{Read a TLE file
 }
 \description{
-TLE (Two-/Three- Line Element) is the standard format for representing orbital
+TLE (Two-/Three- Line Element) is a standard format for representing orbital
 state vectors. This function reads a TLE file containing one or more TLEs. The
 TLE file can contain either Two Line Elements or Three Line Elements, but all
 the TLE in a single file must be of the same type. The two lines of a Two Line

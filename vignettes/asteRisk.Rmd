@@ -86,7 +86,7 @@ Once installed, the package can be loaded as shown below:
 library(asteRisk)
 ```
 
-# Reading TLE files
+# Reading TLE and RINEX files
 
 TLE (Two-/Three- Line Element) is the standard format for representing orbital
 state vectors. In short, TLEs have 2 lines that contain the orbital parameters
@@ -127,6 +127,37 @@ italsat2_TLE <- parseTLElines(italsat2_lines)
 italsat2_TLE
 
 test_TLEs[[17]]$inclination == italsat2_TLE$inclination
+```
+
+RINEX (Receiver Independent Exchange Format), on the other hand, is one of the 
+most widely used formats for providing data of global satellite navigation 
+systems (GNSS). The RINEX standard defines several file types, among which 
+navigation files are used to distribute positional information of the 
+satellites. While the format is mainly limited for GNSS, it is of interest
+for satellite positioning applications given the large amounts of publicly
+available, high-precision data for such satellite constellations.
+
+The exact information provided in a RINEX navigation file varies for each GNSS.
+For example, while GLONASS navigation files provide directly the position,
+velocity and acceleration in the GCRF frame of coordinates, GPS navigation
+files provide orbital elements.
+
+<b>asteRisk</b> provides functions to read RINEX navigation files for GPS and
+GLONASS satellites (functions <b>readGPSNavigationRINEX()</b> and 
+<b>readGLONASSNavigationRINEX()</b> respectively):
+
+```{r tidy = TRUE}
+# Read the provided test RINEX navigation files for both GPS and GLONASS:
+
+testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
+"/testGPSRINEX.txt"))
+testGLONASSnav <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
+"/testGLONASSRINEX.txt"))
+
+# Count the number of positional messages in each file:
+
+length(testGPSnav$messages)
+length(testGLONASSnav$messages)
 ```
 
 # Propagation of orbits
@@ -315,7 +346,14 @@ based on spherical harmonics); the effects of Earth ocean and solid tides,
 the attraction of the Sun, Moon and planets; solar radiation pressure; 
 atmospheric drag, and relativistic effects. The HPOP can be used through the
 <b>hpop()</b> function. However, it should be kept in mind that, while the HPOP
-can achieve a much higher precision, it also has much higher computational cost. 
+can achieve a much higher precision, it also has much higher computational cost.
+It should also be noted that the HPOP requires access to data such as Earth 
+orientation parameters, space weather data and solar and geomagnetic storms.
+Such data is provided in the <b>asteRiskData</b> accessory package, which can be
+installed by running "install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')".
+After having installed the accessory package, it is possible to update the data
+and coefficients to the latest available versions with the <b>getLatestSpaceData()</b>
+function.
 
 ```{r tidy = TRUE, eval = evaluateExtraChunks}
 # The HPOP requires as input the satellite mass, the effective areas subjected

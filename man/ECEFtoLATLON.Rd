@@ -14,7 +14,7 @@ ECEFtoLATLON(position_ECEF, degreesOutput=TRUE)
 }
 \arguments{
   \item{position_ECEF}{Vector with the X, Y and Z components of the position
-  of an object in ECEF frame, in km.
+  of an object in ECEF frame, in m.
   }
   \item{degreesOutput}{Logical indicating if the output should be in sexagesimal
   degrees. If \code{degreesOutput=FALSE}, the output will be in radians.
@@ -22,7 +22,7 @@ ECEFtoLATLON(position_ECEF, degreesOutput=TRUE)
 }
 \value{
 A vector with three elements, corresponding to the latitude and longitude in
-degrees and the altitude in km.
+degrees and the altitude in m.
 }
 \references{
 https://arc.aiaa.org/doi/10.2514/6.2006-6753

@@ -288,11 +288,11 @@ ECItoKOE <- function(position_ECI, velocity_ECI) {
         semiMajorAxis = a,
         eccentricity = e,
         inclination = i,
-        meanAnomaly = m,
-        argumentPerigee = omega,
+        meanAnomaly = as.vector(m),
+        argumentPerigee = as.vector(omega),
         longitudeAscendingNode = OMEGA,
-        trueAnomaly = nu,
-        argumentLatitude = arglat,
+        trueAnomaly = as.vector(nu),
+        argumentLatitude = as.vector(arglat),
         longitudePerigee = lonPer,
         trueLongitude = trueLon
     ))
