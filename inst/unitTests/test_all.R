@@ -126,19 +126,21 @@ testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"),
 
 checkTrue(length(testGPSnav$messages) == 3)
 
-# Test hpop
+# Test hpop - only if asteRiskData available
 
-initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
-initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806) 
-initialTime <- "2006-06-25 00:33:43"
-molniyaMass <- 1600
-molniyaCrossSection <- 15
-molniyaCr <- 1.2
-molniyaCd <- 2.2
-targetTimes <- c(0, 1)
-
-testHpop <- hpop(initialPosition, initialVelocity, initialTime, targetTimes, 
-                 molniyaMass, molniyaCrossSection, molniyaCrossSection,
-                 molniyaCr, molniyaCd)
-
-checkEqualsNumeric(testHpop[2, "X"], -14572000, tolerance=1e-6)
+if (requireNamespace("asteRiskData", quietly = TRUE)) {
+    initialPosition <-c(-14568679.5026116, -4366250.78287623, 9417.9289105405)
+    initialVelocity <- c(-3321.17428902497, -3205.49400830455, 4009.26862308806) 
+    initialTime <- "2006-06-25 00:33:43"
+    molniyaMass <- 1600
+    molniyaCrossSection <- 15
+    molniyaCr <- 1.2
+    molniyaCd <- 2.2
+    targetTimes <- c(0, 1)
+    
+    testHpop <- hpop(initialPosition, initialVelocity, initialTime, targetTimes, 
+                     molniyaMass, molniyaCrossSection, molniyaCrossSection,
+                     molniyaCr, molniyaCd)
+    
+    checkEqualsNumeric(testHpop[2, "X"], -14572000, tolerance=1e-6)
+} 
