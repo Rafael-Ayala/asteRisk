@@ -109,28 +109,15 @@ iauFapa03 <- function(t) {
 }
 
 iauNut00a <- function(date1, date2){
-    # Units of 0.1 microarcsecond to radians
+    # Conversion of 0.1 microarcseconds to radians
     U2R <- DAS2R / 1e7
-    # -------------------------
-        # Luni-Solar nutation model
-    # -------------------------
-        
-        # The units for the sine and cosine coefficients are
-    # 0.1 microarcsecond and the same per Julian century
-    
-    # nl,nlp,nf,nd,nom:   coefficients of l,l',F,D,Om
-    #  sp,spt,cp:          longitude sin, t*sin, cos coefficients
-    #  ce,cet,se:          obliquity cos, t*cos, sin coefficients
-    #  moved the following 4 lines to constants definitions
-    # asteRiskData::xls <- read.csv("R/hpop_files/iauNut00a_asteRiskData:::xls.csv", header=FALSE)
-    # asteRiskData::NLS <- nrow(asteRiskData::xls)
-    # asteRiskData::xpl <- read.csv("R/hpop_files/iauNut00a_asteRiskData:::xpl.csv", header=FALSE)
-    # asteRiskData::NPL <- nrow(asteRiskData::xpl)
+    # Luni-Solar nutation model
+    # The units for the sine and cosine coefficients are 0.1 microarcsecond 
     # Interval between fundamental date J2000.0 and given date (JC). 
     t <- ((date1 - DJ00) + date2) / DJC
     # Mean anomaly of the Moon (IERS 2003)
     el <- iauFal03(t)
-    # Mean anomaly of the Sun (MHB2000) AQUIAQUIAQUI
+    # Mean anomaly of the Sun (MHB2000) 
     elp <- iauFalp03(t) 
     # Mean longitude of the Moon minus that of the ascending node (IERS 2003).
     f <- iauFaf03(t)
@@ -145,26 +132,10 @@ iauNut00a <- function(date1, date2){
     carg <- cos(arg)
     dp <- sum((asteRiskData::xls[asteRiskData::NLS:1, 6] + asteRiskData::xls[asteRiskData::NLS:1, 7] * t) * sarg + asteRiskData::xls[asteRiskData::NLS:1, 8] * carg)
     de <- sum((asteRiskData::xls[asteRiskData::NLS:1, 9] + asteRiskData::xls[asteRiskData::NLS:1, 10] * t) * carg + asteRiskData::xls[asteRiskData::NLS:1, 11] * sarg)
-    # Old non vectorized code
-    # for (i in asteRiskData::NLS:1) {
-    #     # argument and its sine and cosine
-    #     arg <- (asteRiskData::xls[i,1]*el+asteRiskData::xls[i,2]*elp+asteRiskData::xls[i,3]*f+asteRiskData::xls[i,4]*d+asteRiskData::xls[i,5]*om)%%(2*pi)
-    #     sarg <- sin(arg)
-    #     carg <- cos(arg)
-    #     # term
-    #     dp <- dp + (asteRiskData::xls[i,6] + asteRiskData::xls[i,7] * t) * sarg + asteRiskData::xls[i,8] * carg
-    #     de <- de + (asteRiskData::xls[i,9] + asteRiskData::xls[i,10] * t) * carg + asteRiskData::xls[i,11] * sarg
-    # }
     # Convert from decimes microarcseconds to radians
     dpsils <- dp * U2R
     depsls <- de * U2R
     # PLANETARY NUTATION 
-    #  n.b.  The MHB2000 code computes the luni-solar and planetary nutation 
-    #  in different functions, using slightly different Delaunay 
-    #  arguments in the two cases.  This behaviour is faithfully 
-    #  reproduced here.  Use of the IERS 2003 expressions for both 
-    #  cases leads to negligible changes, well below 
-    #  0.1 microarcsecond. 
     # Mean anomaly of the Moon (MHB2000). 
     al <- (2.35555598 + 8328.6914269554 * t) %% (2*pi)
     # Mean longitude of the Moon minus that of the ascending node (MHB2000). 
@@ -191,7 +162,7 @@ iauNut00a <- function(date1, date2){
     alur <- (5.481293872 + 7.4781598567 * t) %% (2*pi)
     # Neptune longitude (MHB2000). 
     alne <- (5.321159000 + 3.8127774000 * t) %% (2*pi)
-    ## Calculate again nutation values (temporary variables)
+    ## Calculate again nutation values 
     arg <- (asteRiskData::xpl[asteRiskData::NPL:1, 1] * al + asteRiskData::xpl[asteRiskData::NPL:1, 2] * af + asteRiskData::xpl[asteRiskData::NPL:1, 3] * ad + asteRiskData::xpl[asteRiskData::NPL:1, 4] * aom +
                 asteRiskData::xpl[asteRiskData::NPL:1, 5] * alme + asteRiskData::xpl[asteRiskData::NPL:1, 6] * alve + asteRiskData::xpl[asteRiskData::NPL:1, 7] * alea +
                 asteRiskData::xpl[asteRiskData::NPL:1, 8] * alma + asteRiskData::xpl[asteRiskData::NPL:1, 9] * alju + asteRiskData::xpl[asteRiskData::NPL:1, 10] * alsa + 
@@ -200,19 +171,6 @@ iauNut00a <- function(date1, date2){
     carg <- cos(arg)
     dp <- sum(asteRiskData::xpl[asteRiskData::NPL:1, 14] * sarg + asteRiskData::xpl[asteRiskData::NPL:1, 15] * carg)
     de <- sum(asteRiskData::xpl[asteRiskData::NPL:1, 16] * sarg + asteRiskData::xpl[asteRiskData::NPL:1, 17] * carg)
-    # old non-vectorized code
-    # for (i in asteRiskData::NPL:1) {
-    #     # Argument and its sine and cosine
-    #     arg <- (asteRiskData::xpl[i,1] * al + asteRiskData::xpl[i,2] * af + asteRiskData::xpl[i,3] * ad + asteRiskData::xpl[i,4] * aom +
-    #             asteRiskData::xpl[i,5] * alme + asteRiskData::xpl[i,6] * alve +asteRiskData::xpl[i,7] * alea +
-    #             asteRiskData::xpl[i,8] * alma + asteRiskData::xpl[i,9] * alju +asteRiskData::xpl[i,10] * alsa + 
-    #             asteRiskData::xpl[i,11] * alur + asteRiskData::xpl[i,12] * alne +asteRiskData::xpl[i,13] * apa) %% (2*pi)
-    #     sarg <- sin(arg)
-    #     carg <- cos(arg)
-    #     # Update terms
-    #     dp <- dp + asteRiskData::xpl[i,14] * sarg + asteRiskData::xpl[i,15] * carg
-    #     de <- de + asteRiskData::xpl[i,16] * sarg + asteRiskData::xpl[i,17] * carg
-    # }
     # Convert from 0.1 microarcsecs  to radians
     dpsipl <- dp * U2R
     depspl <- de * U2R
@@ -229,7 +187,7 @@ iauNut06a <- function(date1, date2){
     # Interval between fundamental date J2000.0 and given date (JC).
     t <- ((date1 - DJ00) + date2) / DJC
     # Factor correcting for secular variation of J2.
-    fj2 = -2.7774e-6 * t
+    fj2 <- -2.7774e-6 * t
     # Obtain IAU 2000A nutation.
     iau2000aNutation <- iauNut00a(date1, date2)
     # Apply P03 adjustments (Wallace & Capitaine, 2006, Eqs.5).

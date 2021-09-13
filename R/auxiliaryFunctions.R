@@ -21,12 +21,12 @@ rem <- function(x, y) {
 }
 
 meanMotionToSemiMajorAxis <- function(meanMotion) {
-    a <- (earth_mu)^(1/3) / ((2*pi*meanMotion/86400)^(2/3))
+    a <- (GM_Earth_TCB)^(1/3) / ((2*pi*meanMotion/86400)^(2/3))
     return(a)
 }
 
 semiMajorAxisToMeanMotion <- function(semiMajorAxis) {
-    n <- sqrt(earth_mu/semiMajorAxis^3) * (86400/(2*pi))
+    n <- sqrt(GM_Earth_TCB/semiMajorAxis^3) * (86400/(2*pi))
     return(n)
 }
 

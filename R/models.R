@@ -18,12 +18,12 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     #a0dprime <- a0/(1-delta0)
     # use no_unkozai semi major axis
     a0dprime <- (ke/n0dprime)^(2/3)
-    perigee <- (a0dprime*(1-e0)-ae)*XKMPER
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4
     high_perigee_flag <- TRUE
     if(perigee >= 98 & perigee <= 156) {
         s <- a0dprime*(1-e0) - s + ae
     } else if(perigee < 98) {
-        s <- 20/XKMPER + ae
+        s <- 20/earthRadius_SGP4 + ae
     }
     if(perigee < 220) {
         high_perigee_flag <- FALSE
@@ -106,8 +106,8 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     Vvector <- Mvector*cos(uk) - Nvector*sin(uk)
     rvector <- rk*Uvector
     rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector
-    position_result <- rvector*XKMPER
-    velocity_result <- -rderivativevector*XKMPER*1440/86400
+    position_result <- rvector*earthRadius_SGP4
+    velocity_result <- -rderivativevector*earthRadius_SGP4*1440/86400
     return(list(
         position=position_result,
         velocity=velocity_result,
@@ -123,9 +123,18 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     } else {
         t <- targetTime
     }
-
+    
+    # Initialize auxiliary variables
+    atime <- xli <- xni <- xfact <- ssl <- ssg <- ssh <- sse <- ssi <- xlamo <-
+        gmst <- del1 <- del2 <- del3 <- fasx2 <- fasx4 <- fasx6 <- d2201 <- 
+        d2211 <- d3210 <- d3222 <- d4410 <- d4422 <- d5220 <- d5232 <- d5421 <-
+        d5433 <- xnddt <- xndot <- xldot <- zmos <- se2 <- se3 <- si2 <- si3 <-
+        sl2 <- sl3 <- sl4 <- sgh2 <- sgh3 <- sgh4 <- sh2 <- sh3 <- zmol <-
+        ee2 <- e3 <- xi2 <- xi3 <- xl2 <- xl3 <- xl4 <- xgh2 <- xgh3 <- xgh4 <-
+        xh2 <- xh3 <- pe <- pinc <- pgh <- ph <- pl <- pgh0 <- ph0 <- pe0 <-
+        pinc0 <- pl0 <- se <- si <- sl <- sgh <- shdq <- 0.0
+    
     ## start equivalent of sgp4_init
-
     a1 <- (ke/n0)^(2/3)
     delta1 <- 1.5 * (k2/(a1^2)) * (((3*(cos(i0))^2) - 1)/((1-e0^2)^(3/2)))
     a0 <- a1 * (1 - (1/3)*delta1 - delta1^2 - (134/81) * delta1^3)
@@ -134,10 +143,10 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     #a0dprime <- a0/(1-delta0)
     # use no_unkozai semi major axis
     a0dprime <- (ke/n0dprime)^(2/3)
-    perigee <- (a0dprime*(1-e0)-ae)*XKMPER
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4
     if (perigee < 156) {
         if (perigee < 98) {
-            s <- 20/XKMPER + ae
+            s <- 20/earthRadius_SGP4 + ae
         } else {
             s <- a0dprime*(1-e0) - s + ae
         }
@@ -720,8 +729,8 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     Nvector <- c(Nx, Ny, Nz)
     Uvector <- Mvector*sin(uk) + Nvector*cos(uk)
     Vvector <- Mvector*cos(uk) - Nvector*sin(uk)
-    position_result <- rk*Uvector*XKMPER
-    velocity_result <- (rkdot*Uvector+rkdotf*Vvector)*XKMPER*1440/86400
+    position_result <- rk*Uvector*earthRadius_SGP4
+    velocity_result <- (rkdot*Uvector+rkdotf*Vvector)*earthRadius_SGP4*1440/86400
     return(list(
         position=position_result,
         velocity=velocity_result,

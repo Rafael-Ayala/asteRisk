@@ -1,3 +1,7 @@
+Changes in version 1.2.0 (2021-XX-XX)
++ Added functions to read RINEX navigation files for GPS and GLONASS satellites
++ Changed vignette to avoid errors due to lack of PhantomJS
+
 Changes in version 1.1.0 (2021-07-05)
 + Added functions to read RINEX navigation files for GPS and GLONASS satellites
 + Changed vignette to avoid errors due to lack of PhantomJS
