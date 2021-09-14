@@ -666,8 +666,8 @@ geometricShadow <- function(pccor,ccor,pscor,sbcor,bcor,sbpcor) {
                   sbcor[3]*ubcor[1] - sbcor[1]*ubcor[3],
                   sbcor[1]*ubcor[2] - sbcor[2]*ubcor[1]) # perpendicular
         rsbx <- sbcor%*%ubcor # projection of sbcor along ubcor
-        rs <- R_sun/rb # apparent radius of Sun from satellite
-        rp <- r_ref/rsbx # apparent radius of Earth from satellite
+        rs <- sunRadius/rb # apparent radius of Sun from satellite
+        rp <- earthRadius_EGM96/rsbx # apparent radius of Earth from satellite
         sep <- sqrt(sum(sepp^2))/rsbx # apparent separation between Sun and Earth
         lambda <- calculateLambda(rs,rp,sep)
     }
@@ -680,8 +680,8 @@ geometricShadow <- function(pccor,ccor,pscor,sbcor,bcor,sbpcor) {
         if (rb > rps) {
             ubcor <- bcor/rb
             rsbx <- sbpcor %*% ubcor
-            rs <- R_sun/rb
-            rp <- R_moon/rsbx
+            rs <- sunRadius/rb
+            rp <- moonRadius/rsbx
             sepp <- c(sbpcor[2]*ubcor[3] - sbpcor[3]*ubcor[2],
                       sbpcor[3]*ubcor[1] - sbpcor[1]*ubcor[3],
                       sbpcor[1]*ubcor[2] - sbpcor[2]*ubcor[1])

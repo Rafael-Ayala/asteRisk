@@ -60,10 +60,10 @@ dnet <- function(dd, dm, zhm, xmm, xm) {
     # turbopause correction for msis models
     # Root mean density
     # NRLMSISE00.env$dd - diffusive density
-    # DM - full mixed density
-    # ZHM - transition scale length
-    # XMM - full mixed molecular weight
-    # XM  - species molecular weight
+    # dm - full mixed density
+    # zhm - transition scale length
+    # xmm - full mixed molecular weight
+    # xm  - species molecular weight
     # Outputs DNET - combined density
     a <- zhm / (xmm-xm)
     if ((dm <= 0) | (NRLMSISE00.env$dd <= 0)) {
@@ -842,7 +842,7 @@ gtd7 <- function(input, flags) {
             )
         assign("meso_tgn2", new_meso_tgn2, NRLMSISE00.env)
         new_meso_tn3 <- c(NRLMSISE00.env$meso_tn2[4], NRLMSISE00.env$meso_tn3[2:5])
-        if (input$alt<zn3[1]) { # lower stratosphere/troposphere (below zn3[1])
+        if (input$alt < zn3[1]) { # lower stratosphere/troposphere (below zn3[1])
             new_meso_tn3[2:5] <- c(asteRiskData::pma[4,1]*asteRiskData::pavgm[4]/(1-flags $sw[23]*glob7s(asteRiskData::pma[4, ], input, flags)),
                                    asteRiskData::pma[5,1]*asteRiskData::pavgm[5]/(1-flags $sw[23]*glob7s(asteRiskData::pma[5, ], input, flags)),
                                    asteRiskData::pma[6,1]*asteRiskData::pavgm[6]/(1-flags $sw[23]*glob7s(asteRiskData::pma[6, ], input, flags)),

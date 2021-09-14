@@ -36,9 +36,9 @@ TEMEtoECEF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
 }
 
 ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
-    a <- 6378137.0
+    a <- earthRadius_WGS84
     a2 <- a^2
-    f <- 1/298.257223563
+    f <- earthFlatteningFactor_WGS84
     b <- a*(1-f)
     b2 <- b^2
     e <- sqrt((a2 - b2)/a2)
@@ -66,6 +66,22 @@ ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
     LATLONALT <- if(degreesOutput)  c(rad2deg(lat), rad2deg(lon), alt) else c(lat, lon, alt)
     names(LATLONALT) <- c("latitude", "longitude", "altitude")
     return(LATLONALT)
+}
+
+LATLONtoECEF <- function(position_LATLON, degreesInput=TRUE) {
+    if(!degreesInput) {
+        position_LATLON <- rad2deg(position_LATLON)
+    }
+    lat <- position_LATLON[1]
+    lon <- position_LATLON[2]
+    alt <- position_LATLON[3]
+    # Prime-vertical radius of curvature
+    N <- earthRadius_WGS84/(sqrt(1 - earthEccentricity_WGS84^2 * sin(lat)^2))
+    position_ECEF <- c((N + alt) * cos(lat) * cos(lon),
+                       (N + alt) * cos(lat) * sin(lon),
+                       ((1 - earthEccentricity_WGS84^2) * N + alt) * sin(lat))
+    names(position_ECEF) <- NULL
+    return(position_ECEF)
 }
 
 TEMEtoLATLON <- function(position_TEME, dateTime, degreesOutput=TRUE) {
@@ -118,6 +134,12 @@ GCRFtoLATLON <- function(position_GCRF, dateTime, degreesOutput=TRUE) {
     hasData()
     ECEFcoords <- GCRFtoECEF(position_GCRF=position_GCRF, dateTime=dateTime)
     return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
+}
+
+LATLONtoGCRF <- function(position_LATLON, dateTime, degreesInput=TRUE) {
+    hasData()
+    ECEFcoords <- LATLONtoECEF(position_LATLON, degreesInput=degreesInput)
+    return(ECEFtoGCRF(ECEFcoords, dateTime=dateTime))
 }
 
 KOEtoECI <- function(a, e, i, M, omega, OMEGA, keplerAccuracy=10e-8, maxKeplerIterations=100) {

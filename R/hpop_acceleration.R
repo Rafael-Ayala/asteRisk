@@ -13,71 +13,71 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     legendre_moonTheta <- legendre(4, 4, moon_polar[2])
     legendre_sunTheta <- legendre(4, 4, sun_polar[2])
     # step 1 of corrections for solid Earth tides
-    dCnm20 <- (0.29525/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)
+    dCnm20 <- (0.29525/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)
                             *legendre_moonTheta$normLegendreValues[3,1] + 
-                               (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)
+                               (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)
                             *legendre_sunTheta$normLegendreValues[3,1] )
-    dCnm21 <- (0.29470/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)
+    dCnm21 <- (0.29470/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)
                             *legendre_moonTheta$normLegendreValues[3,2]*cos(moon_polar[1]) + 
-                                (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)
+                                (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)
                             *legendre_sunTheta$normLegendreValues[3,2]*cos(sun_polar[1]) )
-    dSnm21 <- (0.29470/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)
+    dSnm21 <- (0.29470/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)
                             *legendre_moonTheta$normLegendreValues[3,2]*(sin(moon_polar[1]))+ 
-                                (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)
+                                (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)
                             *legendre_sunTheta$normLegendreValues[3,2]*(sin(sun_polar[1])) )
-    dCnm22 <- (0.29801/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)
+    dCnm22 <- (0.29801/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)
                             *legendre_moonTheta$normLegendreValues[3,3]*cos(2*moon_polar[1])+ 
-                                (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                 legendre_sunTheta$normLegendreValues[3,3]*cos(2*sun_polar[1]) )
-    dSnm22 <- (0.29801/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+    dSnm22 <- (0.29801/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                 legendre_moonTheta$normLegendreValues[3,3]*(sin(2*moon_polar[1]))+
-                                (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                 legendre_sunTheta$normLegendreValues[3,3]*(sin(2*sun_polar[1])) )
-    dCnm30 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dCnm30 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,1]+ (GM_Sun/GM_Earth_TT)*
-                              ((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,1] )
-    dCnm31 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+                              ((earthRadius_EGM96/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,1] )
+    dCnm31 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,2]*cos(moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,2]*cos(sun_polar[1]) )
-    dSnm31 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dSnm31 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,2]*sin(moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,2]*sin(sun_polar[1]) )
-    dCnm32 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dCnm32 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,3]*cos(2*moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,3]*cos(2*sun_polar[1]) )
-    dSnm32 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dSnm32 <- (0.093/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,3]*sin(2*moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,3]*sin(2*sun_polar[1]) )
-    dCnm33 <- (0.094/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dCnm33 <- (0.094/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,4]*cos(3*moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,4]*cos(3*sun_polar[1]) )
-    dSnm33 <- (0.094/7)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*
+    dSnm33 <- (0.094/7)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*
                               legendre_moonTheta$normLegendreValues[4,4]*sin(3*moon_polar[1])+ 
-                              (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*
+                              (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*
                               legendre_sunTheta$normLegendreValues[4,4]*sin(3*sun_polar[1]) )
-    dCnm40 <- (-0.00087/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+    dCnm40 <- (-0.00087/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                  legendre_moonTheta$normLegendreValues[5,1]+ (GM_Sun/GM_Earth_TT)*
-                                 ((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[5,1])
-    dCnm41 <- (-0.00079/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+                                 ((earthRadius_EGM96/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[5,1])
+    dCnm41 <- (-0.00079/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                  legendre_moonTheta$normLegendreValues[5,2]*cos(moon_polar[1])+
-                                 (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                 (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                  legendre_sunTheta$normLegendreValues[5,2]*cos(sun_polar[1]) )
-    dSnm41 <- (-0.00079/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+    dSnm41 <- (-0.00079/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                  legendre_moonTheta$normLegendreValues[5,2]*sin(moon_polar[1])+
-                                 (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                 (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                  legendre_sunTheta$normLegendreValues[5,2]*sin(sun_polar[1]) )
-    dCnm42 <- (-0.00057/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+    dCnm42 <- (-0.00057/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                  legendre_moonTheta$normLegendreValues[5,3]*cos(2*moon_polar[1])+
-                                 (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                 (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                  legendre_sunTheta$normLegendreValues[5,3]*cos(2*sun_polar[1]) )
-    dSnm42 <- (-0.00057/5)*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*
+    dSnm42 <- (-0.00057/5)*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*
                                  legendre_moonTheta$normLegendreValues[5,3]*sin(2*moon_polar[1])+
-                                 (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*
+                                 (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*
                                  legendre_sunTheta$normLegendreValues[5,3]*sin(2*sun_polar[1]) )
     # step 2 of corrections for solid Earth tides
     invjday_results <- invjday(Mjd_UTC+2400000.5)
@@ -136,32 +136,32 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     legendre_moonTheta <- legendre(6, 6, moon_polar[2])
     legendre_sunTheta <- legendre(6, 6, sun_polar[2])
     
-    dSnm21 <- -0.3075/5*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,2]*sin(sun_polar[1]) )
-    dSnm22 <- -0.3075/5*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,3]*sin(2*sun_polar[1]) )
-    dSnm31 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,2]*sin(sun_polar[1]) )
-    dSnm32 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,3]*sin(2*sun_polar[1]) )
-    dSnm33 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,4]*sin(3*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,4]*sin(3*sun_polar[1]) )
-    dSnm41 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,2]*sin(sun_polar[1]) )
-    dSnm42 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,3]*sin(2*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,3]*sin(2*sun_polar[1]) )
-    dSnm43 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,4]*sin(3*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,4]*sin(3*sun_polar[1]) )
-    dSnm44 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,5]*sin(4*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,5]*sin(4*sun_polar[1]) )
-    dSnm51 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,2]*sin(moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,2]*sin(sun_polar[1]) )
-    dSnm52 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,3]*sin(2*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,3]*sin(2*sun_polar[1]) )
-    dSnm53 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,4]*sin(3*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,4]*sin(3*sun_polar[1]) )
-    dSnm54 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,5]*sin(4*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,5]*sin(4*sun_polar[1]) )
-    dSnm55 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,6]*sin(5*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,6]*sin(5*sun_polar[1]) )
-    dSnm61 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,2]*sin(moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,2]*sin(sun_polar[1]) )
-    dSnm62 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,3]*sin(2*sun_polar[1]) )
-    dSnm63 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,4]*sin(3*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,4]*sin(3*sun_polar[1]) )
-    dSnm64 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,5]*sin(4*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,5]*sin(4*sun_polar[1]) )
-    dSnm65 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,6]*sin(5*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,6]*sin(5*sun_polar[1]) )
-    dSnm66 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((r_ref/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,7]*sin(6*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((r_ref/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,7]*sin(6*sun_polar[1]) )
+    dSnm21 <- -0.3075/5*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,2]*sin(sun_polar[1]) )
+    dSnm22 <- -0.3075/5*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^3)*legendre_moonTheta$normLegendreValues[3,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^3)*legendre_sunTheta$normLegendreValues[3,3]*sin(2*sun_polar[1]) )
+    dSnm31 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,2]*sin(sun_polar[1]) )
+    dSnm32 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,3]*sin(2*sun_polar[1]) )
+    dSnm33 <- -0.195/7*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^4)*legendre_moonTheta$normLegendreValues[4,4]*sin(3*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^4)*legendre_sunTheta$normLegendreValues[4,4]*sin(3*sun_polar[1]) )
+    dSnm41 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,2]*sin(moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,2]*sin(sun_polar[1]) )
+    dSnm42 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,3]*sin(2*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,3]*sin(2*sun_polar[1]) )
+    dSnm43 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,4]*sin(3*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,4]*sin(3*sun_polar[1]) )
+    dSnm44 <- -0.132/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^5)*legendre_moonTheta$normLegendreValues[5,5]*sin(4*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^5)*legendre_sunTheta$normLegendreValues[5,5]*sin(4*sun_polar[1]) )
+    dSnm51 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,2]*sin(moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,2]*sin(sun_polar[1]) )
+    dSnm52 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,3]*sin(2*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,3]*sin(2*sun_polar[1]) )
+    dSnm53 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,4]*sin(3*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,4]*sin(3*sun_polar[1]) )
+    dSnm54 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,5]*sin(4*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,5]*sin(4*sun_polar[1]) )
+    dSnm55 <- -0.1032/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^6)*legendre_moonTheta$normLegendreValues[6,6]*sin(5*moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^6)*legendre_sunTheta$normLegendreValues[6,6]*sin(5*sun_polar[1]) )
+    dSnm61 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,2]*sin(moon_polar[1])+ (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,2]*sin(sun_polar[1]) )
+    dSnm62 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,3]*sin(2*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,3]*sin(2*sun_polar[1]) )
+    dSnm63 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,4]*sin(3*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,4]*sin(3*sun_polar[1]) )
+    dSnm64 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,5]*sin(4*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,5]*sin(4*sun_polar[1]) )
+    dSnm65 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,6]*sin(5*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,6]*sin(5*sun_polar[1]) )
+    dSnm66 <- -0.0892/9*( (GM_Moon/GM_Earth_TT)*((earthRadius_EGM96/moon_polar[3])^7)*legendre_moonTheta$normLegendreValues[7,7]*sin(6*moon_polar[1]) + (GM_Sun/GM_Earth_TT)*((earthRadius_EGM96/sun_polar[3])^7)*legendre_sunTheta$normLegendreValues[7,7]*sin(6*sun_polar[1]) )
     
-    c1 <- 4*pi*r_ref^2*1025/(5.9722e24)*(1-0.3075)
+    c1 <- 4*pi*earthRadius_EGM96^2*1025/(5.9722e24)*(1-0.3075)
     c2 <- GM_Moon/GM_Earth_TT
-    c3 <- (r_ref/moon_polar[3])
+    c3 <- (earthRadius_EGM96/moon_polar[3])
     c4 <- GM_Sun/GM_Earth_TT
-    c5 <- r_ref/sun_polar[3]
+    c5 <- earthRadius_EGM96/sun_polar[3]
     for(i in 3:7){
         for (j in 1:i){
             addition <- c1 / (3+2*(i-2)) * ( c2 * c3^i * legendre_moonTheta$normLegendreValues[i,j] * cos((j-1)*moon_polar[1]) + c4 * c5^i * legendre_sunTheta$normLegendreValues[i,j] * cos((j-1)*sun_polar[1]))
@@ -204,9 +204,9 @@ elasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     q2 <- 0
     q3 <- 0
     for(n in 0:n) {
-        b1 <- (-GM_Earth_TT/d^2)*(r_ref/d)^n*(n+1)
-        b2 <-  (GM_Earth_TT/d)*(r_ref/d)^n
-        b3 <-  (GM_Earth_TT/d)*(r_ref/d)^n
+        b1 <- (-GM_Earth_TT/d^2)*(earthRadius_EGM96/d)^n*(n+1)
+        b2 <-  (GM_Earth_TT/d)*(earthRadius_EGM96/d)^n
+        b3 <-  (GM_Earth_TT/d)*(earthRadius_EGM96/d)^n
         q1 <- sum(legendre_latgc$normLegendreValues[n+1,1:(m+1)]*(C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
         q2 <- sum(legendre_latgc$normLegendreDerivativeValues[n+1,1:(m+1)]*
                            (C[n+1,1:(m+1)]*cos((0:m)*lon)+S[n+1,1:(m+1)]*sin((0:m)*lon)))
