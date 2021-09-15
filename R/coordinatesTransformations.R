@@ -69,19 +69,19 @@ ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
 }
 
 LATLONtoECEF <- function(position_LATLON, degreesInput=TRUE) {
-    if(!degreesInput) {
-        position_LATLON <- rad2deg(position_LATLON)
-    }
     lat <- position_LATLON[1]
     lon <- position_LATLON[2]
     alt <- position_LATLON[3]
+    if(degreesInput) {
+        lat <- deg2rad(lat)
+        lon <- deg2rad(lon)
+    }
     # Prime-vertical radius of curvature
     N <- earthRadius_WGS84/(sqrt(1 - earthEccentricity_WGS84^2 * sin(lat)^2))
     position_ECEF <- c((N + alt) * cos(lat) * cos(lon),
                        (N + alt) * cos(lat) * sin(lon),
                        ((1 - earthEccentricity_WGS84^2) * N + alt) * sin(lat))
-    names(position_ECEF) <- NULL
-    return(position_ECEF)
+    return(unname(position_ECEF))
 }
 
 TEMEtoLATLON <- function(position_TEME, dateTime, degreesOutput=TRUE) {
@@ -98,7 +98,7 @@ ECEFtoGCRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
     hour <- date$hour
     minute <- date$min
     second <- date$sec
-    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     results <- ECEFtoECI(Mjd_UTC, c(position_ECEF, velocity_ECEF))
     return(list(
         position=as.numeric(results$position),
@@ -115,7 +115,7 @@ GCRFtoECEF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
     hour <- date$hour
     minute <- date$min
     second <- date$sec
-    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     results <- ECItoECEF(Mjd_UTC, c(position_GCRF, velocity_GCRF))
     return(list(
         position=as.numeric(results$position),

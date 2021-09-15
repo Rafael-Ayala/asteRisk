@@ -1,7 +1,7 @@
 ## These functions are implementations of those provided in the International
 ## Astronomical Union SOFA library, available at http://www.iausofa.org
 
-iauCal2jd <- function(year, month, day) {
+iauCal2jd <- function(year, month, day, hour=0, min=0, sec=0) {
     djm0 <- 2400000.5
     b <- 0
     c <- 0
@@ -18,27 +18,9 @@ iauCal2jd <- function(year, month, day) {
         a <- trunc(year/100)
         b <- 2 - a + floor(a/4)
     }
-    # Original code
-    # if (year < 1582) {
-    #     # if statement only for subsequent conditionals. TODO CHANGE 
-    # } else if (year > 1582) {
-    #     a <- trunc(year/100)
-    #     b <- 2 - a + floor(a / 4)
-    # } else if (month < 10) {
-    #     # TODO CHANGE 
-    # } else if (month > 10) { ## TODO VERIFY introduction of gregorian in 1582
-    #     a <- trunc(year/100)
-    #     b <- 2 - a + floor(a / 4)
-    # } else if (day <= 4) {
-    #     # TODO CHANGE
-    # } else if (day > 14) {
-    #     a <- trunc(year/100)
-    #     b <- 2 - a + floor(a / 4)
-    # } else {
-    #     stop("Please enter a valid calendar date")
-    # }
     jd <- trunc(365.25 * year + c) + trunc(30.6001 * (month + 1))
     jd <- jd + day + b + 1720994.5
+    jd <- jd + (hour+min/60+sec/3600)/24
     djm <- jd-djm0
     return(list(
         DJMJD0=djm0,

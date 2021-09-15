@@ -60,7 +60,7 @@ checkEqualsNumeric(testLATLON1[1], 0.1891839, tolerance=6e-6)
 
 testECEF3 <- LATLONtoECEF(testLATLON1)
 
-checkEqualsNumeric(testECEF3$position[1], -37325973.4, tolerance=3e-9)
+checkEqualsNumeric(testECEF3[1], -37325973.4, tolerance=3e-9)
 
 # Test TEMEtoLATLON
 

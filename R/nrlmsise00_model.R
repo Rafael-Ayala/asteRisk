@@ -976,7 +976,6 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     input$g_lat <- geodetic_results["latitude"]*(180/pi)
     input$g_long <- geodetic_results["longitude"]*(180/pi)
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
-
     TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
     UTC <- iauCal2jd_results$DATE + TIME
     TT <- UTC + TT_UTC/86400
@@ -987,6 +986,8 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
                                            iauCal2jd_results$DJMJD0, TT, rnpb)
     lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)
+    print("ESTO es LST")
+    print(list)
     input$lst <- lst
     i <- which(((invjday_results$year == asteRiskData::spaceWeather[, 1]) & 
                     (invjday_results$mon == asteRiskData::spaceWeather[, 2]) & 
@@ -1026,7 +1027,7 @@ NRLMSISE00model <- function(position_ECEF, dateTime) {
     hour <- date$hour
     minute <- date$min
     second <- date$sec
-    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     IERS_results <- IERS(asteRiskData::earthPositions, Mjd_UTC, "l")
     UT1_UTC <- IERS_results$UT1_UTC[[1]]
     TAI_UTC <- IERS_results$TAI_UTC[[1]]

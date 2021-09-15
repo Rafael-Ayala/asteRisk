@@ -23,7 +23,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
     minute <- date$min
     second <- date$sec
     initial_state <- c(position, velocity)
-    Mjd_UTC <- MJday(year, month, day, hour, minute, second)
+    Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     parameters = list(
         MJD_UTC = Mjd_UTC,
         solarArea = radiationArea,

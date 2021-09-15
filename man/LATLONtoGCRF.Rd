@@ -43,8 +43,8 @@ longitude <- -5.9845
 altitude <- 20000
 
 # Let´s calculate the corresponding coordinates in GCRF frame, assuming that
-# the provided coordinates were valid the 20th of October, 2020 at 15:00 UTC
+# the provided coordinates were valid the 20th of October, 2020 at 15:00:00 UTC
 
 coordinatesGCRF <- LATLONtoGCRF(c(latitude, longitude, altitude), 
-                                dateTime="2020-10-20 15:00")
+                                dateTime="2020-10-20 15:00:00")
 }

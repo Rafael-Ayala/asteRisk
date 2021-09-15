@@ -1,41 +1,3 @@
-MJday <- function(year, month, day, hour=0, min=0, sec=0) {
-    y <- year
-    m <- month
-    b <- 0
-    c <- 0
-    if (m <= 2) {
-        y <- y -1
-        m <- m + 12
-    }
-    if (y < 0) {
-        c <- -0.75
-    }
-    if (year < 1582) {
-        # if statement only for subsequent conditionals. TODO CHANGE
-    } else if (year > 1582) {
-        a <- trunc(y/100)
-        b <- 2 - a + floor(a / 4)
-    } else if (month < 10) {
-        # TODO CHANGE.
-    } else if (month > 10) { ## TODO VERIFY introduction of gregorian in 1582
-        a <- trunc(y/100)
-        b <- 2 - a + floor(a / 4)
-    } else if (day <= 4) {
-        # TODO CHANGE
-    } else if (day > 14) {
-        a <- trunc(y/100)
-        b <- 2 - a + floor(a / 4)
-    } else {
-        stop("Please enter a valid calendar date")
-    }
-    jd <- trunc(365.25*y + c) + trunc(30.6001 * (m+1))
-    jd <- jd + day + b + 1720994.5
-    jd <- jd + (hour+min/60+sec/3600)/24
-    Mjd <- jd - 2400000.5
-    return(Mjd)
-}
-
-
 IERS <- function(eop,Mjd_UTC,interp="n") {
     if(interp == "l") {
         mjd <- floor(Mjd_UTC)
@@ -66,16 +28,16 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
         mjd = (floor(Mjd_UTC))
         i <- which(mjd == eop[, 4])[1]
         eop <- as.numeric(eop[i, ])
-        # setting IERS Earth rotation parameters 
-        # (UT1-UTC [s], TAI-UTC [s], x ["], y ["])
+        # IERS Earth rotation parameters 
+        # (UT1-UTC in s, TAI-UTC in s, x in rads, y in rads)
         x_pole <- eop[5]/const_Arcs # Pole coordinate (rad)
         y_pole <- eop[6]/const_Arcs # Pole coordinate (rad)
         UT1_UTC <- eop[7] # UT1-UTC time difference (s)
         LOD <- eop[8] # Length of day (s)
         dpsi <- eop[9]/const_Arcs
         deps <- eop[10]/const_Arcs
-        dx_pole <- eop[11]/const_Arcs # Pole velocity? (rad)
-        dy_pole <- eop[12]/const_Arcs # Pole velocity? (rad)
+        dx_pole <- eop[11]/const_Arcs # Pole velocity (rad)
+        dy_pole <- eop[12]/const_Arcs # Pole velocity (rad)
         TAI_UTC <- eop[13] # TAI-UTC time difference (s)
     }
     return(list(
@@ -219,7 +181,7 @@ ECItoECEF <- function(MJD_UTC, Y0) {
 }
 
 Mjday_TDB <- function(Mjd_TT) {
-    # Given Modified julian date (TT), compute Modified julian date (TDB)
+    # Given Modified julian date (TT compatible), compute Modified julian date (TDB compatible)
     T_TT <- (Mjd_TT - 51544.5)/36525
     Mjd_TDB <- Mjd_TT + ( 0.001658*sin(628.3076*T_TT +6.2401)+
                               0.000022*sin(575.3385*T_TT+4.2970)+
@@ -248,7 +210,7 @@ cheb3D <- function(t, N, Ta, Tb, Cx, Cy, Cz) {
 }
 
 JPL_Eph_DE436 <- function(Mjd_TDB) {
-    # calculate equatorial position of sun, moon, and nine major planets 
+    # calculate equatorial position of sun, moon, and major planets 
     # using JPL Ephemerides
     JD <- Mjd_TDB + 2400000.5
     i <- which(JD > asteRiskData::DE436coeffs[, 1] & JD <= asteRiskData::DE436coeffs[, 2])[1]
