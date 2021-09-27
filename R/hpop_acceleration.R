@@ -316,7 +316,6 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     UT1_GPS <- timeDiffs_results$UT1_GPS[[1]]
     TT_UTC <- timeDiffs_results$TT_UTC[[1]]
     GPS_UTC <- timeDiffs_results$GPS_UTC[[1]]
-    
     JD <- MJD_UTC + 2400000.5
     invjday_results <- invjday(MJD_UTC+2400000.5)
     year <- invjday_results$year
@@ -325,28 +324,21 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     hour <- invjday_results$hour
     minute <- invjday_results$min
     sec <- invjday_results$sec
-    
     iauCal2jd_results <- iauCal2jd(year, month, day)
     DJMJD0 <-iauCal2jd_results$DJMJD0
     DATE <- iauCal2jd_results$DATE
-    
     TIME <- (60*(60*hour + minute) + sec)/86400
     UTC <- DATE + TIME
     TT <- UTC + TT_UTC/86400
     TUT <- TIME + UT1_UTC/86400
     UT1 <- DATE + TUT
-    
     PMM <- iauPom00(x_pole, y_pole, iauSp00(DJMJD0, TT))
     NPB <- iauPnm06a(DJMJD0, TT)
-
     theta <- iauRz(iauGst06(DJMJD0, UT1, DJMJD0, TT, NPB), diag(3))
-    
     E <- PMM %*% theta %*% NPB
-    
     MJD_TDB <- Mjday_TDB(TT)
     JPL_ephemerides <- JPL_Eph_DE436(MJD_TDB)
-    
-    # Acceleration due to Earth, with harmonic effects
+    # Acceleration due to Earth, with zonal harmonics
     a <- elasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSunGeocentric,
                                   JPL_ephemerides$positionMoon, Y[1:3], E,
                                   UT1_UTC, TT_UTC,

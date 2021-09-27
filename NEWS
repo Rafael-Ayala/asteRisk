@@ -1,5 +1,6 @@
 Changes in version 1.2.0 (2021-XX-XX)
 + Added functions to convert from geodetic latitude, longitude and altitude to ECEF and GCRF frames
++ Removed redundant internal functions and constants
 
 Changes in version 1.1.0 (2021-07-05)
 + Added functions to read RINEX navigation files for GPS and GLONASS satellites
