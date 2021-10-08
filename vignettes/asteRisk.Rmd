@@ -385,12 +385,12 @@ molniyaCr <- 1.2
 # a mismatch between the position derivative calculated at each propagation
 # point through SGP4/SDP4 and the actual velocity of the satellite.
 
-GCRF_coordinates <- TEMEtoGCRF(results_position_matrix[1,1:3],
-                               results_velocity_matrix[1,1:3], 
+GCRF_coordinates <- TEMEtoGCRF(results_position_matrix[1,1:3]*1000,
+                               results_velocity_matrix[1,1:3]*1000, 
                                molniya$dateTime)
 
-initialPosition <- GCRF_coordinates$position*1000
-initialVelocity <- GCRF_coordinates$velocity*1000
+initialPosition <- GCRF_coordinates$position
+initialVelocity <- GCRF_coordinates$velocity
 
 # Let´s use the HPOP to calculate the position each 2 minutes during a period
 # of 3 hours

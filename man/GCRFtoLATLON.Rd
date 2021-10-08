@@ -32,7 +32,7 @@ GCRFtoLATLON(position_GCRF, dateTime, degreesOutput=TRUE)
 }
 \value{
 A vector with three elements, corresponding to the latitude and longitude in
-degrees and the altitude in m.
+degrees (or radians if specified) and the altitude in m.
 }
 \references{
 https://arc.aiaa.org/doi/10.2514/6.2006-6753

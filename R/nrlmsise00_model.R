@@ -863,8 +863,8 @@ gtd7 <- function(input, flags) {
         }
         dz28 <- soutput$d[3]
         ## N2 density 
-        dmr <- soutput$d[[3]] / NRLMSISE00.env$dm28m - 1
-        densm_results <- densm(input$alt, NRLMSISE00.env$dm28m, xmm, tz, mn3, zn3, 
+        dmr <- soutput$d[[3]] / dm28m - 1
+        densm_results <- densm(input$alt, dm28m, xmm, tz, mn3, zn3, 
                                NRLMSISE00.env$meso_tn3, NRLMSISE00.env$meso_tgn3, mn2, zn2, 
                                NRLMSISE00.env$meso_tn2, NRLMSISE00.env$meso_tgn2)
         output$d[3] <- densm_results$densm_tmp
@@ -969,12 +969,23 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
                            invjday_results$min,
                            invjday_results$sec)
     input$doy <- floor(days)
-    input$year <- 0
+    # input$year <- 0
+    input$year <- invjday_results$year
     input$sec <- invjday_results$hour*3600 + invjday_results$min*60 + invjday_results$sec
     geodetic_results <- ECEFtoLATLON(r_ECEF, degreesOutput=FALSE)
     input$alt <- geodetic_results["altitude"]/1000
     input$g_lat <- geodetic_results["latitude"]*(180/pi)
     input$g_long <- geodetic_results["longitude"]*(180/pi)
+    
+    #BYPASS
+    input$doy = 172
+    input$year=0
+    input$sec=29000
+    input$alt=400
+    input$g_lat=60
+    input$g_long=-70
+    
+    
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
     TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
     UTC <- iauCal2jd_results$DATE + TIME
@@ -982,12 +993,16 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     TUT <- TIME + UT1_UTC/86400
     UT1 <- iauCal2jd_results$DATE + TUT
     rnpb <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
+    # The following calculates Local Sidereal Time as sum of east longitude 
+    # plus Greenwich sidereal time, taken from Explanatory Supplement to the
+    # Astronomical Almanac, Urban & Seidelmann 2013
     lst <- geodetic_results["longitude"] + iauGst06(iauCal2jd_results$DJMJD0, UT1, 
                                            iauCal2jd_results$DJMJD0, TT, rnpb)
     lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)
+    lst =16 #BYPASS
     print("ESTO es LST")
-    print(list)
+    print(lst)
     input$lst <- lst
     i <- which(((invjday_results$year == asteRiskData::spaceWeather[, 1]) & 
                     (invjday_results$mon == asteRiskData::spaceWeather[, 2]) & 

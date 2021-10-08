@@ -1,9 +1,24 @@
 calculatePolarMotionMatrix <- function(julianDate) {
-    MJD <- julianDate - 2400000.5
-    A <- 2 * pi * (MJD - 57226) / 365.25
-    C <- 2 * pi * (MJD - 57226) / 435
-    xp <- (0.1033 + 0.0494*cos(A) + 0.0482*sin(A) + 0.0297*cos(C) + 0.0307*sin(C)) * 4.84813681e-6
-    yp <- (0.3498 + 0.0441*cos(A) - 0.0393*sin(A) + 0.0307*cos(C) - 0.0297*sin(C)) * 4.84813681e-6
+    hasData()
+    # Old code where polar coefficients xp and yp are calculated instead of 
+    # retrieved from data, based on Grady Hillhouse C++ implementation of
+    # Vallado's MatLab implementation
+    # MJD <- julianDate - 2400000.5
+    # A <- 2 * pi * (MJD - 57226) / 365.25
+    # C <- 2 * pi * (MJD - 57226) / 435
+    # xp <- (0.1033 + 0.0494*cos(A) + 0.0482*sin(A) + 0.0297*cos(C) + 0.0307*sin(C)) * 4.84813681e-6
+    # yp <- (0.3498 + 0.0441*cos(A) - 0.0393*sin(A) + 0.0307*cos(C) - 0.0297*sin(C)) * 4.84813681e-6
+    # polarMotionMatrix <- matrix(c(cos(xp), 0, -sin(xp),
+    #                               sin(xp)*sin(yp), cos(yp), cos(xp)*sin(yp),
+    #                               sin(xp)*cos(yp), -sin(yp), cos(xp)*cos(yp)),
+    #                             nrow=3, ncol=3, byrow=TRUE)
+    # New code using observed/predicted values retrieved from Celestrak, still
+    # using 80's theory
+    MJD <- trunc(julianDate - 2400000.5)
+    earthPositionsRow <- asteRiskData::earthPositions[asteRiskData::earthPositions[,4] == MJD, ]
+    # Multiplication factor to convert from arcseconds to radians
+    xp <- earthPositionsRow[5] * 4.84813681e-6
+    yp <- earthPositionsRow[6] * 4.84813681e-6
     polarMotionMatrix <- matrix(c(cos(xp), 0, -sin(xp),
                                   sin(xp)*sin(yp), cos(yp), cos(xp)*sin(yp),
                                   sin(xp)*cos(yp), -sin(yp), cos(xp)*cos(yp)),
@@ -23,7 +38,12 @@ TEMEtoECEF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     position_PEF <- as.vector(t(PEF_TOD_matrix) %*% position_TEME)
     polarMotionMatrix <- calculatePolarMotionMatrix(julianDate)
     position_ECEF <- as.vector(t(polarMotionMatrix) %*% position_PEF)
-    omegaEarth <- c(0, 0, 7.29211514670698e-05 * (1.0  - 0.002/86400.0))
+    # Old version uses 0.002 as constant value for Length of Day (LOD)
+    # omegaEarth <- c(0, 0, 7.29211514670698e-05 * (1.0  - 0.002/86400.0))
+    # Now changed to get exact value from EOP tables
+    MJD <- trunc(julianDate - 2400000.5)
+    LOD <- asteRiskData::earthPositions[asteRiskData::earthPositions[,4] == MJD, 8]
+    omegaEarth <- c(0, 0, 7.29211514670698e-05 * (1.0  - LOD/86400.0))
     velocity_PEF <- as.vector(t(PEF_TOD_matrix) %*% velocity_TEME) -
         c(omegaEarth[2] * position_PEF[3] - omegaEarth[3] * position_PEF[2],
           omegaEarth[3] * position_PEF[1] - omegaEarth[1] * position_PEF[3],

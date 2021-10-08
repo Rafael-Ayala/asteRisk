@@ -2,6 +2,11 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
     if(interp == "l") {
         mjd <- floor(Mjd_UTC)
         i <- which(mjd == eop[, 4])[1]
+        if(is.na(i)) {
+            warning(strwrap("No Earth Orientation Parameters found for the
+                            specified date. Try to obtain latest space data
+                            by running getLatestSpaceData()∫"))
+        }
         preeop <- as.numeric(eop[i, ])
         nexteop <- as.numeric(eop[i+1, ])
         mfme <- 1440*(Mjd_UTC - floor(Mjd_UTC))

@@ -19,8 +19,8 @@ LATLONtoGCRF(position_LATLON, dateTime, degreesInput=TRUE)
 \arguments{
   \item{position_LATLON}{Vector with the latitude, longitude and altitude of the
   object. Latitude and longitude can be provided in sexagesimal degrees or in 
-  radians (by default, decimal degrees are asumed). Altitude must be provided in 
-  meters.
+  radians (by default, sexagesimal degrees are asumed). Altitude must be 
+  provided in meters.
   }
   \item{dateTime}{Date-time string with the date and time in UTC corresponding
   to the provided geodetic coordinates.

@@ -42,19 +42,12 @@ checkEquals(testSGDP4_2$algorithm, "sdp4")
 checkEqualsNumeric(testSGDP4_1$position[1], 231.5594, tolerance=5e-7)
 checkEqualsNumeric(testSGDP4_2$position[1], 5501.081, tolerance=2e-7)
 
-# Test TEMEtoECEF
-
-testECEF <- TEMEtoECEF(testSGDP4_2$position*1000,
-                       testSGDP4_2$velocity*1000,
-                       "2006-06-27 00:58:29")
-
-checkEqualsNumeric(testECEF$position[1], -37325973.4, tolerance=3e-9)
-
 # Test ECEFtoLATLON
 
-testLATLON1 <- ECEFtoLATLON(testECEF$position)
+# Provided values are those obtained by test of TEMEtoECEF
+testLATLON1 <- ECEFtoLATLON(c(-37325973.4, 19151626.6, 138376.3))
 
-checkEqualsNumeric(testLATLON1[1], 0.1891839, tolerance=6e-6)
+checkEqualsNumeric(testLATLON1[1], 0.1891839, tolerance=6e-5)
 
 # Test LATLONtoECEF
 
@@ -67,7 +60,7 @@ checkEqualsNumeric(testECEF3[1], -37325973.4, tolerance=3e-9)
 testLATLON2 <- TEMEtoLATLON(testSGDP4_2$position*1000,
                             "2006-06-27 00:58:29")
 
-checkEqualsNumeric(testLATLON2[1], 0.1891839, tolerance=6e-6)
+checkEqualsNumeric(testLATLON2[1], 0.1891839, tolerance=6e-5)
 
 # Test readGLONASSNavigationRINEX
 
@@ -85,6 +78,14 @@ checkTrue(length(testGPSnav$messages) == 3)
 
 
 if (requireNamespace("asteRiskData", quietly = TRUE)) {
+    # Test TEMEtoECEF
+    
+    testECEF <- TEMEtoECEF(testSGDP4_2$position*1000,
+                           testSGDP4_2$velocity*1000,
+                           "2006-06-27 00:58:29")
+    
+    checkEqualsNumeric(testECEF$position[1], -37325973.4, tolerance=3e-9)
+    
     # Test TEMEtoGCRF
     
     testGCRF <- TEMEtoGCRF(testSGDP4_2$position*1000,
@@ -114,7 +115,7 @@ if (requireNamespace("asteRiskData", quietly = TRUE)) {
     testLATLON3 <- GCRFtoLATLON(testGCRF$position,
                                 "2006-06-27 00:58:29")
     
-    checkEqualsNumeric(testLATLON3[1], 0.1891839, tolerance=6e-6)
+    checkEqualsNumeric(testLATLON3[1], 0.1891839, tolerance=6e-5)
     
     # Test ECItoKOE
     

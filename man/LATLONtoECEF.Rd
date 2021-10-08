@@ -16,8 +16,8 @@ LATLONtoECEF(position_LATLON, degreesInput=TRUE)
 \arguments{
   \item{position_LATLON}{Vector with the latitude, longitude and altitude of the
   object. Latitude and longitude can be provided in sexagesimal degrees or in 
-  radians (by default, decimal degrees are asumed). Altitude must be provided in 
-  meters.
+  radians (by default, sexagesimal degrees are asumed). Altitude must be 
+  provided in meters.
   }
   \item{degreesInput}{Logical indicating if the input latitude and longitude are
   in sexagesimal degrees. If \code{degreesInput=FALSE}, the input will be
