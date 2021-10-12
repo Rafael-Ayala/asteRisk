@@ -13,7 +13,7 @@ calculatePolarMotionMatrix <- function(julianDate) {
     #                               sin(xp)*cos(yp), -sin(yp), cos(xp)*cos(yp)),
     #                             nrow=3, ncol=3, byrow=TRUE)
     # New code using observed/predicted values retrieved from Celestrak, still
-    # using 80's theory
+    # using 80's nutation theory
     MJD <- trunc(julianDate - 2400000.5)
     earthPositionsRow <- asteRiskData::earthPositions[asteRiskData::earthPositions[,4] == MJD, ]
     # Multiplication factor to convert from arcseconds to radians

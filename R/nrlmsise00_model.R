@@ -947,7 +947,32 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
         sw = rep(0, 24),
         swc = rep(0, 24)
     )
-    ap_a <- numeric(7)
+    # Meaning of flags set through switches: (currently set values: all 1, 
+    # except 0 for 1 and -1 for 10)
+    # 1 - if 1, output in m and kg instead of cm and g 
+    # 2 - consider F10.7 effect on mean
+    # 3 - consider latitude variation of gravity
+    # 4 - consider symmetrical annual effects
+    # 5 - consider symmetrical semiannual effects
+    # 6 - consider asymmetrical annual effects
+    # 7 - consider asymmetrical semiannual effects
+    # 8 - consider diurnal effects
+    # 9 - consider semidiurnal effects
+    # 10 - consider magnetic activity based on daily Ap indeces
+    # 11 - consider all UT/long effects
+    # 12 - consider longitudinal effects
+    # 13 - consider UT and mixed UT/long effects
+    # 14 - consider mixed AP/UT/LONG effects
+    # 15 - consider terdiurnal effects
+    # 16 - consider departures from diffusive equilibrium
+    # 17 - consider all TINF variations
+    # 18 - consider all TLB variations
+    # 19 - consider all TN1 variations
+    # 20 - consider all S variations
+    # 21 - consider all TN2 variations
+    # 22 - consider all NLB variations
+    # 22 - consider all TN3 variations
+    # 23 - consider turbo scale height variations
     input <- list(
         year = 0,
         doy = 0,
@@ -959,7 +984,7 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
         f107A = 0,
         f107 = 0,
         ap = 0,
-        ap_a = ap_a
+        ap_a = numeric(7)
     )
     invjday_results <- invjday(Mjd_UTC+2400000.5)
     days <- fractionalDays(invjday_results$year,
@@ -976,16 +1001,6 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     input$alt <- geodetic_results["altitude"]/1000
     input$g_lat <- geodetic_results["latitude"]*(180/pi)
     input$g_long <- geodetic_results["longitude"]*(180/pi)
-    
-    #BYPASS
-    input$doy = 172
-    input$year=0
-    input$sec=29000
-    input$alt=400
-    input$g_lat=60
-    input$g_long=-70
-    
-    
     iauCal2jd_results <- iauCal2jd(invjday_results$year, invjday_results$month, invjday_results$day)
     TIME <- (60*(60*invjday_results$hour + invjday_results$min) + invjday_results$sec)/86400
     UTC <- iauCal2jd_results$DATE + TIME
@@ -1000,34 +1015,63 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
                                            iauCal2jd_results$DJMJD0, TT, rnpb)
     lst <- lst %% (2*pi)
     lst <- (lst*24)/(2*pi)
-    lst =16 #BYPASS
-    print("ESTO es LST")
-    print(lst)
     input$lst <- lst
     i <- which(((invjday_results$year == asteRiskData::spaceWeather[, 1]) & 
                     (invjday_results$mon == asteRiskData::spaceWeather[, 2]) & 
                     (invjday_results$day == asteRiskData::spaceWeather[, 3])))[1]
-    sw <- as.numeric(asteRiskData::spaceWeather[i, ])
-    input$ap <- sw[23]
-    input$ap_a[1] <- sw[23] 
-    input$ap_a[2] <- sw[15] 
-    sw_1 <- as.numeric(asteRiskData::spaceWeather[i-1, ])
-    input$ap_a[3] <- sw_1[22] 
-    input$ap_a[4] <- sw_1[21] 
-    input$ap_a[5] <- sw_1[20] 
-    sum <- sw_1[19]+sw_1[18]+sw_1[17]+sw_1[16]+sw_1[15]
-    sw_2 <- as.numeric(asteRiskData::spaceWeather[i-2, ])
-    sum <- sum + sw_2[22] + sw_2[21]  +sw_2[20]
-    input$ap_a[6] <- sum/8 
-    sw_3 <- as.numeric(asteRiskData::spaceWeather[i-3, ])
-    sum <- sw_2[19] + sw_2[18] + sw_2[17] + sw_2[16] + 
-          sw_2[15] + sw_3[22] + sw_3[21] + sw_3[20]
-    input$ap_a[7] <- sum/8
-    input$f107 <- sw[31]  
-    input$f107A <- sw[33]   
+    spaceWeather_current <- as.numeric(asteRiskData::spaceWeather[i, ])
+    spaceWeather_past1day <- as.numeric(asteRiskData::spaceWeather[i-1, ])
+    spaceWeather_past2days <- as.numeric(asteRiskData::spaceWeather[i-2, ])
+    spaceWeather_past3days <- as.numeric(asteRiskData::spaceWeather[i-3, ])
+    # Column 23 of space weather data contains average Ap index for current day
+    input$ap <- spaceWeather_current[23]
+    # ap_a array contains the following elements:
+    # 1 - average Ap index for current day (column 23)
+    # 2 - 3-hour Ap index for current time
+    # 3 - 3-hour Ap index for 3 hours before current time
+    # 4 - 3-hour Ap index for 6 hours before current time
+    # 5 - 3-hour Ap index for 9 hours before current time
+    # 6 - average of 8 3-hour Ap indices from 12 h to 33 h before current time
+    # 7 - average of 8 3-hour Ap indices from 36 h to 57 h before current time
+    input$ap_a[1] <- spaceWeather_current[23]
+    ap3h_currentColumn <- invjday_results$hour %/% 3 + 15
+    # Series of Ap values for 3-hour intervals from current value to 3 days 
+    # before, to ensure that values up to 57 hours before are stored
+    # Therefore, element 1 is Ap index for current time (3-hour interval),
+    # and each following element is the Ap index for a 3-hour interval 3 hour
+    # before the previous element
+    ap3h_series <- c(spaceWeather_current[ap3h_currentColumn:15],
+                     spaceWeather_past1day[22:15],
+                     spaceWeather_past2days[22:15],
+                     spaceWeather_past3days[22:15])
+    input$ap_a[2] <- ap3h_series[1]
+    input$ap_a[3] <- ap3h_series[2]
+    input$ap_a[4] <- ap3h_series[3]
+    input$ap_a[5] <- ap3h_series[4]
+    input$ap_a[6] <- mean(ap3h_series[5:12])
+    input$ap_a[7] <- mean(ap3h_series[13:20])
+    # f107 and f107A values in input are, respectively, F10.7 daily solar radio 
+    # flux for the previous day and the 81-day average of F10.7 daily solar
+    # radio flux centered on the current day 
+    # Current version uses:
+    # - Observed, unadjusted F10.7 value (column 31 of space weather data for
+    #   previous day). Not using value adjusted to 1 AU since this is specified 
+    #   by the model.
+    # - Average of F10.7 centered in target day (columnn 32 of space weather
+    #   data for current day). Also not adjusted to 1 AU.
+    input$f107 <- spaceWeather_past1day[31]  
+    input$f107A <- spaceWeather_current[32]
+    # For altitudes below 80 km, the effects of Ap and F10.7 are not well
+    # understood. As specified by the NRLMSISE-00 model, for these altitudes
+    # the values should be set to 150 for f107 and f107A, and 4 for ap
+    if(input$alt < 80){
+        input$ap <- 4
+        input$ap_a <- rep(4, 7)
+        input$f107 <- 150
+        input$f107a <- 150
+    } 
     output <- gtd7d(input, flags)
     output_densities <- output$d
-    #dens <- 1e3*output_densities[[6]]
     output_densities[6] <- 1e3*output_densities[6]
     names(output_densities) <- c("He", "O", "N2", "O2", "Ar", "Total", "H",
                                  "N", "AnomalousO")
