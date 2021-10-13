@@ -119,8 +119,6 @@ parseGLONASSNavigationRINEXlines <- function(lines) {
     epochMinute <- as.numeric(substr(line1, 16, 17))
     epochSecond <- as.numeric(substr(line1, 18, 22))
     clockBias <- as.numeric(substr(line1, 23, 41))
-    clockDrift <- as.numeric(substr(line1, 42, 60))
-    clockDriftRate <- as.numeric(substr(line1, 61, 79))
     relativeFreqBias <- as.numeric(substr(line1, 42, 60))
     messageFrameTime <- as.numeric(substr(line1, 61, 79))
     positionX <- as.numeric(substr(line2, 4, 22))
@@ -144,7 +142,7 @@ parseGLONASSNavigationRINEXlines <- function(lines) {
                             epochHour, ":", epochMinute, ":", epochSecond, 
                             sep="")
     dateTimePOSIXct <- as.POSIXct(dateTimeString)
-    UTCDateTimePOSIXct <- dateTimePOSIXct # - 3*3600
+    UTCDateTimePOSIXct <- dateTimePOSIXct
     UTCDateTimeString <- as.character(UTCDateTimePOSIXct) # In UTC
     return(list(
         satelliteNumber=satelliteNumber,

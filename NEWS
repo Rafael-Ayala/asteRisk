@@ -1,6 +1,9 @@
 Changes in version 1.2.0 (2021-XX-XX)
 + Added functions to convert from geodetic latitude, longitude and altitude to ECEF and GCRF frames
 + Removed redundant internal functions and constants
++ Now actual Earth Orientation Parameters are used to calculate polar motion matrices
++ Corrections to the space weather parameters used by the NRLMSISE-00 model have been applied
++ Fixed bug when reading fields of RINEX GLONASS navigation files
 
 Changes in version 1.1.0 (2021-07-05)
 + Added functions to read RINEX navigation files for GPS and GLONASS satellites
