@@ -103,7 +103,7 @@ readTLE <- function(filename) {
     return(parsedTLEs)
 }
 
-parseGLONASSNavigationRINEXlines <- function(lines) {
+parseGLONASSNavigationRINEXlines <- function(lines, tauC=0) {
     if(length(lines) != 4) {
         stop("Invalid GLONASS navigation RINEX file")
     }
@@ -118,7 +118,7 @@ parseGLONASSNavigationRINEXlines <- function(lines) {
     epochHour <- as.numeric(substr(line1, 13, 14))
     epochMinute <- as.numeric(substr(line1, 16, 17))
     epochSecond <- as.numeric(substr(line1, 18, 22))
-    clockBias <- as.numeric(substr(line1, 23, 41))
+    clockBias <- -as.numeric(substr(line1, 23, 41))
     relativeFreqBias <- as.numeric(substr(line1, 42, 60))
     messageFrameTime <- as.numeric(substr(line1, 61, 79))
     positionX <- as.numeric(substr(line2, 4, 22))
@@ -141,9 +141,7 @@ parseGLONASSNavigationRINEXlines <- function(lines) {
     dateTimeString <- paste(epochYear, "-", epochMonth, "-", epochDay, " ", 
                             epochHour, ":", epochMinute, ":", epochSecond, 
                             sep="")
-    dateTimePOSIXct <- as.POSIXct(dateTimeString)
-    UTCDateTimePOSIXct <- dateTimePOSIXct
-    UTCDateTimeString <- as.character(UTCDateTimePOSIXct) # In UTC
+    correctedEphemerisUTC <- as.nanotime(as.POSIXct(dateTimeString, tz="UTC")) + clockBias*1e9 + tauC*1e9 # AQUIAQUIAQUI
     return(list(
         satelliteNumber=satelliteNumber,
         epochYearShort=epochYearShort,
@@ -152,7 +150,7 @@ parseGLONASSNavigationRINEXlines <- function(lines) {
         epochHour=epochHour,
         epochMinute=epochMinute,
         epochSecond=epochSecond,
-        UTCepochDateTime=UTCDateTimeString,  # TODO consider clock bias difference GLONASS-UTC
+        ephemerisUTCTime=correctedEphemerisUTC,
         clockBias=clockBias,
         relativeFreqBias=relativeFreqBias,
         messageFrameTime=messageFrameTime,
@@ -191,7 +189,7 @@ parseGLONASSNavigationRINEXheaderLines <- function(lines) {
         refYear <- as.numeric(substr(systemTimeCorrectionLine, 1, 6))
         refMonth <- as.numeric(substr(systemTimeCorrectionLine, 7, 12))
         refDay <- as.numeric(substr(systemTimeCorrectionLine, 13, 18))
-        sysTimeCorrection <- as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 22, 40)))
+        sysTimeCorrection <- -as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 22, 40)))
     } else {
         systemTimeCorrectionLine <- NULL
         refYear <- NULL
@@ -235,14 +233,16 @@ readGLONASSNavigationRINEX <- function(filename) {
     startingLines <- seq(1, by=messageNumberLines, length.out = numberMessages)
     for(i in 1:length(startingLines)) {
         singleMessageLines <- bodyLines[startingLines[i]:(startingLines[i]+messageNumberLines-1)]
-        parsedMessages[[i]] <- parseGLONASSNavigationRINEXlines(singleMessageLines)
+        parsedMessages[[i]] <- parseGLONASSNavigationRINEXlines(singleMessageLines, tauC=headerFields$sysTimeCorrection)
     }
     return(list(
         header=headerFields, 
         messages=parsedMessages))
 }
 
-parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0) {
+parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
+                                         deltaUTCA1=0, referenceTimeUTC,
+                                         referenceWeekUTC) {
     if(length(lines) != 8) {
         stop("Invalid GPS navigation RINEX file")
     }
@@ -256,12 +256,12 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0) {
     line7 <- gsub("D", "E", lines[7], ignore.case=TRUE)
     line8 <- gsub("D", "E", lines[8], ignore.case=TRUE)
     satellitePRNCode <- as.numeric(substr(line1, 1, 2))
-    epochYearShort <- as.numeric(substr(line1, 4, 5))
-    epochMonth <- as.numeric(substr(line1, 7, 8))
-    epochDay <- as.numeric(substr(line1, 10, 11))
-    epochHour <- as.numeric(substr(line1, 13, 14))
-    epochMinute <- as.numeric(substr(line1, 16, 17))
-    epochSecond <- as.numeric(substr(line1, 18, 22))
+    tocYearShort <- as.numeric(substr(line1, 4, 5))
+    tocMonth <- as.numeric(substr(line1, 7, 8))
+    tocDay <- as.numeric(substr(line1, 10, 11))
+    tocHour <- as.numeric(substr(line1, 13, 14))
+    tocMinute <- as.numeric(substr(line1, 16, 17))
+    tocSecond <- as.numeric(substr(line1, 18, 22))
     clockBias <- as.numeric(substr(line1, 23, 41))
     clockDrift <- as.numeric(substr(line1, 42, 60))
     clockDriftRate <- as.numeric(substr(line1, 61, 79))
@@ -273,17 +273,19 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0) {
     eccentricity <- as.numeric(substr(line3, 23, 41))
     latitudeCorrectionSine <- as.numeric(substr(line3, 42, 60))
     semiMajorAxis <- as.numeric(substr(line3, 61, 79))^2 # RINEX file contains sqrt
-    timeOfEphemeris <- as.numeric(substr(line4, 4, 22))
+    calculatedMeanMotion <- semiMajorAxisToMeanMotion(semiMajorAxis, outputRevsPerDay = FALSE)
+    correctedMeanMotion <- calculatedMeanMotion + deltaN
+    toeSecondsOfGPSWeek <- as.numeric(substr(line4, 4, 22))
     inclinationCorrectionCosine <- as.numeric(substr(line4, 23, 41))
     ascension <- as.numeric(substr(line4, 42, 60)) # radians, OMEGA angle
     inclinationCorrectionSine <- as.numeric(substr(line4, 61, 79))
-    inclination <- as.numeric(substr(line5, 4, 22)) # radiands, initial inclination
+    inclination <- as.numeric(substr(line5, 4, 22)) # radians, initial inclination
     radiusCorrectionCosine <- as.numeric(substr(line5, 23, 41))
     perigeeArgument <- as.numeric(substr(line5, 42, 60)) # radians, omega angle
-    OMEGADot <- as.numeric(substr(line5, 61, 79)) # radians/s, derivtive of OMEGA
+    OMEGADot <- as.numeric(substr(line5, 61, 79)) # radians/s, derivative of OMEGA
     inclinationRate <- as.numeric(substr(line6, 4, 22)) 
     codesL2Channel <- as.numeric(substr(line6, 23, 41))
-    GPSWeek <- as.numeric(substr(line6, 42, 60)) 
+    toeGPSWeek <- as.numeric(substr(line6, 42, 60))
     dataFlagL2P <- as.numeric(substr(line6, 61, 79))
     satelliteAccuracy <- as.numeric(substr(line7, 4, 22)) 
     satelliteHealthCode <- as.numeric(substr(line7, 23, 41))
@@ -291,38 +293,124 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0) {
     IODC <- as.numeric(substr(line7, 61, 79))
     transmissionTime <- as.numeric(substr(line8, 4, 22)) # seconds of GPS week
     fitInterval <- as.numeric(substr(line8, 23, 41))
-    if (is.numeric(epochYearShort)) if(epochYearShort >= 80) {
-        epochYear <- 1900 + epochYearShort
+    if (is.numeric(tocYearShort)) if(tocYearShort >= 80) {
+        tocYear <- 1900 + tocYearShort
     } else {
-        epochYear <- 2000 + epochYearShort
+        tocYear <- 2000 + tocYearShort
     }
-    dateTimeString <- paste(epochYear, "-", epochMonth, "-", epochDay, " ", 
-                            epochHour, ":", epochMinute, ":", epochSecond, 
+    tocDateTimeString <- paste(tocYear, "-", tocMonth, "-", tocDay, " ", 
+                            tocHour, ":", tocMinute, ":", tocSecond, 
                             sep="")
-    dateTimePOSIXct <- as.POSIXct(dateTimeString)
-    UTCDateTimePOSIXct <- dateTimePOSIXct - leapSeconds
-    UTCDateTimeString <- as.character(UTCDateTimePOSIXct) # In UTC
+    tocGPSTseconds <- as.double(difftime(tocDateTimeString, "1980-01-06 00:00:00", tz="UTC", units="secs")) 
+    tocGPSWeek <- tocGPSTseconds%/%604800
+    tocSecondsOfGPSWeek <- tocGPSTseconds%%604800
+    differenceToeToc <- toeSecondsOfGPSWeek - tocSecondsOfGPSWeek
+    if(differenceToeToc > 302400) differenceToeToc <- differenceToeToc - 604800
+    if(differenceToeToc < -302400) differenceToeToc <- differenceToeToc + 604800
+    F_constant <- -2*sqrt(GM_Earth_TCB)/c_light^2
+    kepler_sol_1 <- meanAnomaly
+    kepler_sol_current <- kepler_sol_1
+    convergence <- FALSE
+    iterations <- 0
+    keplerAccuracy=10e-8
+    maxKeplerIterations=100
+    while(!convergence) {
+        iterations <- iterations + 1
+        delta_kepler_sol <- ( (meanAnomaly - kepler_sol_current + eccentricity*sin(kepler_sol_current)) / (1 - eccentricity*cos(kepler_sol_current)) )
+        kepler_sol_current <- kepler_sol_current + delta_kepler_sol
+        if(iterations > maxKeplerIterations | delta_kepler_sol < keplerAccuracy) {
+            convergence <- TRUE
+        }
+    }
+    eccentricAnomaly <- kepler_sol_current
+    relativityDeltaSVtimeToGPST <- F_constant * eccentricity*(sqrt(semiMajorAxis)) * sin(eccentricAnomaly)
+    deltaSVtimeToGPST <- clockBias + clockDrift*differenceToeToc + clockDriftRate*differenceToeToc^2 + relativityDeltaSVtimeToGPST
+    toeSecondsOfGPSWeekGPST <- toeSecondsOfGPSWeek - deltaSVtimeToGPST
+    differenceToeGPSTTot <- toeSecondsOfGPSWeekGPST - referenceTimeUTC
+    deltaGPSTToUTC <- leapSeconds + deltaUTCA0 + deltaUTCA1*(differenceToeGPSTTot + 604800*(tocGPSWeek - referenceWeekUTC))
+    # ephemerisUTCDateTime <- as.POSIXct(toeGPSWeek * 604800 + toeSecondsOfGPSWeek - deltaSVtimeToGPST - deltaGPSTToUTC, origin="1980-01-06 00:00:00", tz="UTC")
+    # ephemerisUTCDateTimeString <- as.character(ephemerisUTCDateTime) # In UTC
+    # Modified to use nanotime package to handle nanosecond accuracy
+    ephemerisUTCDateTime <- as.POSIXct(toeGPSWeek * 604800 + toeSecondsOfGPSWeek, origin="1980-01-06 00:00:00", tz="UTC")
+    ephemerisUTCDateTime <- as.nanotime(ephemerisUTCDateTime) - deltaSVtimeToGPST*1e9 - deltaGPSTToUTC*1e9
+    # Calculation of ECEF ephemeris according to IS-GPS-200M
+    # trueAnomaly <- 2 * atan2(sqrt(1 + eccentricity) * sin(eccentricAnomaly/2), sqrt(1 - eccentricity) * cos(eccentricAnomaly/2))
+    trueAnomaly <- atan2(sqrt(1 - eccentricity^2) * sin(eccentricAnomaly), cos(eccentricAnomaly) - eccentricity)
+    # trueAnomaly <- 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly/2))
+    latitudeArgument <- trueAnomaly + perigeeArgument
+    deltauk <- latitudeCorrectionSine * sin(2*latitudeArgument) + latitudeCorrectionCosine * cos(2*latitudeArgument)
+    deltark <- radiusCorrectionSine * sin(2*latitudeArgument) + radiusCorrectionCosine * cos(2*latitudeArgument)
+    deltaik <- inclinationCorrectionSine * sin(2*latitudeArgument) + inclinationCorrectionCosine * cos(2*latitudeArgument)
+    correctedLatitudeArgument <- latitudeArgument + deltauk
+    correctedRadius <- semiMajorAxis * (1 - eccentricity*cos(eccentricAnomaly)) + deltark
+    correctedInclination <- inclination + deltaik
+    # Positions in orbital plane
+    xkprime <- correctedRadius*cos(correctedLatitudeArgument)
+    ykprime <- correctedRadius*sin(correctedLatitudeArgument)
+    correctedAscension <- ascension - omegaEarth*toeSecondsOfGPSWeek
+    position_ECEF <- c( # in m
+        xkprime*cos(correctedAscension) - ykprime*cos(correctedInclination)*sin(correctedAscension),
+        xkprime*sin(correctedAscension) + ykprime*cos(correctedInclination)*cos(correctedAscension),
+        ykprime*sin(correctedInclination))
+    # velocity
+    eccentricAnomalyDot <- correctedMeanMotion/(1 - eccentricity * cos(eccentricAnomaly))
+    trueAnomalyDot <- eccentricAnomalyDot*sqrt(1 - eccentricity^2)/(1 - eccentricity*cos(eccentricAnomaly))
+    correctedInclinationDot <- inclinationRate + 2*trueAnomalyDot*(
+        inclinationCorrectionSine*cos(2*latitudeArgument) - inclinationCorrectionCosine*sin(2*latitudeArgument))
+    correctedLatitudeArgumentDot <- trueAnomalyDot + 2*trueAnomalyDot*(
+        latitudeCorrectionSine*cos(2*latitudeArgument) - latitudeCorrectionCosine*sin(2*latitudeArgument))
+    correctedRadiusDot <- eccentricity * semiMajorAxis * eccentricAnomalyDot *
+        sin(eccentricAnomaly) + 2*trueAnomalyDot*(
+            radiusCorrectionSine*cos(2*latitudeArgument) - radiusCorrectionCosine*sin(2*latitudeArgument)
+        )
+    ascensionDot <- OMEGADot - omegaEarth
+    # In-plane velocities
+    xkprimedot <- correctedRadiusDot*cos(correctedLatitudeArgument) - 
+        correctedRadius*correctedLatitudeArgumentDot*sin(correctedLatitudeArgument)
+    ykprimedot <- correctedRadiusDot*sin(correctedLatitudeArgument) + 
+        correctedRadius*correctedLatitudeArgumentDot*cos(correctedLatitudeArgument)
+    velocity_ECEF <- c( # in m/s
+        -xkprime*ascensionDot*sin(correctedAscension) + xkprimedot*cos(correctedAscension) - 
+            ykprimedot*sin(correctedAscension)*cos(correctedInclination) -
+            ykprime*(ascensionDot*cos(correctedAscension)*cos(correctedInclination) - correctedInclinationDot*sin(correctedAscension)*sin(correctedInclination)),
+        xkprime*ascensionDot*cos(correctedAscension) + xkprimedot*sin(correctedAscension) + 
+            ykprimedot*cos(correctedAscension)*cos(correctedInclination) -
+            ykprime*(ascensionDot*sin(correctedAscension)*cos(correctedInclination) + correctedInclinationDot*sin(correctedAscension)*sin(correctedInclination)),
+        ykprimedot*sin(correctedInclination) + ykprime*correctedInclinationDot*cos(correctedInclination)
+    )
+    # Acceleration
+    oblateEarthAccelerationFactor <- -1.5*J2_WGS84*(GM_Earth_TCB/correctedRadius^2)*(earthRadius_WGS84/correctedRadius)^2
+    acceleration_ECEF <- c(
+        -GM_Earth_TCB*(position_ECEF[1]/correctedRadius^3) + oblateEarthAccelerationFactor*
+            ((1 - 5*(position_ECEF[3]/correctedRadius)^2)*(position_ECEF[1]/correctedRadius)) +
+            2*velocity_ECEF[2]*omegaEarth + position_ECEF[1]*omegaEarth^2,
+        -GM_Earth_TCB*(position_ECEF[2]/correctedRadius^3) + oblateEarthAccelerationFactor*
+            ((1 - 5*(position_ECEF[3]/correctedRadius)^2)*(position_ECEF[1]/correctedRadius)) -
+            2*velocity_ECEF[1]*omegaEarth + position_ECEF[2]*omegaEarth^2,
+        -GM_Earth_TCB*(position_ECEF[3]/correctedRadius^3) + oblateEarthAccelerationFactor*
+            ((3-5*(position_ECEF[3]/correctedRadius)^2)*(position_ECEF[3]/correctedRadius))
+    )
     return(list(
         satellitePRNCode=satellitePRNCode,
-        epochYearShort=epochYearShort,
-        epochMonth=epochMonth,
-        epochDay=epochDay,
-        epochHour=epochHour,
-        epochMinute=epochMinute,
-        epochSecond=epochSecond,
-        UTCepochDateTime=UTCDateTimeString,  # TODO consider clock bias difference GPS-UTC
+        tocYearShort=tocYearShort,
+        tocMonth=tocMonth,
+        tocDay=tocDay,
+        tocHour=tocHour,
+        tocMinute=tocMinute,
+        tocSecond=tocSecond,
         clockBias=clockBias,
         clockDrift=clockDrift,
         clockDriftRate=clockDriftRate,
         IODE=IODE,
         radiusCorrectionSine=radiusCorrectionSine,
         deltaN=deltaN,
+        correctedMeanMotion=correctedMeanMotion,
         meanAnomaly=meanAnomaly,
         latitudeCorrectionCosine=latitudeCorrectionCosine,
         eccentricity=eccentricity,
         latitudeCorrectionSine=latitudeCorrectionSine,
         semiMajorAxis=semiMajorAxis,
-        timeOfEphemeris=timeOfEphemeris,
+        toeSecondsOfGPSWeek=toeSecondsOfGPSWeek,
         inclinationCorrectionCosine=inclinationCorrectionCosine,
         ascension=ascension,
         inclinationCorrectionSine=inclinationCorrectionSine,
@@ -332,14 +420,18 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0) {
         OMEGADot=OMEGADot,
         inclinationRate=inclinationRate,
         codesL2Channel=codesL2Channel,
-        GPSWeek=GPSWeek,
+        toeGPSWeek=toeGPSWeek,
         dataFlagL2P=dataFlagL2P,
         satelliteAccuracy=satelliteAccuracy,
         satelliteHealthCode=satelliteHealthCode,
         totalGroupDelay=totalGroupDelay,
         IODC=IODC,
         transmissionTime=transmissionTime,
-        fitInterval=fitInterval
+        fitInterval=fitInterval,
+        ephemerisUTCTime=ephemerisUTCDateTime,
+        position_ECEF=position_ECEF,
+        velocity_ECEF=velocity_ECEF,
+        acceleration_ECEF=acceleration_ECEF
     ))
 }
 
@@ -379,11 +471,11 @@ parseGPSNavigationRINEXheaderLines <- function(lines) {
     } else {
         ionBetaB0 <- ionBetaB1 <- ionBetaB2 <- ionBetaB3 <- NULL
     }
-    deltaUTCLineIndex <- grep("DELTA UTC", lines)
+    deltaUTCLineIndex <- grep("DELTA.UTC", lines)
     if(length(deltaUTCLineIndex) > 0) {
         deltaUTCLine <- lines[deltaUTCLineIndex]
-        deltaUTCA0 <- as.numeric(gsub("D", "E", substr(deltaUTCLine, 1, 21)))
-        deltaUTCA1 <- as.numeric(gsub("D", "E", substr(deltaUTCLine, 22, 42)))
+        deltaUTCA0 <- as.numeric(gsub("D", "E", substr(deltaUTCLine, 1, 22)))
+        deltaUTCA1 <- as.numeric(gsub("D", "E", substr(deltaUTCLine, 23, 42)))
         referenceTimeUTC <- as.numeric(substr(deltaUTCLine, 43, 51))
         referenceWeekUTC <- as.numeric(substr(deltaUTCLine, 52, 60))
     } else {
@@ -433,7 +525,11 @@ readGPSNavigationRINEX <- function(filename) {
     startingLines <- seq(1, by=messageNumberLines, length.out = numberMessages)
     for(i in 1:length(startingLines)) {
         singleMessageLines <- bodyLines[startingLines[i]:(startingLines[i]+messageNumberLines-1)]
-        parsedMessages[[i]] <- parseGPSNavigationRINEXlines(singleMessageLines, headerFields$leapSeconds)
+        parsedMessages[[i]] <- parseGPSNavigationRINEXlines(singleMessageLines, headerFields$leapSeconds, 
+                                                            headerFields$deltaUTCA0,
+                                                            headerFields$deltaUTCA1, 
+                                                            headerFields$referenceTimeUTC,
+                                                            headerFields$referenceWeekUTC)
     }
     return(list(
         header=headerFields, 

@@ -52,6 +52,7 @@ Q33 <- 2.2123015e-7
 earthRadius_WGS84 <- 6.378137e6 # WGS84 Earth radius in meters
 earthEccentricity_WGS84 <- 8.18191908426214947083e-2
 earthFlatteningFactor_WGS84 <- 1/298.257223563
+J2_WGS84 <- 0.00108262998905
 # WGS84_E2D2 <-earthEccentricity_WGS84^2/2
 # WGS84_E4D4 <- earthEccentricity_WGS84^4/4
 # WGS84_INVA2 <- 1/earthRadius_WGS84^2

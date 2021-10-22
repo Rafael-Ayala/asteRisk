@@ -4,6 +4,9 @@ Changes in version 1.2.0 (2021-XX-XX)
 + Now actual Earth Orientation Parameters are used to calculate polar motion matrices
 + Corrections to the space weather parameters used by the NRLMSISE-00 model have been applied
 + Fixed bug when reading fields of RINEX GLONASS navigation files
++ Functions to read RINEX navigation files now perform correction of ephemeris times to UTC, according to each GNSS specifications
++ readGPSNavigationRINEX now also calculated the ephemeris in Cartesian coordinates in ECEF frame
++ Fixed error in documentation that erroneously indicated GLONASS ephemerides were in GCRF frame (when they are actually in ECEF frame)
 
 Changes in version 1.1.0 (2021-07-05)
 + Added functions to read RINEX navigation files for GPS and GLONASS satellites

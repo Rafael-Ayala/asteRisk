@@ -177,3 +177,43 @@
 #                color="blue", size=0.3, alpha=0.8)
 # 
 # 
+# 
+# 
+# targetTimes <- seq(0, 86400, by=120)
+# 
+# epochDateTime = as.character(as.POSIXct(testMes$ephemerisUTCTime, tz="UTC))
+# GCRF_posvel=ECEFtoGCRF(testMes$position_ECEF, velocity_ECEF = testMes$velocity_ECEF, dateTime = epochDateTime)
+# 
+# hpop_results <- hpop(GCRF_posvel$position, GCRF_posvel$velocity, epochDateTime,
+#                      targetTimes, 1080, 22+4.7,
+#                      22+4.7, 2.2, 1.2)
+
+# # Now we can calculate and plot the corresponding geodetic coordinates
+# 
+# geodetic_matrix_hpop <- matrix(nrow=nrow(hpop_results), ncol=3)
+# 
+# for(i in 1:nrow(geodetic_matrix_hpop)) {
+#     new_dateTime <- as.character(as.POSIXct(epochDateTime, tz="UTC") + targetTimes[i])
+#     new_geodetic <- GCRFtoLATLON(hpop_results[i, 2:4], new_dateTime)
+#     geodetic_matrix_hpop[i,] <- new_geodetic
+# }
+# 
+# colnames(geodetic_matrix_hpop) <- c("latitude", "longitude", "altitude")
+# 
+# library(ggmap)
+# 
+# ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80))) +
+#     geom_segment(data=as.data.frame(geodetic_matrix_hpop),
+#                  aes(x=longitude, y=latitude,
+#                      xend=c(tail(longitude, n=-1), NA),
+#                      yend=c(tail(latitude, n=-1), NA)),
+#                  na.rm=TRUE) +
+#     geom_point(data=as.data.frame(geodetic_matrix_hpop), aes(x=longitude, y=latitude),
+#                color="blue", size=0.3, alpha=0.8)
+# 
+# 
+# GCRF_posvel=KOEtoECI(testMes$semiMajorAxis, testMes$eccentricity, testMes$inclination, testMes$meanAnomaly, testMes$perigeeArgument, testMes$ascension)
+# 
+# hpop_results <- hpop(GCRF_posvel$position, GCRF_posvel$velocity, epochDateTime,
+#                      targetTimes, 1080, 22+4.7,
+#                      22+4.7, 2.2, 1.2)

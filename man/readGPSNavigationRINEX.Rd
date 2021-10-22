@@ -35,13 +35,18 @@ the following elements:
   \item{ionBetaB1 }{Coefficient for ionospheric correction B1}
   \item{ionBetaB2 }{Coefficient for ionospheric correction B2}
   \item{ionBetaB3 }{Coefficient for ionospheric correction B3}
-  \item{deltaUTCA0 }{A0 parameter to compute accurate time in UTC}
-  \item{deltaUTCA1 }{A1 parameter to compute accurate time in UTC}
-  \item{referenceTimeUTC }{Time in seconds of current UTC week for reference
-  time}
-  \item{referenceWeekUTC }{UTC reference week number }
-  \item{leapSeconds }{Leap seconds introduced since 1980. Useful to convert to
-  UTC time (UTC time = GPS time - leap seconds)}
+  \item{deltaUTCA0 }{A0 parameter, corresponding to bias between GPST and UTC
+  time at the reference time (Tot) given by fields \code{referenceTimeUTC} and
+  \code{referenceWeekUTC}. Should be used to compute accurate time in UTC}
+  \item{deltaUTCA1 }{A1 parameter, corresponding to the clock drift between
+  GPST and UTC at the reference time (Tot) given by fields \code{referenceTimeUTC} 
+  and \code{referenceWeekUTC}. Should be used to compute accurate time in UTC}
+  \item{referenceTimeUTC }{Time in seconds of current UTC week of Tot, which is
+  the reference time to correct GPST time to UTC}
+  \item{referenceWeekUTC }{UTC reference week number (continuous scale, not
+  modulo 1024) of Tot.}
+  \item{leapSeconds }{Leap seconds introduced since the 6th of January, 1980. 
+  Useful to convert to UTC time (UTC time = GPS time - leap seconds)}
   \item{comments }{Miscellaneous comments found in the header of the RINEX file}
 
 The second element is named \code{messages}, and it contains one element for
@@ -51,13 +56,21 @@ of the GPS satellite:
   \item{satellitePRNCode }{PRN code of the satellite. Unique PRN codes are
   assigned to all satellites in global navigation satellite systems, and 
   therefore provide an identifier for each of them}
-  \item{epochYearShort }{Epoch year in 2-digit format. If lower than 80, the
-  meaning should be taken as 20XX, while if larger than 80, it refers to 19XX.}
-  \item{epochMonth }{Epoch month}
-  \item{epochDay }{Epoch day}
-  \item{epochHour }{Epoch hour}
-  \item{epochMinute }{Epoch minute}
-  \item{epochSecond }{Epoch second}
+  \item{tocYearShort }{Toc year in 2-digit format. If lower than 80, the meaning 
+  should be taken as 20XX, while if larger than 80, it refers to 19XX. Toc is
+  the GPS time of the specific satellite that should be used as the time 
+  reference to apply clock bias, clock drift and possibly even clock drift rate,
+  as well as a relativistic correction, as described in the GPS system 
+  specification (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf) to obtain 
+  the corrected GPST system time. The GPST system time can be converted to UTC 
+  time by subtracting leap seconds since the 6th of January 1980 and performing
+  another polynomial correction to account for bias and drift between GPST and
+  UTC times.}
+  \item{tocMonth }{Toc month}
+  \item{tocDay }{Toc day}
+  \item{tocHour }{Toc hour}
+  \item{tocMinute }{Toc minute}
+  \item{tocSecond }{Toc second}
   \item{UTCepochDateTime }{Date-time string indicating the time corresponding
   to the reported position in the present message. The time is in UTC, obtained
   by subtracting the leap seconds (if available in the header) from the time
@@ -66,16 +79,16 @@ of the GPS satellite:
   accurate conversion to actual UTC time, the clock bias, clock drift and 
   possibly even clock drift rate (described in the next three elements) must be 
   considered}
-  \item{clockBias }{Clock bias (i.e., constant offset) that should be applied to
-  the satellite time in order to obtain an even more accurate UTC time. In 
-  seconds}
-  \item{clockDrift }{Clock drift of the satellite clock that should be applied 
-  in combination with the time difference to the reference time in order to 
-  obtain an even more accurate UTC time. In seconds per second}
+  \item{clockBias }{Clock bias (i.e., constant offset) at Toc that should be 
+  applied to the satellite time in order to calculate accurate GPST. In seconds.
+  Often referred to as af0.}
+  \item{clockDrift }{Clock drift of the satellite clock at Toc that should be 
+  applied to the satellite time in order to calculate accurate GPST. In seconds.
+  Often referred to as af1.}
   \item{clockDriftRate }{Rate of change for the clock drift of the satellite 
-  clock. It is frequently 0, but if not, it should be applied in combination 
-  with clock bias and clock drift in order to obtain an even more accurate UTC 
-  time. In seconds per square second.}  
+  clock at Toc. It is frequently 0, but if not, it should be applied in 
+  combination with clock bias and clock drift in order to correct to GPST as
+  accurately as possible. In seconds per square second. Often referred to as af2.}  
   \item{IODE }{Issue-of-data ephemeris. It acts as a time-stamp or unique 
   identifier for the provided navigation data. In particular, the IODE of a 
   given navigation message should never be the same as the IODE for any other
@@ -85,9 +98,11 @@ of the GPS satellite:
   \item{radiusCorrectionSine }{Amplitude of the sine harmonic component for the 
   correction of orbital radius. In meters}
   \item{deltaN }{Mean motion difference from computed value. In radians per
-  second In order to obtain the real (perturbed) mean motion, first the 
+  second. In order to obtain the real (perturbed) mean motion, first the 
   Keplerian mean motion should be calculated from the semi-major axis. Then, 
   deltaN should be added to it.}
+  \item{correctedMeanMotion }{Corrected mean motion calculated by adding deltaN
+  to the value computed from the semi-major axis. In radians per second}
   \item{meanAnomaly }{Mean anomaly of the satellite at epoch. In radians. This 
   indicates where the satellite is along its orbital path. It is provided as the 
   angle between the direction of the perigee and the hypothetical point where 
@@ -103,7 +118,10 @@ of the GPS satellite:
   the correction of latitude argument. In radians}
   \item{semiMajorAxis }{Semi-major axis of the orbit of the satellite at epoch.
   In meters. This is a Keplerian orbital element}
-  \item{timeOfEphemeris }{Time of the GPS week (in seconds) for the ephemeris}
+  \item{toeSecondsOfGPSWeek }{Time of the GPS week (in seconds) for the ephemeris.
+  Together with the \code{toeGPSWeek}, it can be used to calculate the ephemeris
+  time in GPS time of the specific satellite, to which sequential corrections
+  first to GPST and then to UTC should be applied.}
   \item{inclinationCorrectionCosine }{Amplitude of the cosine harmonic component
   for the correction of inclination. In radians}
   \item{ascension }{Longitude of the ascending node of the satellite at epoch, 
@@ -127,7 +145,7 @@ of the GPS satellite:
   equinox. In radians/second.}
   \item{codesL2Channel }{Flag indicating if coarse/acquisition (C/A) code is
   being transmitted on the L2 channel (value of 1) or not (value of 0)}
-  \item{GPSWeek }{GPS week number at epoch}
+  \item{toeGPSWeek }{GPS week number at epoch}
   \item{dataFlagL2P }{Flag indicating if precise (P) code is being transmitted 
   on the L2 channel (value of 1) or not (value of 0)}
   \item{satelliteAccuracy }{Accuracy of the position of the satellite, in 
@@ -153,6 +171,25 @@ of the GPS satellite:
   the corrections for perturbed orbital elements should be applied and 
   propagated. If 0, the ephemeris data are valid for up to 4 hours. If 1, they
   are valid for more than 4 hours.}
+  \item{ephemerisUTCTime }{A \link{nanotime} object indicating the time
+  corresponding to the reported position (ephemeris) in the present message. 
+  The time is in UTC, obtained by first applying the individual clock bias, clock 
+  drift and clock drift rate of the particular satellite (fields \code{clockBias},
+  \code{clockDrift} and \code{clockDriftRate} of each message) and a relativistic
+  correction to obtain corrected GPST time (system-wide GPS time), and then
+  subtraction of leap seconds since the 6th of January 1980 and a second polynomial
+  correction (with fields \code{deltaUTCA0} and \code{deltaUTCA1} from the 
+  header) to obtain UTC time. Corrections are performed as described in the GPS
+  system specifications (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).}
+  \code{position_ECEF}{Position of the satellite in the ECEF frame, calculated
+  from the provided orbital ephemeris following the procedure described in the
+  GPS system specifications. In meters.}
+  \code{velocity_ECEF}{Velocity of the satellite in the ECEF frame, calculated
+  from the provided orbital ephemeris following the procedure described in the
+  GPS system specifications. In meters/second.}
+  \code{acceleration_ECEF}{Acceleration of the satellite in the ECEF frame, calculated
+  from the provided orbital ephemeris following the procedure described in the
+  GPS system specifications. In meters/squared second.}
 }
 \references{
 https://gage.upc.edu/gFD/
@@ -160,6 +197,7 @@ https://www.navcen.uscg.gov/pubs/gps/rinex/rinex.txt
 ftp://www.ngs.noaa.gov/cors/RINEX211.txt
 http://acc.igs.org/misc/rinex304.pdf
 https://www.icao.int/Meetings/AMC/MA/2004/GNSS/icd.pdf
+https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf
 }
 \examples{
 # The file testGPSRINEX.txt provided with the package includes 3 navigation

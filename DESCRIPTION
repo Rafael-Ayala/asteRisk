@@ -23,7 +23,7 @@ Acknowledgements: The development of this software is supported by the Spanish
     Ministry of Science and Innovation (grant code PID2019-105471RB-I00) and the
     Regional Government of Andalusia (grant code P18-RT-1060).
 License: GPL-3
-Imports: deSolve, stats
+Imports: deSolve, nanotime, stats
 Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown, markdown
 Additional_repositories: https://rafael-ayala.github.io/drat/
 VignetteBuilder: knitr
