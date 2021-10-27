@@ -217,3 +217,17 @@
 # hpop_results <- hpop(GCRF_posvel$position, GCRF_posvel$velocity, epochDateTime,
 #                      targetTimes, 1080, 22+4.7,
 #                      22+4.7, 2.2, 1.2)
+
+
+for(i in 1:length(target_times_1)) {
+    new_result <- sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
+                        e0=test_TLE1$eccentricity,
+                        i0=test_TLE1$inclination*pi/180,
+                        M0=test_TLE1$meanAnomaly*pi/180,
+                        omega0=test_TLE1$perigeeArgument*pi/180,
+                        OMEGA0=test_TLE1$ascension*pi/180,
+                        Bstar=test_TLE1$Bstar,
+                        initialDateTime=test_TLE1$dateTime, targetTime = target_times_1[i])
+    results_position_matrix[i,] <- new_result[[1]]
+    results_velocity_matrix[i,] <- new_result[[2]]
+}

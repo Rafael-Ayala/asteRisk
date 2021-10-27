@@ -1,7 +1,7 @@
 ## SGP4 constants
 
 # XKMPER <- 6378.135 # Earth radius in kilometers
-earthRadius_SGP4 <- 6378.135 # Earth radius in kilometers, value for SGP/SDP
+earthRadius_SGP4 <- 6378.135 # Earth radius in kilometers, value for SGP/SDP. From WGS-72
 ae <- 1 # distance units per earth radii
 # earthEccentricity <- 0.0818191908 # Earth eccentricity
 
