@@ -10,7 +10,9 @@ J3 <- -2.53881e-6 # third gravitational zonal harmonic of Earth
 J4 <- -1.65597e-6 # fourth gravitational zonal harmonic of Earth
 k2 <- 0.5 * J2 * ae ^ 2
 k4 <- (-3 / 8) * J4 * ae ^ 4
-ke <- 7.43669161e-2
+# ke <- 7.43669161e-2 OLD IMPLEMENTATION OF WGS72
+GM_Earth_WGS72 <- 398600.8
+ke <- 60/(sqrt(earthRadius_SGP4^3/GM_Earth_WGS72))
 A30 <- -J3 * ae ^ 3
 
 q0 <- 120 / 6378.135 + 1 # q0 parameter for SGP4/SGP8 density function

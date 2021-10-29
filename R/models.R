@@ -1,5 +1,5 @@
 sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTime,
-                 keplerAccuracy=10e-8, maxKeplerIterations=100) {
+                 keplerAccuracy=10e-12, maxKeplerIterations=10) {
     checkTimeInput(initialDateTime, targetTime, "sgp4")
     if(2*pi/n0 >= 225) {
         deep_space <- TRUE
@@ -36,7 +36,7 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     C1 <- Bstar * C2
     # Introduction of C3 = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
     if(e0 > 1e-4) {
-        C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0) *2/J2
+        C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0) *2/J2 *(1/e0)
     } else {
         C3 <- 0
     }
@@ -50,8 +50,14 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     omegaDF <- omega0 + ( ( -(3*k2*(1-5*theta^2)) / (2*a0dprime^2*beta0^4) ) + ( (3*k2^2*(7-114*theta^2+395*theta^4)) / (16*a0dprime^4*beta0^8) ) + ( (5*k4*(3-36*theta^2+49*theta^4)) / (4*a0dprime^4*beta0^8) ) )*n0dprime*(t - t0)
     OMEGADF <- OMEGA0 + ( ( (-3*k2*theta) / (a0dprime^2*beta0^4) ) + ( (3*k2^2*(4*theta-19*theta^3)) / (2*a0dprime^4*beta0^8) ) + ( (5*k4*theta*(3-7*theta^2)) / (2*a0dprime^4*beta0^8) ) ) * n0dprime * (t - t0)
     deltaomega <-Bstar*C3*(cos(omega0))*(t - t0)
-    deltaM <- (-2/3) * (q0 - s)^4*Bstar*xi^4*(ae/(e0*eta)) * ( (1 + eta*cos(MDF))^3 - (1 + eta*cos(M0))^3 )
-    Mp <- MDF + deltaomega + deltaM
+    # Introduction of deltaM = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
+    if(e0 > 1e-4) {
+        deltaM <- (-2/3) * (q0 - s)^4*Bstar*xi^4*(ae/(e0*eta)) * ( (1 + eta*cos(MDF))^3 - (1 + eta*cos(M0))^3 )
+    } else {
+        deltaM <- 0
+    }
+    # Mp <- MDF + deltaomega + deltaM # Changed to match Vallado's implementation 
+    Mp <- MDF + high_perigee_flag*deltaomega + high_perigee_flag*deltaM 
     omega <- omegaDF - deltaomega - deltaM
     OMEGA <- OMEGADF - (21/2)*( (n0dprime*k2*theta) / (a0dprime^2 * beta0^2) )*C1*(t - t0)^2
     e <- e0 - Bstar*C4*(t-t0) - Bstar*C5*(sin(Mp) - sin(M0))
@@ -63,8 +69,9 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     ILL <- ( (A30*sin(i0)) / (8*k2*a*beta^2) ) * e * cos(omega) * ( (3 + 5* theta) / (1 + theta) )
     ayNL <- (A30*sin(i0))/(4*k2*a*beta^2)
     ILT <- IL + ILL
+    # ILT <- rem(IL + ILL, 2*pi)
     ayN <- e * sin(omega) + ayNL
-    U <- ILT - OMEGA
+    U <- rem(ILT - OMEGA, 2*pi)
     kepler_sol_1 <- U
     kepler_sol_current <- kepler_sol_1
     convergence <- FALSE
@@ -73,18 +80,20 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
         iterations <- iterations + 1
         delta_kepler_sol <- ( (U-ayN*cos(kepler_sol_current) + axN*sin(kepler_sol_current) - kepler_sol_current) / (-ayN*sin(kepler_sol_current) - axN*cos(kepler_sol_current) + 1) )
         kepler_sol_current <- kepler_sol_current + delta_kepler_sol
-        if(iterations > maxKeplerIterations | delta_kepler_sol < keplerAccuracy) {
+        if(iterations > maxKeplerIterations | abs(delta_kepler_sol) < keplerAccuracy) {
             convergence <- TRUE
         }
     }
     kepler_sol <- kepler_sol_current
     ecosE <- axN*cos(kepler_sol) + ayN*sin(kepler_sol)
-    esinE <- axN*sin(kepler_sol) * ayN*cos(kepler_sol)
+    esinE <- axN*sin(kepler_sol) - ayN*cos(kepler_sol)
     eL <- sqrt((axN^2 + ayN^2))
     pL <- a*(1 - eL^2)
     r <- a*(1 - ecosE)
-    rderivative <- ke*(sqrt(a)/r)*esinE
-    rfderivative <- ke*sqrt(pL)/r
+    # rderivative <- ke*(sqrt(a)/r)*esinE # Changed to match Vallado's implementation
+    rderivative <- (sqrt(a)/r)*esinE
+    # rfderivative <- ke*sqrt(pL)/r # Changed to match Vallado's implementation
+    rfderivative <- sqrt(pL)/r
     cosu <- (a/r) * (cos(kepler_sol) - axN + ( (ayN*esinE) / (1 + sqrt(1 - eL^2)) ))
     sinu <- (a/r)*(sin(kepler_sol) - ayN - ( (axN*esinE) / (1+ sqrt(1 - eL^2)) ))
     u <- atan2(sinu,cosu)
@@ -92,8 +101,10 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     Deltau <- (-k2/(4*pL^2)) * (7*theta^2 - 1) * sin(2*u)
     DeltaOMEGA <- ( (3*k2*theta) / (2*pL^2) ) * sin(2*u)
     Deltai <- ( (3*k2*theta) / (2*pL^2) ) * sin(i0) * cos(2*u)
-    Deltarderivative <- ( (-k2*n) / pL ) * (1-theta^2) *sin(2*u)
-    Deltarfderivative <- ( (k2*n) / pL ) * ( (1-theta^2) * cos(2*u) - 1.5*(1-3*theta^2) )
+    # Deltarderivative <- ( (-k2*n) / pL ) * (1-theta^2) *sin(2*u) # Changed to match Vallado's implementation
+    Deltarderivative <- ( (-k2*n) / pL ) * (1-theta^2) *sin(2*u)/ke
+    # Deltarfderivative <- ( (k2*n) / pL ) * ( (1-theta^2) * cos(2*u) - 1.5*(1-3*theta^2) ) # Changed to match Vallado's implementation
+    Deltarfderivative <- ( (k2*n) / pL ) * ( (1-theta^2) * cos(2*u) - 1.5*(1-3*theta^2) )/ke
     rk <- r * (1 - 1.5*k2*( ( sqrt(1-eL^2) ) / ( pL^2 ) ) * (3*theta^2-1) ) + Deltar
     uk <- u + Deltau
     OMEGAk <- OMEGA + DeltaOMEGA
@@ -102,7 +113,7 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     rfkderivative <- rfderivative + Deltarfderivative
     Mx <- -sin(OMEGAk) * cos(ik)
     My <- cos(OMEGAk) * cos(ik)
-    Mz <-sin(ik)
+    Mz <- sin(ik)
     Mvector <- c(Mx, My, Mz)
     Nx <- cos(OMEGAk)
     Ny <- sin(OMEGAk)
@@ -111,9 +122,11 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     Uvector <- Mvector*sin(uk) + Nvector*cos(uk)
     Vvector <- Mvector*cos(uk) - Nvector*sin(uk)
     rvector <- rk*Uvector
-    rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector
+    # rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector # Changed to match Vallado's implementation
+    rderivativevector <- rkderivative*Uvector + rfkderivative * Vvector
     position_result <- rvector*earthRadius_SGP4
-    velocity_result <- -rderivativevector*earthRadius_SGP4*1440/86400
+    # velocity_result <- rderivativevector*earthRadius_SGP4*1440/86400 # Changed to match Vallado's implementation
+    velocity_result <- rderivativevector*earthRadius_SGP4*ke/60
     return(list(
         position=position_result,
         velocity=velocity_result,

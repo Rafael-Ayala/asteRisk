@@ -217,7 +217,21 @@
 # hpop_results <- hpop(GCRF_posvel$position, GCRF_posvel$velocity, epochDateTime,
 #                      targetTimes, 1080, 22+4.7,
 #                      22+4.7, 2.2, 1.2)
+# 
+test_TLEs <- readTLE(paste0(path.package("asteRisk"), "/testTLE.txt"))
+test_TLE1=test_TLEs[[1]]
 
+sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
+      e0=test_TLE1$eccentricity,
+      i0=test_TLE1$inclination*pi/180,
+      M0=test_TLE1$meanAnomaly*pi/180,
+      omega0=test_TLE1$perigeeArgument*pi/180,
+      OMEGA0=test_TLE1$ascension*pi/180,
+      Bstar=test_TLE1$Bstar,
+      targetTime = 0)
+
+results_position_matrix <- matrix(nrow=length(target_times_1), ncol=3)
+results_velocity_matrix <- matrix(nrow=length(target_times_1), ncol=3)
 
 for(i in 1:length(target_times_1)) {
     new_result <- sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
@@ -231,3 +245,19 @@ for(i in 1:length(target_times_1)) {
     results_position_matrix[i,] <- new_result[[1]]
     results_velocity_matrix[i,] <- new_result[[2]]
 }
+
+# # testline1 = '1 25544U 98067A   19343.69339541  .00001764  00000-0  38792-4 0  9991'
+# # testline2 = '2 25544  51.6439 211.2001 0007417  17.6667  85.6398 15.50103472202482'
+# # 
+# # testTLEpy = parseTLElines(c(testline1, testline2))
+# targetTimePy = "2019-12-9 20:42:9.07"
+# 
+# sgp4(n0=testTLEpy$meanMotion*((2*pi)/(1440)),
+#      e0=testTLEpy$eccentricity,
+#      i0=testTLEpy$inclination*pi/180,
+#      M0=testTLEpy$meanAnomaly*pi/180,
+#      omega0=testTLEpy$perigeeArgument*pi/180,
+#      OMEGA0=testTLEpy$ascension*pi/180,
+#      Bstar = testTLEpy$Bstar,
+#      initialDateTime = testTLEpy$dateTime,
+#      targetTime = targetTimePy)
