@@ -20,10 +20,15 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     a0dprime <- (ke/n0dprime)^(2/3) # called ao in Vallado's implementation
     perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4 # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
     high_perigee_flag <- TRUE
+    qzms24 <- qzms2t
     if(perigee >= 98 & perigee <= 156) {
         s <- a0dprime*(1-e0) - s + ae # equivalent to: (perigee - 78)/6378.135 + 1
+        sfour <- perigee - 78
+        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
     } else if(perigee < 98) {
         s <- 20/earthRadius_SGP4 + ae # equivalent to 20/6378.135 + 1
+        sfour <- 20
+        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
     }
     if(perigee < 220) {
         high_perigee_flag <- FALSE # Vallado's implementation uses isimp, which is a low perigee flag (therefore values are inverted)
@@ -32,17 +37,17 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     xi <- 1/(a0dprime - s) # called tsi in Vallado's implementation
     beta0 <- sqrt(1-e0^2)
     eta <- a0dprime * e0 * xi
-    C2 <-(q0 - s)^4 * xi^4 * n0dprime * (abs(1 - eta^2))^(-7/2) * (a0dprime * (1 + 1.5*eta^2 + 4*e0*eta + e0*eta^3) + 1.5 * ((k2*xi)/abs(1 - eta^2)) * (-0.5 * 1.5*theta^2) * (8+ 24*eta^2+ 3*eta^4))
+    C2 <-qzms24 * xi^4 * n0dprime * (abs(1 - eta^2))^(-7/2) * (a0dprime * (1 + 1.5*eta^2 + 4*e0*eta + e0*eta^3) + 1.5 * ((k2*xi)/abs(1 - eta^2)) * (-0.5 + 1.5*theta^2) * (8+ 24*eta^2+ 3*eta^4))
     C1 <- Bstar * C2
     # Introduction of C3 = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
     if(e0 > 1e-4) {
-        C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0) *2/J2 *(1/e0)
+        C3 <- qzms24 * xi^5 * A30 * n0dprime * ae * sin(i0) *2/J2 *(1/e0)
     } else {
         C3 <- 0
     }
     # C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0)
-    C4 <- 2 * n0dprime * (q0 - s)^4 * xi^4 * a0dprime * beta0^2 * (1-eta^2)^(-7/2) * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*abs(1-eta^2))) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
-    C5 <- 2*(q0 - s)^4*xi^4*a0dprime*beta0^2*(1-eta^2)^(-7/2)*(1+(11/4)*eta*(eta+e0)+e0*eta^3)
+    C4 <- 2 * n0dprime * qzms24 * xi^4 * a0dprime * beta0^2 * (1-eta^2)^(-7/2) * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*abs(1-eta^2))) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
+    C5 <- 2*qzms24*xi^4*a0dprime*beta0^2*(1-eta^2)^(-7/2)*(1+(11/4)*eta*(eta+e0)+e0*eta^3)
     D2 <- 4*a0dprime * xi * C1^2
     D3 <- (4/3) * a0dprime * xi^2 *(17*a0dprime + s)*C1^3
     D4 <- (2/3) * a0dprime * xi^3 * (221*a0dprime + 31*s)*C1^4
@@ -52,7 +57,7 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     deltaomega <-Bstar*C3*(cos(omega0))*(t - t0)
     # Introduction of deltaM = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
     if(e0 > 1e-4) {
-        deltaM <- (-2/3) * (q0 - s)^4*Bstar*xi^4*(ae/(e0*eta)) * ( (1 + eta*cos(MDF))^3 - (1 + eta*cos(M0))^3 )
+        deltaM <- (-2/3) * qzms24*Bstar*xi^4*(ae/(e0*eta)) * ( (1 + eta*cos(MDF))^3 - (1 + eta*cos(M0))^3 )
     } else {
         deltaM <- 0
     }

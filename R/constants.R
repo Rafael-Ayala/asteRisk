@@ -17,6 +17,7 @@ A30 <- -J3 * ae ^ 3
 
 q0 <- 120 / 6378.135 + 1 # q0 parameter for SGP4/SGP8 density function
 s <- 78 / 6378.135 + 1 # s parameter for SGP4/SGP8 density function
+qzms2t <- ((120 - 78)/earthRadius_SGP4)^4
 
 ## Constants required for SDP4
 

@@ -217,7 +217,7 @@
 # hpop_results <- hpop(GCRF_posvel$position, GCRF_posvel$velocity, epochDateTime,
 #                      targetTimes, 1080, 22+4.7,
 #                      22+4.7, 2.2, 1.2)
-# 
+# # 
 test_TLEs <- readTLE(paste0(path.package("asteRisk"), "/testTLE.txt"))
 test_TLE1=test_TLEs[[1]]
 
