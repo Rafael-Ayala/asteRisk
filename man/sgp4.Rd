@@ -18,7 +18,7 @@ Space Track Report #3.
 }
 \usage{
 sgp4(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTime,
-     keplerAccuracy=10e-8, maxKeplerIterations=100)
+     keplerAccuracy=10e-12, maxKeplerIterations=10)
 }
 \arguments{
   \item{n0}{Mean motion of the satellite at epoch in radians/min.

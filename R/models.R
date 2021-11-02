@@ -139,7 +139,7 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
 }
 
 sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetTime,
-                 keplerAccuracy=10e-8, maxKeplerIterations=100) {
+                 keplerAccuracy=10e-12, maxKeplerIterations=10) {
     checkTimeInput(initialDateTime, targetTime, "sdp4")
     t0 <- 0
     if(is.character(initialDateTime) & is.character(targetTime)) {
@@ -184,8 +184,8 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     aux1 <- aux0^(-7/2)
     aux2 <- xi^4*a0dprime*beta0^2*aux1
 
-    C2 <- (q0 - s)^4 * xi^4 * n0dprime * aux1 * (a0dprime * (1 + 1.5*eta^2 + 4*e0*eta + e0*eta^3) + 1.5 * ((k2*xi)/aux0) * (-0.5 * 1.5*theta^2) * (8+ 24*eta^2+ 3*eta^4))
-
+    C2 <- (q0 - s)^4 * xi^4 * n0dprime * aux1 * (a0dprime * (1 + 1.5*eta^2 + 4*e0*eta + e0*eta^3) + 1.5 * ((k2*xi)/aux0) * (-0.5 + 1.5*theta^2) * (8+ 24*eta^2+ 3*eta^4))
+    
     C1 <- Bstar * C2
 
     C4 <- 2 * n0dprime * (q0 - s)^4 * aux2 * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*aux0)) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
@@ -444,7 +444,8 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
         temp0 <- 2*temp1 * ROOT54
         d5421 <- temp0 * f542 * g521
         d5433 <- temp0 * f543 * g533
-        xlamo <- (M0 + 2*OMEGA0 - 2*gmst) %% (2*pi)
+        # xlamo <- (M0 + 2*OMEGA0 - 2*gmst) %% (2*pi)
+        xlamo <- rem(M0 + 2*OMEGA0 - 2*gmst, 2*pi)
         bfact <- Mdot + 2*OMEGAdot - 2 *THDT + ssl + 2*ssh
     } else {
         # object is not in a resonant period regime
@@ -469,7 +470,7 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
         xndot <- del1 * sin_1 + del2 * sin_2 + del3 * sin_3
         xnddt <- del1 * cos_1 + 2*del2 * cos_2 + 3*del3 * cos_3
     } else if(iresfl) {
-        omega <- omega0 + omegadot + atime
+        omega <- omega0 + omegadot * atime
         sin_1 <- sin(2*omega + xli - G22)
         cos_1 <- cos(2*omega + xli - G22)
         sin_2 <- sin(xli  - G22)
@@ -544,7 +545,7 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
                 xndot <- del1 * sin_1 + del2 * sin_2 + del3 * sin_3
                 xnddt <- del1 * cos_1 + 2*del2 * cos_2 + 3*del3 * cos_3
             } else {
-                omega <- omega0 + omegadot + atime
+                omega <- omega0 + omegadot * atime
                 sin_1 <- sin(2*omega + xli - G22)
                 cos_1 <- cos(2*omega + xli - G22)
                 sin_2 <- sin(xli  - G22)
@@ -762,7 +763,7 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
 }
 
 sgdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL,
-                            targetTime, keplerAccuracy=10e-8, maxKeplerIterations=100) {
+                            targetTime, keplerAccuracy=10e-12, maxKeplerIterations=10) {
     if(2*pi/n0 >= 225) {
         deep_space <- TRUE
     } else {

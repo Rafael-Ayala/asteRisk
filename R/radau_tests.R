@@ -218,33 +218,63 @@
 #                      targetTimes, 1080, 22+4.7,
 #                      22+4.7, 2.2, 1.2)
 # # 
-test_TLEs <- readTLE(paste0(path.package("asteRisk"), "/testTLE.txt"))
-test_TLE1=test_TLEs[[1]]
+# test_TLEs <- readTLE(paste0(path.package("asteRisk"), "/testTLE.txt"))
+# test_TLE1=test_TLEs[[1]]
+# 
+# sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
+#       e0=test_TLE1$eccentricity,
+#       i0=test_TLE1$inclination*pi/180,
+#       M0=test_TLE1$meanAnomaly*pi/180,
+#       omega0=test_TLE1$perigeeArgument*pi/180,
+#       OMEGA0=test_TLE1$ascension*pi/180,
+#       Bstar=test_TLE1$Bstar,
+#       targetTime = 0)
+# 
+# results_position_matrix <- matrix(nrow=length(target_times_1), ncol=3)
+# results_velocity_matrix <- matrix(nrow=length(target_times_1), ncol=3)
+# 
+# for(i in 1:length(target_times_1)) {
+#     new_result <- sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
+#                         e0=test_TLE1$eccentricity,
+#                         i0=test_TLE1$inclination*pi/180,
+#                         M0=test_TLE1$meanAnomaly*pi/180,
+#                         omega0=test_TLE1$perigeeArgument*pi/180,
+#                         OMEGA0=test_TLE1$ascension*pi/180,
+#                         Bstar=test_TLE1$Bstar,
+#                         initialDateTime=test_TLE1$dateTime, targetTime = target_times_1[i])
+#     results_position_matrix[i,] <- new_result[[1]]
+#     results_velocity_matrix[i,] <- new_result[[2]]
+# }
+# 
+# test_TLE11=test_TLEs[[11]]
+# target_times_11 = seq(0, 2880, by=120)
+# 
+# sgdp4(n0=test_TLE11$meanMotion*((2*pi)/(1440)),
+#       e0=test_TLE11$eccentricity,
+#       i0=test_TLE11$inclination*pi/180,
+#       M0=test_TLE11$meanAnomaly*pi/180,
+#       omega0=test_TLE11$perigeeArgument*pi/180,
+#       OMEGA0=test_TLE11$ascension*pi/180,
+#       Bstar=test_TLE11$Bstar,
+#       targetTime = 2880, initialDateTime = test_TLE11$dateTime)
+# 
+# results_position_matrix <- matrix(nrow=length(target_times_11), ncol=3)
+# results_velocity_matrix <- matrix(nrow=length(target_times_11), ncol=3)
+# 
+# for(i in 1:length(target_times_11)) {
+#     new_result <- sgdp4(n0=test_TLE11$meanMotion*((2*pi)/(1440)),
+#                         e0=test_TLE11$eccentricity,
+#                         i0=test_TLE11$inclination*pi/180,
+#                         M0=test_TLE11$meanAnomaly*pi/180,
+#                         omega0=test_TLE11$perigeeArgument*pi/180,
+#                         OMEGA0=test_TLE11$ascension*pi/180,
+#                         Bstar=test_TLE11$Bstar,
+#                         initialDateTime=test_TLE11$dateTime, targetTime = target_times_11[i])
+#     results_position_matrix[i,] <- new_result[[1]]
+#     results_velocity_matrix[i,] <- new_result[[2]]
+# }
+# 
 
-sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
-      e0=test_TLE1$eccentricity,
-      i0=test_TLE1$inclination*pi/180,
-      M0=test_TLE1$meanAnomaly*pi/180,
-      omega0=test_TLE1$perigeeArgument*pi/180,
-      OMEGA0=test_TLE1$ascension*pi/180,
-      Bstar=test_TLE1$Bstar,
-      targetTime = 0)
-
-results_position_matrix <- matrix(nrow=length(target_times_1), ncol=3)
-results_velocity_matrix <- matrix(nrow=length(target_times_1), ncol=3)
-
-for(i in 1:length(target_times_1)) {
-    new_result <- sgdp4(n0=test_TLE1$meanMotion*((2*pi)/(1440)),
-                        e0=test_TLE1$eccentricity,
-                        i0=test_TLE1$inclination*pi/180,
-                        M0=test_TLE1$meanAnomaly*pi/180,
-                        omega0=test_TLE1$perigeeArgument*pi/180,
-                        OMEGA0=test_TLE1$ascension*pi/180,
-                        Bstar=test_TLE1$Bstar,
-                        initialDateTime=test_TLE1$dateTime, targetTime = target_times_1[i])
-    results_position_matrix[i,] <- new_result[[1]]
-    results_velocity_matrix[i,] <- new_result[[2]]
-}
 
 # # testline1 = '1 25544U 98067A   19343.69339541  .00001764  00000-0  38792-4 0  9991'
 # # testline2 = '2 25544  51.6439 211.2001 0007417  17.6667  85.6398 15.50103472202482'
