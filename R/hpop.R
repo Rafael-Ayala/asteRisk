@@ -15,6 +15,7 @@ odeModel <- function(t, state, parameters) {
 hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea, 
                  radiationArea, dragCoefficient, radiationCoefficient, ...) {
     hasData()
+    extraArgs <- list(...)
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
     year <- date$year + 1900
     month <- date$mon + 1
@@ -32,7 +33,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
         Cr = radiationCoefficient,
         Cd = dragCoefficient)
     integration_results <- ode(y=initial_state, times=times, func=odeModel,
-                               parms=parameters, method="radau", maxsteps=100, rtol=1e-13,
+                               parms=parameters, method="radau", rtol=1e-13,
                                atol=1e-16, hini=0.01, ...)
     colnames(integration_results) <- c("time", "X", "Y", "Z", "dX", "dY", "dZ")
     return(integration_results)

@@ -291,3 +291,126 @@
 #      Bstar = testTLEpy$Bstar,
 #      initialDateTime = testTLEpy$dateTime,
 #      targetTime = targetTimePy)
+
+
+# Checks for planet lab cubesats propagation
+# Planetlabs uses 3U cubesats (10cmx10cmx30cm, 3.99 kg)
+# Planetlabs epochs are given in s since J2000 TT epoch, which is  11:58:55.816 UTC 1st of January 2000
+# Using hardware ID 0505 ephemeris at 2021-04-10, target 2021-04-25
+# # 
+# #
+# getLatestSpaceData()
+# 
+# planet_lab_mass <- 3.99
+# planet_lab_area <- 0.5*(10+10+30)*0.0001
+# planet_lab_cd <- 2.2
+# planet_lab_cr <- 1.2
+# planet_lab_initial_position <- c(-6.791120798515737e+06,  1.298567476543681e+06, -4.919967206741248e+05)
+# planet_lab_initial_velocity <- c(-1.083847203010712e+03, -3.073534729296989e+03,  6.844313262593339e+03)
+# planet_lab_initial_dateTime <- as.POSIXct(671365399.184000, origin="2000-01-01 11:58:55.816", tz="UTC")
+# planet_lab_target_dateTime <- as.POSIXct(672661404.184000, origin="2000-01-01 11:58:55.816", tz="UTC")
+# target_time <- 672661404.184000 - 671365399.184000
+# 
+# propagation_planet_lab <- hpop(position = planet_lab_initial_position,
+#                                velocity = planet_lab_initial_velocity,
+#                                dateTime = planet_lab_initial_dateTime,
+#                                satelliteMass = planet_lab_mass,
+#                                dragArea = planet_lab_area,
+#                                radiationArea = planet_lab_area,
+#                                dragCoefficient = planet_lab_cd,
+#                                radiationCoefficient = planet_lab_cr,
+#                                times = seq(0, target_time, by=10800),
+#                                maxsteps = 100000)
+# 
+# # saveRDS(propagation_planet_lab, "propagation_planet_lab.rds")
+# # 
+# planet_lab_initial_dateTime2 <- as.POSIXct(671365399.184000 + 1296000, origin="2000-01-01 11:58:55.816", tz="UTC")
+# planet_lab_initial_position2 <- propagation_planet_lab[121, 2:4]
+# planet_lab_initial_velocity2 <- propagation_planet_lab[121, 5:7]
+# 
+# propagation_planet_lab_2 <- hpop(position = planet_lab_initial_position2,
+#                                  velocity = planet_lab_initial_velocity2,
+#                                  dateTime = planet_lab_initial_dateTime2,
+#                                  satelliteMass = planet_lab_mass,
+#                                  dragArea = planet_lab_area,
+#                                  radiationArea = planet_lab_area,
+#                                  dragCoefficient = planet_lab_cd,
+#                                  radiationCoefficient = planet_lab_cr,
+#                                  times = seq(0, 5, by=1),
+#                                  maxsteps = 100000)
+# 
+# # Compare with TLE
+# 
+# planet_lab_TLE1 <- readTLE(paste0(path.package("asteRisk"), "/planet_mc_20210410.tle"))
+# 
+# planet_lab_0505_TLE1 <- planet_lab_TLE1[[1]]
+# 
+# sgp4_epoch_position <- sgp4(n0=planet_lab_0505_TLE1$meanMotion*((2*pi)/(1440)),
+#      e0=planet_lab_0505_TLE1$eccentricity,
+#      i0=planet_lab_0505_TLE1$inclination*pi/180,
+#      M0=planet_lab_0505_TLE1$meanAnomaly*pi/180,
+#      omega0=planet_lab_0505_TLE1$perigeeArgument*pi/180,
+#      OMEGA0=planet_lab_0505_TLE1$ascension*pi/180,
+#      Bstar = planet_lab_0505_TLE1$Bstar,
+#      initialDateTime = planet_lab_0505_TLE1$dateTime,
+#      targetTime = 0)
+# 
+# sgp4_GCRF_epoch_position <- TEMEtoGCRF(sgp4_epoch_position$position*1000, sgp4_epoch_position$velocity*1000, planet_lab_0505_TLE1$dateTime)
+# 
+# sgp4_final_position <- sgp4(n0=planet_lab_0505_TLE1$meanMotion*((2*pi)/(1440)),
+#                             e0=planet_lab_0505_TLE1$eccentricity,
+#                             i0=planet_lab_0505_TLE1$inclination*pi/180,
+#                             M0=planet_lab_0505_TLE1$meanAnomaly*pi/180,
+#                             omega0=planet_lab_0505_TLE1$perigeeArgument*pi/180,
+#                             OMEGA0=planet_lab_0505_TLE1$ascension*pi/180,
+#                             Bstar = planet_lab_0505_TLE1$Bstar,
+#                             initialDateTime = planet_lab_0505_TLE1$dateTime,
+#                             targetTime = (672661404.184000 - 671365399.184000)/60)
+# 
+# sgp4_GCRF_final_position <- TEMEtoGCRF(sgp4_final_position$position*1000, sgp4_final_position$velocity*1000, planet_lab_0505_TLE1$dateTime)
+# 
+# 
+# 
+# # Testing proapgation of GPS RINEX for 1 day interval
+# 
+# RINEXfile_2021010 <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), "/brdc0100.21n"))
+# RINEXfile_2021011 <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), "/brdc0110.21n"))
+# 
+# RINEX_2021010_msg1 <- RINEXfile_2021010$messages[[1]]
+# RINEX_2021011_msg1 <- RINEXfile_2021011$messages[[1]]
+# 
+# GPS_initial_dateTime <- "2021-01-09 23:59:41.999217172"
+# GPS_initial_GCRF <- ECEFtoGCRF(RINEX_2021010_msg1$position_ECEF, RINEX_2021010_msg1$velocity_ECEF, GPS_initial_dateTime)
+# GPS_target_dateTime <- "2021-01-10 23:59:41.999217712"
+# GPS_target_GCRF <-  ECEFtoGCRF(RINEX_2021011_msg1$position_ECEF, RINEX_2021011_msg1$velocity_ECEF, GPS_target_dateTime)
+# 
+# GPS_initial_position <- GPS_initial_GCRF$position
+# GPS_initial_velocity <- GPS_initial_GCRF$velocity
+# gps_mass <- 1633 # satellite of block IIF
+# gps_area <- 0.5*(5.4 + 7.01 + 5.72 + 22.25)*0.85 # from https://mediatum.ub.tum.de/doc/1188612/719708.pdf, the 0.85 is shadowing factor
+# gps_cd <- 2.2
+# gps_cr <- 1.2
+# 
+# propagation_GPS <- hpop(position = GPS_initial_position,
+#                         velocity = GPS_initial_velocity,
+#                         dateTime = GPS_initial_dateTime,
+#                         satelliteMass = gps_mass,
+#                         dragArea = gps_area,
+#                         radiationArea = gps_area,
+#                         dragCoefficient = gps_cd,
+#                         radiationCoefficient = gps_cr,
+#                         times = seq(0, 86400, by=3600))
+# 
+# test_GCRF_propagation_position <- propagation_GPS[25, 2:4]
+# test_GCRF_propagation_velocity <- propagation_GPS[25, 5:7]
+# 
+# sqrt(sum((GPS_target_GCRF$position - test_GCRF_propagation_position)^2))
+
+
+
+##### CHECKS FOR CONVERSION BETWEEN FRAMES
+# TEME to GCRF
+# 
+# r_teme <- c(5094.18016210, 6127.64465950, 6380.34453270)
+# dateTime <- "2004-04-06 7:51:28.386009"
+# TEMEtoGCRF(r_teme, c(0,0,0), dateTime)

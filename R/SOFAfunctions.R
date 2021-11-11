@@ -31,7 +31,7 @@ iauCal2jd <- function(year, month, day, hour=0, min=0, sec=0) {
 iauObl06 <- function(date1, date2) {
     # Interval between fundamental date J2000.0 and given date (JC).
     t <- ((date1 - JD_J2000_0) + date2) / DJC
-    # Mean obliquity
+    # Mean obliquity of the ecliptic (angle between ecliptic and mean equator for the Julian date defined as date1 + date2)
     eps0 <- (84381.406+(-46.836769+(-0.0001831+(0.00200340+(-0.000000576-0.0000000434*t)*t)*t)*t)*t)*DAS2R
     return(eps0)
 }

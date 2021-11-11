@@ -296,7 +296,7 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     UT1_GPS <- timeDiffs_results$UT1_GPS[[1]]
     TT_UTC <- timeDiffs_results$TT_UTC[[1]]
     GPS_UTC <- timeDiffs_results$GPS_UTC[[1]]
-    JD <- MJD_UTC + 2400000.5
+    # Add 2400000.5 to convert modified Julian date to Julian date
     invjday_results <- invjday(MJD_UTC+2400000.5)
     year <- invjday_results$year
     month <- invjday_results$month

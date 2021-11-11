@@ -7,8 +7,18 @@ rad2deg <- function(radians) {
 }
 
 UTCdateTimeToGMST <- function(dateTime) {
+    # Formula is actually for converting from UT1 Julian date, but difference 
+    # between UTC and UT1 JD will be below 0.9 seconds
     daysToJ2000_0 <- as.numeric(julian(as.POSIXct(dateTime, tz="UTC"),
                                        origin=as.POSIXct("2000-01-01 12:00:00", tz="UTC")))
+    centuriesFromJ2000 <- daysToJ2000_0/36525
+    GMST <- 67310.54841 + (876600.0*3600 + 8640184.812866)*centuriesFromJ2000+ 0.093104*centuriesFromJ2000^2 - 6.2e-6*centuriesFromJ2000^3
+    GMST <- GMST %% 86400
+    return(GMST*pi/43200)
+}
+
+MJDToGMST <- function(MJD) {
+    daysToJ2000_0 <- MJD - MJD_J2000
     centuriesFromJ2000 <- daysToJ2000_0/36525
     GMST <- 67310.54841 + (876600.0*3600 + 8640184.812866)*centuriesFromJ2000+ 0.093104*centuriesFromJ2000^2 - 6.2e-6*centuriesFromJ2000^3
     GMST <- GMST %% 86400

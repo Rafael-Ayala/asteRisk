@@ -5,7 +5,7 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
         if(is.na(i)) {
             warning(strwrap("No Earth Orientation Parameters found for the
                             specified date. Try to obtain latest space data
-                            by running getLatestSpaceData()∫"))
+                            by running getLatestSpaceData()"))
         }
         preeop <- as.numeric(eop[i, ])
         nexteop <- as.numeric(eop[i+1, ])
@@ -27,8 +27,8 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
         y_pole <- y_pole/const_Arcs  # Pole coordinate (rad)
         dpsi <- dpsi/const_Arcs
         deps <- deps/const_Arcs
-        dx_pole <- dx_pole/const_Arcs  # Pole velocity? (rad)
-        dy_pole <- dy_pole/const_Arcs  # Pole velocity? (rad)
+        dx_pole <- dx_pole/const_Arcs  # Pole velocity (rad)
+        dy_pole <- dy_pole/const_Arcs  # Pole velocity (rad)
     } else if(interp == "n") {
         mjd = (floor(Mjd_UTC))
         i <- which(mjd == eop[, 4])[1]
@@ -187,14 +187,14 @@ ECItoECEF <- function(MJD_UTC, Y0) {
 
 Mjday_TDB <- function(Mjd_TT) {
     # Given Modified julian date (TT compatible), compute Modified julian date (TDB compatible)
-    T_TT <- (Mjd_TT - 51544.5)/36525
-    Mjd_TDB <- Mjd_TT + ( 0.001658*sin(628.3076*T_TT +6.2401)+
-                              0.000022*sin(575.3385*T_TT+4.2970)+
-                              0.000014*sin(1256.6152*T_TT + 6.1969)+
-                              0.000005*sin(606.9777*T_TT+4.0212)+  
-                              0.000005*sin(52.9691*T_TT+0.4444) +   
-                              0.000002*sin(21.3299*T_TT+5.5431)+   
-                              0.000010*sin(628.3076*T_TT+4.2490) )/86400
+    T_TT <- (Mjd_TT - 51544.5)/36525 # Julian centuries in TT
+    Mjd_TDB <- Mjd_TT + ( 0.001658 * sin(628.3076 * T_TT + 6.2401) +
+                              0.000022 * sin(575.3385 * T_TT + 4.2970) +
+                              0.000014 * sin(1256.6152 * T_TT + 6.1969) +
+                              0.000005 * sin(606.9777 * T_TT + 4.0212)+  
+                              0.000005 * sin(52.9691 * T_TT + 0.4444) +   
+                              0.000002 * sin(21.3299 * T_TT + 5.5431)+   
+                              0.000010 * sin(628.3076 * T_TT + 4.2490) )/86400
     return(Mjd_TDB)
 }
 

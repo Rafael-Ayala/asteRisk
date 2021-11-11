@@ -46,7 +46,17 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
   \item{satelliteMass}{Mass of the satellite in kilograms.
   }
   \item{dragArea}{Effective area of the satellite for atmospheric drag in
-  squared meters.
+  squared meters. If the way that a satellite will orient with respect to its
+  velocity is not known, a mean cross-sectional area should be calculated
+  assuming that the orientation of the satellite with respect to its velocity
+  will vary uniformly. A decent estimate can be obtained with a flat-plate model,
+  where the satellite is considered to be parallelepiped-shaped. The mean
+  effective area can then be calculated as CSA = (S1 + S2 + S3 (+S4))/2, where
+  S1, S2 and S3 are the areas of the three perpendicular surfaces of the model
+  and S4 is an optional term to account for the area of solar panels (potential
+  masking between the solar panels and the main surfaces is not considered; this
+  might be partially accounted for by introducing a factor to reduce the 
+  calculated effective area). 
   }
   \item{radiationArea}{Effective area of the satellite subject to the effect of
   radiation pressure in squared meters.
@@ -78,6 +88,9 @@ Satellite Orbits: Models, Methods and Applications. Oliver Montenbruck and Eberh
 Fundamentals of Astrodynamics and Applications. David Vallado.
 https://www.mathworks.com/matlabcentral/fileexchange/55167-high-precision-orbit-propagator
 https://ccmc.gsfc.nasa.gov/modelweb/models/nrlmsise00.php
+https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=1144&context=smallsat
+https://iopscience.iop.org/article/10.1088/1742-6596/911/1/012009/pdf
+https://www.sciencedirect.com/science/article/pii/S1110016821000016
 }
 \examples{
 if(requireNamespace("asteRiskData", quietly = TRUE)) {
