@@ -394,7 +394,7 @@ rotationGCRFtoTEME <- function(MJD_UTC) {
 }
 
 rotationTEMEtoGCRF <- function(MJD_UTC) {
-    inverseRotation <- rotationGCRFtoTEME(MJD_UTC)
+    inverseRotation <- rotationGCRFtoTEME(MJD_UTC, deltaDeltaPsi, deltaDeltaEps)
     return(Conj(inverseRotation))
 }
 
@@ -433,44 +433,5 @@ rotationGCRFtoJ2000 <- function(MJD_UTC) {
 
 rotationJ2000toGCRF <- function(MJD_UTC) {
     inverseRotation <- rotationGCRFtoJ2000(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationTODtoMOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
-    nutation <- IAU76_nutation(MJD_TT)
-    nutation$deltaPsi <- nutation$deltaPsi + deltaDeltaPsi
-    nutation$deltaEps <- nutation$deltaEps + deltaDeltaEps
-    obliquity <-  nutation$meanEclipticObliquity + nutation$deltaEps
-    quatTODtoMOD <- anglesToQuaternion(c(obliquity, nutation$deltaPsi, -nutation$meanEclipticObliquity), "XZX")
-}
-
-rotationMODtoTOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    inverseRotation <- rotationTODtoMOD(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0)
-    return(Conj(inverseRotation))
-}
-
-rotationGCRFtoTOD <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoTOD <- rotationMODtoTOD(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    return(quatGCRFtoMOD * quatMODtoTOD)
-}
-
-rotationTODtoGCRF <- function(MJD_UTC) {
-    inverseRotation <- rotationGCRFtoTOD(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationJ2000toMOD <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoPEF <- rotationMODtoPEF(MJD_UTC, 0, 0)
-    quatPEFtoMOD <- rotationPEFtoMOD(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    return(quatGCRFtoMOD * quatMODtoPEF * quatPEFtoMOD)
-}
-
-rotationMODtoJ2000 <- function(MJD_UTC) {
-    inverseRotation <- rotationJ2000toMOD(MJD_UTC)
     return(Conj(inverseRotation))
 }
