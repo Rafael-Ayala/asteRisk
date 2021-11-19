@@ -26,7 +26,7 @@ calculatePolarMotionMatrix <- function(julianDate) {
     return(polarMotionMatrix)
 }
 
-TEMEtoECEF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
+TEMEtoITRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     gmst <- UTCdateTimeToGMST(dateTime)
     daysToJ2000_0 <- as.numeric(julian(as.POSIXct(dateTime, tz="UTC"),
                                        origin=as.POSIXct("2000-01-01 12:00:00", tz="UTC")))
@@ -55,7 +55,7 @@ TEMEtoECEF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     ))
 }
 
-ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
+ITRFtoLATLON <- function(position_ITRF, degreesOutput=TRUE) {
     a <- earthRadius_WGS84
     a2 <- a^2
     f <- earthFlatteningFactor_WGS84
@@ -63,9 +63,9 @@ ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
     b2 <- b^2
     e <- sqrt((a2 - b2)/a2)
     eprime <- sqrt((a2 - b2)/b2)
-    X <- position_ECEF[1]
-    Y <- position_ECEF[2]
-    Z <- position_ECEF[3]
+    X <- position_ITRF[1]
+    Y <- position_ITRF[2]
+    Z <- position_ITRF[3]
     p <- sqrt(X^2 + Y^2)
     theta <- atan2(a*Z, b*p)
     sintheta <- sin(theta)
@@ -88,7 +88,7 @@ ECEFtoLATLON <- function(position_ECEF, degreesOutput=TRUE) {
     return(LATLONALT)
 }
 
-LATLONtoECEF <- function(position_LATLON, degreesInput=TRUE) {
+LATLONtoITRF <- function(position_LATLON, degreesInput=TRUE) {
     lat <- position_LATLON[1]
     lon <- position_LATLON[2]
     alt <- position_LATLON[3]
@@ -105,11 +105,11 @@ LATLONtoECEF <- function(position_LATLON, degreesInput=TRUE) {
 }
 
 TEMEtoLATLON <- function(position_TEME, dateTime, degreesOutput=TRUE) {
-    ECEFcoords <- TEMEtoECEF(position_TEME=position_TEME, dateTime=dateTime)
-    return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
+    ECEFcoords <- TEMEtoITRF(position_TEME=position_TEME, dateTime=dateTime)
+    return(ITRFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
 }
 
-ECEFtoGCRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
+ITRFtoGCRF <- function(position_ITRF, velocity_ITRF=c(0, 0, 0), dateTime) {
     hasData()
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
     year <- date$year + 1900
@@ -119,14 +119,14 @@ ECEFtoGCRF <- function(position_ECEF, velocity_ECEF=c(0, 0, 0), dateTime) {
     minute <- date$min
     second <- date$sec
     Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
-    results <- ECEFtoECI(Mjd_UTC, c(position_ECEF, velocity_ECEF))
+    results <- ECEFtoECI(Mjd_UTC, c(position_ITRF, velocity_ITRF))
     return(list(
         position=as.numeric(results$position),
         velocity=as.numeric(results$velocity)
     ))
 }
 
-GCRFtoECEF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
+GCRFtoITRF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
     hasData()
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
     year <- date$year + 1900
@@ -145,29 +145,21 @@ GCRFtoECEF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
 
 TEMEtoGCRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     hasData()
-    ecef_results <- TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
-    GCRF_results <- ECEFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
+    ecef_results <- TEMEtoITRF(position_TEME, velocity_TEME, dateTime)
+    GCRF_results <- ITRFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
     return(GCRF_results)
 }
-
-TEMEtoGCRF2 <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
-    hasData()
-    ecef_results <- TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
-    GCRF_results <- ECEFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
-    return(GCRF_results)
-}
-
 
 GCRFtoLATLON <- function(position_GCRF, dateTime, degreesOutput=TRUE) {
     hasData()
-    ECEFcoords <- GCRFtoECEF(position_GCRF=position_GCRF, dateTime=dateTime)
-    return(ECEFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
+    ECEFcoords <- GCRFtoITRF(position_GCRF=position_GCRF, dateTime=dateTime)
+    return(ITRFtoLATLON(ECEFcoords$position, degreesOutput=degreesOutput))
 }
 
 LATLONtoGCRF <- function(position_LATLON, dateTime, degreesInput=TRUE) {
     hasData()
-    ECEFcoords <- LATLONtoECEF(position_LATLON, degreesInput=degreesInput)
-    return(ECEFtoGCRF(ECEFcoords, dateTime=dateTime))
+    ECEFcoords <- LATLONtoITRF(position_LATLON, degreesInput=degreesInput)
+    return(ITRFtoGCRF(ECEFcoords, dateTime=dateTime))
 }
 
 KOEtoECI <- function(a, e, i, M, omega, OMEGA, keplerAccuracy=10e-8, maxKeplerIterations=100) {
@@ -346,131 +338,4 @@ ECItoKOE <- function(position_ECI, velocity_ECI) {
         longitudePerigee = lonPer,
         trueLongitude = trueLon
     ))
-}
-
-### New coordinate transformations with quaternion rotations
-
-rotationMODtoGCRF <- function(MJD_UTC) {
-    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
-    precession <- IAU76_precession(MJD_TT)
-    rotation <- anglesToQuaternion(c(precession$z,
-                                     -precession$theta,
-                                     precession$zeta),
-                                   "ZYZ")
-    return(rotation)
-}
-
-rotationGCRFtoMOD <- function(MJD_UTC) {
-    inverseRotation <- rotationMODtoGCRF(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationTEMEtoMOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
-    nutation <- IAU76_nutation(MJD_TT)
-    nutation$deltaPsi <- nutation$deltaPsi + deltaDeltaPsi
-    nutation$deltaEps <- nutation$deltaEps + deltaDeltaEps
-    obliquity <-  nutation$meanEclipticObliquity + nutation$deltaEps
-    T_TT <- (MJD_TT - MJD_J2000)/36525 # Julian centuries in TT
-    meanLongitudeAscendingNodeMoon <- (125.04452222 + T_TT * (-(5*360 + 134.1362608) + T_TT * (0.0020708 + T_TT * 2.2e-6))) * pi/180
-    meanLongitudeAscendingNodeMoon <- meanLongitudeAscendingNodeMoon %% (2*pi)
-    equationEquinoxes1982 <- nutation$deltaPsi * cos(nutation$meanEclipticObliquity) +
-        (0.00264 * sin(meanLongitudeAscendingNodeMoon) + 0.000063 * sin(2 * meanLongitudeAscendingNodeMoon)) * pi/648000
-    quatTEMEtoTOD <- anglesToQuaternion(-equationEquinoxes1982, "Z")
-    quatTODtoMOD <- anglesToQuaternion(c(obliquity, nutation$deltaPsi, -nutation$meanEclipticObliquity), "XZX")
-    return(quatTEMEtoTOD * quatTODtoMOD)
-}
-
-rotationMODtoTEME <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    inverseRotation <- rotationTEMEtoMOD(MJD_UTC, deltaDeltaPsi, deltaDeltaEps)
-    return(Conj(inverseRotation))
-}
-
-rotationGCRFtoTEME <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoTEME <- rotationMODtoTEME(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    return(quatGCRFtoMOD * quatMODtoTEME)
-}
-
-rotationTEMEtoGCRF <- function(MJD_UTC) {
-    inverseRotation <- rotationGCRFtoTEME(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationPEFtoMOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
-    MJD_UT1 <- MJDUTCtoMJDUT1(MJD_UTC)
-    nutation <- IAU76_nutation(MJD_TT)
-    nutation$deltaPsi <- nutation$deltaPsi + deltaDeltaPsi
-    nutation$deltaEps <- nutation$deltaEps + deltaDeltaEps
-    obliquity <-  nutation$meanEclipticObliquity + nutation$deltaEps
-    T_TT <- (MJD_TT - MJD_J2000)/36525 # Julian centuries in TT
-    meanLongitudeAscendingNodeMoon <- (125.04452222 + T_TT * (-(5*360 + 134.1362608) + T_TT * (0.0020708 + T_TT * 2.2e-6))) * pi/180
-    meanLongitudeAscendingNodeMoon <- meanLongitudeAscendingNodeMoon %% (2*pi)
-    equationEquinoxes1982 <- nutation$deltaPsi * cos(nutation$meanEclipticObliquity) +
-        (0.00264 * sin(meanLongitudeAscendingNodeMoon) + 0.000063 * sin(2 * meanLongitudeAscendingNodeMoon)) * pi/648000
-    thetaGMST <- MJDToGMST(MJD_UT1)
-    thetaGAST <- thetaGMST + equationEquinoxes1982
-    quatPEFtoTOD <- anglesToQuaternion(-thetaGAST, "Z")
-    quatTODtoMOD <- anglesToQuaternion(c(obliquity, nutation$deltaPsi, -nutation$meanEclipticObliquity), "XZX")
-    return(quatPEFtoTOD * quatTODtoMOD)
-}
-
-rotationMODtoPEF <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    inverseRotation <- rotationPEFtoMOD(MJD_UTC, deltaDeltaPsi, deltaDeltaEps)
-    return(Conj(inverseRotation))
-}
-
-rotationGCRFtoJ2000 <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoPEF <- rotationMODtoPEF(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    quatPEFtoMOD <- rotationPEFtoMOD(MJD_UTC, 0, 0)
-    quatMODtoJ2000 <- rotationMODtoGCRF(MJD_UTC)
-    return(quatGCRFtoMOD * quatMODtoPEF * quatPEFtoMOD * quatMODtoJ2000)
-}
-
-rotationJ2000toGCRF <- function(MJD_UTC) {
-    inverseRotation <- rotationGCRFtoJ2000(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationTODtoMOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
-    nutation <- IAU76_nutation(MJD_TT)
-    nutation$deltaPsi <- nutation$deltaPsi + deltaDeltaPsi
-    nutation$deltaEps <- nutation$deltaEps + deltaDeltaEps
-    obliquity <-  nutation$meanEclipticObliquity + nutation$deltaEps
-    quatTODtoMOD <- anglesToQuaternion(c(obliquity, nutation$deltaPsi, -nutation$meanEclipticObliquity), "XZX")
-}
-
-rotationMODtoTOD <- function(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0) {
-    inverseRotation <- rotationTODtoMOD(MJD_UTC, deltaDeltaPsi = 0, deltaDeltaEps = 0)
-    return(Conj(inverseRotation))
-}
-
-rotationGCRFtoTOD <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoTOD <- rotationMODtoTOD(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    return(quatGCRFtoMOD * quatMODtoTOD)
-}
-
-rotationTODtoGCRF <- function(MJD_UTC) {
-    inverseRotation <- rotationGCRFtoTOD(MJD_UTC)
-    return(Conj(inverseRotation))
-}
-
-rotationJ2000toMOD <- function(MJD_UTC) {
-    IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
-    quatGCRFtoMOD <- rotationGCRFtoMOD(MJD_UTC)
-    quatMODtoPEF <- rotationMODtoPEF(MJD_UTC, 0, 0)
-    quatPEFtoMOD <- rotationPEFtoMOD(MJD_UTC, IERS_results$dpsi, IERS_results$deps)
-    return(quatGCRFtoMOD * quatMODtoPEF * quatPEFtoMOD)
-}
-
-rotationMODtoJ2000 <- function(MJD_UTC) {
-    inverseRotation <- rotationJ2000toMOD(MJD_UTC)
-    return(Conj(inverseRotation))
 }

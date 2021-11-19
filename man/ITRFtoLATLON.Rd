@@ -1,20 +1,23 @@
-\name{ECEFtoLATLON}
-\alias{ECEFtoLATLON}
-\title{Convert coordinates from ECEF to geodetic latitude, longitude and altitude
+\name{ITRFtoLATLON}
+\alias{ITRFtoLATLON}
+\title{Convert coordinates from ITRF to geodetic latitude, longitude and altitude
 }
 \description{
-The ECEF (Earth Centered, Earth Fixed) frame of reference is a non-inertial
-coordinate frame, where the origin is placed at the center of mass of the Earth
-and the frame rotates with respect to the stars to remain fixed with respect to 
-the Earth surface as it rotates. This function converts Cartesian coordinates
-in the ECEF frame to geodetic latitude, longitude and altitude.
+The ITRF (International Terrestrial Reference Frame) is an ECEF (Earth Centered, 
+Earth Fixed) frame of reference, i.e., a non-inertial frame of reference where 
+the origin is placed at the center of mass of Earth, and the frame rotates 
+with respect to the stars to remain fixed with respect to the Earth surface as 
+it rotates. The Z-axis extends along the true North as defined by the IERS
+reference pole, and the X-axis extends towards the intersection between the
+equator and the Greenwich meridian at any time. This function converts Cartesian 
+coordinates in the ECEF frame to geodetic latitude, longitude and altitude.
 }
 \usage{
-ECEFtoLATLON(position_ECEF, degreesOutput=TRUE)
+ITRFtoLATLON(position_ITRF, degreesOutput=TRUE)
 }
 \arguments{
-  \item{position_ECEF}{Vector with the X, Y and Z components of the position
-  of an object in ECEF frame, in m.
+  \item{position_ITRF}{Vector with the X, Y and Z components of the position
+  of an object in ITRF frame, in m.
   }
   \item{degreesOutput}{Logical indicating if the output should be in sexagesimal
   degrees. If \code{degreesOutput=FALSE}, the output will be in radians.
@@ -28,6 +31,16 @@ degrees (or radians if specified) and the altitude in m.
 https://arc.aiaa.org/doi/10.2514/6.2006-6753
 }
 \examples{
+coordinates_ITRF <- c(5062040.1, -530657.4, 3863936.5)
+
+# Let's calculate the geodetic latitude, longitude and altitude
+
+geodetic <- ITRFtoLATLON <- (coordinates_ITRF)
+
+# A longer application example follows, useful to represent the groundtrack of a 
+# satellite after propagaton with SGP4/SDP4
+
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 # The following orbital parameters correspond to an object with NORAD catalogue
 # number 24208 (Italsat 2) the 26th of June, 2006 at 00:58:29.34 UTC.
 
@@ -45,14 +58,15 @@ epochDateTime <- "2006-06-26 00:58:29.34"
 state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA0,
                          Bstar=Bstar, initialDateTime=epochDateTime, targetTime=1440)
 
-# We can now convert the results in TEME frame to ECEF frame, previously
+# We can now convert the results in TEME frame to ITRF frame, previously
 # multiplying by 1000 to convert the km output of sgdp4 to m
 
-state_1day_ECEF <- TEMEtoECEF(state_1day_TEME$position, state_1day_TEME$velocity,
+state_1day_ITRF <- TEMEtoITRF(state_1day_TEME$position, state_1day_TEME$velocity,
                               "2006-06-27 00:58:29.34")
                               
 # Finally, we can convert the ECEF coordinates to geodetic latitude, longitude
 # and altitude
 
-state_1day_geodetic <- ECEFtoLATLON(state_1day_ECEF$position)
+state_1day_geodetic <- ITRFtoLATLON(state_1day_ITRF$position)
+}
 }

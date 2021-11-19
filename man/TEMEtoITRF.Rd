@@ -1,6 +1,6 @@
-\name{TEMEtoECEF}
-\alias{TEMEtoECEF}
-\title{Convert coordinates from TEME to ECEF
+\name{TEMEtoITRF}
+\alias{TEMEtoITRF}
+\title{Convert coordinates from TEME to ITRF
 }
 \description{
 The TEME (True Equator, Mean Equinox) frame of reference is an Earth-centered
@@ -9,13 +9,19 @@ of Earth and the coordinate frame is fixed with respect to the stars (and
 therefore not fixed with respect to the Earth surface in its rotation). The
 coordinates and velocities calculated with the SGP4 and SDP4 models are in the
 TEME frame of reference. This function converts positions and velocities in
-TEME to the ECEF (Earth Centered, Earth Fixed) frame of reference. In the ECEF
-frame, the origin is also placed at the center of mass of Earth, but the
-frame rotates with respect to the stars to remain fixed with respect to the
-Earth surface as it rotates.
+TEME to the ITRF (International Terrestrial Reference Frame), which is an ECEF 
+(Earth Centered, Earth Fixed) frame of reference. In the ITRF, the origin is 
+also placed at the center of mass of Earth, but the frame rotates with respect 
+to the stars to remain fixed with respect to the Earth surface as it rotates. 
+The Z-axis extends along the true North as defined by the IERS reference pole, 
+and the X-axis extends towards the intersection between the equator and the 
+Greenwich meridian at any time.
+
+This function requires the \code{asteRiskData} package, which can be installed 
+by running \code{install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')}
 }
 \usage{
-TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
+TEMEtoITRF(position_TEME, velocity_TEME, dateTime)
 }
 \arguments{
   \item{position_TEME}{Vector with the X, Y and Z components of the position
@@ -30,15 +36,16 @@ TEMEtoECEF(position_TEME, velocity_TEME, dateTime)
 }
 \value{
 A list with two elements representing the position and velocity of the satellite
-in the ECEF (Earth Centered, Earth Fixed) frame of reference. Position values
-are in m, and velocity values are in m/s. Each of the two elements contains
-three values, corresponding to the X, Y and Z components of position and
-velocity in this order.
+in the ITRF (International Terrestrial Reference Frame) frame of reference. 
+Position values are in m, and velocity values are in m/s. Each of the two 
+elements contains three values, corresponding to the X, Y and Z components of 
+position and velocity in this order.
 }
 \references{
 https://celestrak.com/columns/v04n03/#FAQ01
 }
 \examples{
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 # The following orbital parameters correspond to an object with NORAD catalogue
 # number 24208 (Italsat 2) the 26th of June, 2006 at 00:58:29.34 UTC.
 
@@ -56,10 +63,11 @@ epochDateTime <- "2006-06-26 00:58:29.34"
 state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA0,
                          Bstar=Bstar, initialDateTime=epochDateTime, targetTime=1440)
 
-# We can now convert the results in TEME frame to ECEF frame, previously
+# We can now convert the results in TEME frame to ITRF frame, previously
 # multiplying by 1000 to convert the km output of sgdp4 to m
 
-state_1day_ECEF <- TEMEtoECEF(state_1day_TEME$position*1000, 
+state_1day_ITRF <- TEMEtoITRF(state_1day_TEME$position*1000, 
                               state_1day_TEME$velocity*1000,
                               "2006-06-27 00:58:29.34")
+}
 }

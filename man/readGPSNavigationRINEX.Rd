@@ -181,13 +181,13 @@ of the GPS satellite:
   correction (with fields \code{deltaUTCA0} and \code{deltaUTCA1} from the 
   header) to obtain UTC time. Corrections are performed as described in the GPS
   system specifications (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).}
-  \code{position_ECEF}{Position of the satellite in the ECEF frame, calculated
+  \code{position_ITRF}{Position of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters.}
-  \code{velocity_ECEF}{Velocity of the satellite in the ECEF frame, calculated
+  \code{velocity_ITRF}{Velocity of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters/second.}
-  \code{acceleration_ECEF}{Acceleration of the satellite in the ECEF frame, calculated
+  \code{acceleration_ITRF}{Acceleration of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters/squared second.}
 }

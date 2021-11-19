@@ -282,20 +282,21 @@ Earth-centered inertial coordinate frame, where the origin is placed at the
 center of mass of Earth and the coordinate frame is fixed with respect to the 
 stars (and therefore not fixed with respect to the Earth surface in its rotation). 
 
-<b>asteRisk</b> provides the <b>TEMEtoECEF()</b> function, which converts 
-positions and velocities in TEME to the ECEF (Earth Centered, Earth Fixed) 
-frame of reference. In the ECEF frame, the origin is also placed at the center 
-of mass of Earth, but the frame rotates with respect to the stars to remain 
-fixed with respect to the Earth surface as it rotates.
+<b>asteRisk</b> provides the <b>TEMEtoITRF()</b> function, which converts 
+positions and velocities in TEME to the ITRF (International Terrestrial Reference 
+Frame) frame of reference. The ITRF is an ECEF (Earth Centered, Earth Fixed) 
+frame of reference, i.e., a non-inertial frame of reference where the origin is 
+also placed at the center of mass of Earth, and the frame rotates with respect 
+to the stars to remain fixed with respect to the Earth surface as it rotates.
 
-Additionally, the <b>TEMEtoLATLON()</b> and <b>ECEFtoLATLON()</b> functions
+Additionally, the <b>TEMEtoLATLON()</b> and <b>ITRFtoLATLON()</b> functions
 convert Cartesian coordinates to geodetic latitude, longitude and altitude
-values, from the TEME and ECEF frames respectively. This can be useful, for 
+values, from the TEME and ITRF frames respectively. This can be useful, for 
 example, to visualize the ground track followed by a satellite.
 
 ```{r tidy = TRUE}
 # Let us convert the last propagation previously calculated for the MOLNIYA 1-83
-# satellite into the ECEF frame. In order to do so, it is required to provide
+# satellite into the ITRF frame. In order to do so, it is required to provide
 # a date-time string indicating the time for the newly calculated position and
 # velocity. Since this was 720 minutes after the epoch for the original state
 # vector, we can just add 12 hours to it 
@@ -304,7 +305,7 @@ molniya$dateTime
 
 new_dateTime <- "2006-06-25 12:33:43"
 
-ecef_coordinates <- TEMEtoECEF(last_molniya_propagation$position,
+ITRF_coordinates <- TEMEtoITRF(last_molniya_propagation$position,
                                last_molniya_propagation$velocity,
                                new_dateTime)
 

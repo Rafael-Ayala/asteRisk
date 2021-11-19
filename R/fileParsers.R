@@ -428,9 +428,9 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
         transmissionTime=transmissionTime,
         fitInterval=fitInterval,
         ephemerisUTCTime=ephemerisUTCDateTime,
-        position_ECEF=position_ECEF,
-        velocity_ECEF=velocity_ECEF,
-        acceleration_ECEF=acceleration_ECEF
+        position_ITRF=position_ECEF,
+        velocity_ITRF=velocity_ECEF,
+        acceleration_ITRF=acceleration_ECEF
     ))
 }
 

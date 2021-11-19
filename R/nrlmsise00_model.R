@@ -997,7 +997,7 @@ NRLMSISE00 <- function(Mjd_UTC, r_ECEF, UT1_UTC, TT_UTC) {
     # input$year <- 0
     input$year <- invjday_results$year
     input$sec <- invjday_results$hour*3600 + invjday_results$min*60 + invjday_results$sec
-    geodetic_results <- ECEFtoLATLON(r_ECEF, degreesOutput=FALSE)
+    geodetic_results <- ITRFtoLATLON(r_ECEF, degreesOutput=FALSE)
     input$alt <- geodetic_results["altitude"]/1000
     input$g_lat <- geodetic_results["latitude"]*(180/pi)
     input$g_long <- geodetic_results["longitude"]*(180/pi)

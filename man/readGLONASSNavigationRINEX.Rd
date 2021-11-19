@@ -68,23 +68,23 @@ of the GLONASS satellite:
   \item{messageFrameTime }{Second of the UTC day when the message was 
   transmitted}
   \item{positionX }{X coordinate of the position of the satellite in km, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{positionY }{Y coordinate of the position of the satellite in km, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{positionZ }{Z coordinate of the position of the satellite in km, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{velocityX }{X component of the velocity of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{velocityY }{Y component of the velocity of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{velocityZ }{Z component of the velocity of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{accelX }{X component of the accel of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{accelY }{Y component of the accel of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{accelZ }{Z component of the accel of the satellite in km/s, in the
-  ECEF system of coordinates}
+  ITRF system of coordinates}
   \item{satelliteHealthCode }{Code indicating the health of the satellite. 0 if
   healthy}
   \item{freqNumber }{Frequency number (k) of the GLONASS satellite. The two 

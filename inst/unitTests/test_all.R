@@ -39,28 +39,21 @@ testSGDP4_2 <- sgdp4(
 
 checkEquals(testSGDP4_1$algorithm, "sgp4")
 checkEquals(testSGDP4_2$algorithm, "sdp4")
-checkEqualsNumeric(testSGDP4_1$position[1], 231.5594, tolerance=5e-7)
+checkEqualsNumeric(testSGDP4_1$position[1], 231.5655, tolerance=5e-7)
 checkEqualsNumeric(testSGDP4_2$position[1], 5501.081, tolerance=2e-7)
 
-# Test ECEFtoLATLON
+# Test ITRFtoLATLON
 
-# Provided values are those obtained by test of TEMEtoECEF
-testLATLON1 <- ECEFtoLATLON(c(-37325973.4, 19151626.6, 138376.3))
+# Provided values are those obtained by test of TEMEtoITRF
+testLATLON1 <- ITRFtoLATLON(c(-37325973.4, 19151626.6, 138376.3))
 
 checkEqualsNumeric(testLATLON1[1], 0.1891839, tolerance=6e-5)
 
-# Test LATLONtoECEF
+# Test LATLONtoITRF
 
-testECEF3 <- LATLONtoECEF(testLATLON1)
+testECEF3 <- LATLONtoITRF(testLATLON1)
 
 checkEqualsNumeric(testECEF3[1], -37325973.4, tolerance=3e-9)
-
-# Test TEMEtoLATLON
-
-testLATLON2 <- TEMEtoLATLON(testSGDP4_2$position*1000,
-                            "2006-06-27 00:58:29")
-
-checkEqualsNumeric(testLATLON2[1], 0.1891839, tolerance=6e-5)
 
 # Test readGLONASSNavigationRINEX
 
@@ -78,9 +71,16 @@ checkTrue(length(testGPSnav$messages) == 3)
 
 
 if (requireNamespace("asteRiskData", quietly = TRUE)) {
-    # Test TEMEtoECEF
+    # Test TEMEtoLATLON
     
-    testECEF <- TEMEtoECEF(testSGDP4_2$position*1000,
+    testLATLON2 <- TEMEtoLATLON(testSGDP4_2$position*1000,
+                                "2006-06-27 00:58:29")
+    
+    checkEqualsNumeric(testLATLON2[1], 0.1891839, tolerance=6e-5)
+    
+    # Test TEMEtoITRF
+    
+    testECEF <- TEMEtoITRF(testSGDP4_2$position*1000,
                            testSGDP4_2$velocity*1000,
                            "2006-06-27 00:58:29")
     
@@ -94,17 +94,17 @@ if (requireNamespace("asteRiskData", quietly = TRUE)) {
     
     checkEqualsNumeric(testGCRF$position[1], 5560876.4, tolerance=2e-8)
     
-    # Test ECEFtoGCRF
+    # Test ITRFtoGCRF
     
-    testGCRF2 <- ECEFtoGCRF(testECEF$position,
+    testGCRF2 <- ITRFtoGCRF(testECEF$position,
                             testECEF$velocity,
                             "2006-06-27 00:58:29")
     
     checkEqualsNumeric(testGCRF2$position[1], 5560876.4, tolerance=2e-8)
     
-    # Test GCRFtoECEF
+    # Test GCRFtoITRF
     
-    testECEF2 <- GCRFtoECEF(testGCRF$position,
+    testECEF2 <- GCRFtoITRF(testGCRF$position,
                             testGCRF$velocity,
                             "2006-06-27 00:58:29")
     

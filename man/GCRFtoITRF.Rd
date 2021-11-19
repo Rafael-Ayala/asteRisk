@@ -1,6 +1,6 @@
-\name{GCRFtoECEF}
-\alias{GCRFtoECEF}
-\title{Convert coordinates from GCRF to ECEF
+\name{GCRFtoITRF}
+\alias{GCRFtoITRF}
+\title{Convert coordinates from GCRF to ITRF
 }
 \description{
 The GCRF (Geocentric Celestial Reference Frame) frame of reference is an 
@@ -11,14 +11,17 @@ rotation). The X-axis is aligned with the mean equinox of Earth at 12:00
 Terrestrial Time on the 1st of January, 2000, and the Z-axis is aligned with
 the Earth´s rotation axis.
 
-It is equivalent to the J2000 frame of reference (also called EME2000), and in 
-some contexts it is also referred to as ICRF frame (although in its strict 
-definition, the origin of coordinates is placed at the barycenter of the Solar 
-System).
+It is almost equivalent to the J2000 frame of reference (also called EME2000), 
+and in some contexts it is also referred to as ICRF frame (although in its 
+strict definition, the origin of coordinates is placed at the barycenter of the 
+Solar System).
 
-In the ECEF frame, the origin is also placed at the center of mass of Earth, 
-but the frame rotates with respect to the stars to remain fixed with respect to 
-the Earth surface as it rotates.
+In the ITRF (International Terrestrial Reference Frame), the origin is also 
+placed at the center of mass of Earth, but the frame rotates with respect to the 
+stars to remain fixed with respect to the Earth surface as it rotates. The 
+Z-axis extends along the true North as defined by the IERS reference pole, and 
+the X-axis extends towards the intersection between the equator and the 
+Greenwich meridian at any time.
 
 The coordinates and velocities input and calculated with the high-precision
 orbital propagator (\link{hpop}) are in the GCRF frame of reference.
@@ -27,7 +30,7 @@ This function requires the \code{asteRiskData} package, which can be installed
 by running \code{install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')}
 }
 \usage{
-GCRFtoECEF(position_GCRF, velocity_GCRF, dateTime)
+GCRFtoITRF(position_GCRF, velocity_GCRF, dateTime)
 }
 \arguments{
   \item{position_GCRF}{Vector with the X, Y and Z components of the position
@@ -42,10 +45,10 @@ GCRFtoECEF(position_GCRF, velocity_GCRF, dateTime)
 }
 \value{
 A list with two elements representing the position and velocity of the satellite
-in the ECEF (Earth Centered, Earth Fixed) frame of reference. Position values
-are in m, and velocity values are in m/s. Each of the two elements contains
-three values, corresponding to the X, Y and Z components of position and
-velocity in this order.
+in the ITRF (International Terrestrial Reference Frame) frame of reference. 
+Position values are in m, and velocity values are in m/s. Each of the two 
+elements contains three values, corresponding to the X, Y and Z components of 
+position and velocity in this order.
 }
 \references{
 https://celestrak.com/columns/v02n01/
@@ -58,8 +61,8 @@ if(requireNamespace("asteRiskData", quietly = TRUE)) {
 position_GCRF <- c(-14471729.582, -4677558.558, 9369.461)
 velocity_GCRF <- c(-3251.691, -3276.008, 4009.228)
 
-# Let´s convert them into the ECEF frame
+# Let´s convert them into the ITRF frame
 
-coordinates_ECEF <- GCRFtoECEF(position_GCRF, velocity_GCRF, "2006-06-27 00:58:29.34")
+coordinates_ITRF <- GCRFtoITRF(position_GCRF, velocity_GCRF, "2006-06-27 00:58:29.34")
 }
 }
