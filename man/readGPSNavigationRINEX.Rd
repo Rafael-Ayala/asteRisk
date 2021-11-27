@@ -175,19 +175,19 @@ of the GPS satellite:
   corresponding to the reported position (ephemeris) in the present message. 
   The time is in UTC, obtained by first applying the individual clock bias, clock 
   drift and clock drift rate of the particular satellite (fields \code{clockBias},
-  \code{clockDrift} and \code{clockDriftRate} of each message) and a relativistic
+  \item{clockDrift} and \code{clockDriftRate} of each message) and a relativistic
   correction to obtain corrected GPST time (system-wide GPS time), and then
   subtraction of leap seconds since the 6th of January 1980 and a second polynomial
   correction (with fields \code{deltaUTCA0} and \code{deltaUTCA1} from the 
   header) to obtain UTC time. Corrections are performed as described in the GPS
   system specifications (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).}
-  \code{position_ITRF}{Position of the satellite in the ITRF frame, calculated
+  \item{position_ITRF}{Position of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters.}
-  \code{velocity_ITRF}{Velocity of the satellite in the ITRF frame, calculated
+  \item{velocity_ITRF}{Velocity of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters/second.}
-  \code{acceleration_ITRF}{Acceleration of the satellite in the ITRF frame, calculated
+  \item{acceleration_ITRF}{Acceleration of the satellite in the ITRF frame, calculated
   from the provided orbital ephemeris following the procedure described in the
   GPS system specifications. In meters/squared second.}
 }
