@@ -618,7 +618,7 @@ calculateLambda <- function(rs, rp, sep) {
     } else {
         lambda <- (rs^2-rp^2)/rs^2 
     }
-    return(lambda)
+    return(as.numeric(lambda))
 }
 
 geometricShadow <- function(pccor,ccor,pscor,sbcor,bcor,sbpcor) {
