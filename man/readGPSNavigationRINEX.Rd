@@ -175,7 +175,7 @@ of the GPS satellite:
   corresponding to the reported position (ephemeris) in the present message. 
   The time is in UTC, obtained by first applying the individual clock bias, clock 
   drift and clock drift rate of the particular satellite (fields \code{clockBias},
-  \item{clockDrift} and \code{clockDriftRate} of each message) and a relativistic
+  \code{clockDrift} and \code{clockDriftRate} of each message) and a relativistic
   correction to obtain corrected GPST time (system-wide GPS time), and then
   subtraction of leap seconds since the 6th of January 1980 and a second polynomial
   correction (with fields \code{deltaUTCA0} and \code{deltaUTCA1} from the 

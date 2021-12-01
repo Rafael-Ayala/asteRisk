@@ -46,8 +46,8 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
         C3 <- 0
     }
     # C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0)
-    C4 <- 2 * n0dprime * qzms24 * xi^4 * a0dprime * beta0^2 * (1-eta^2)^(-7/2) * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*abs(1-eta^2))) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
-    C5 <- 2*qzms24*xi^4*a0dprime*beta0^2*(1-eta^2)^(-7/2)*(1+(11/4)*eta*(eta+e0)+e0*eta^3)
+    C4 <- 2 * n0dprime * qzms24 * xi^4 * a0dprime * beta0^2 * abs(1-eta^2)^(-7/2) * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*abs(1-eta^2))) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
+    C5 <- 2*qzms24*xi^4*a0dprime*beta0^2*abs(1-eta^2)^(-7/2)*(1+(11/4)*eta*(eta+e0)+e0*eta^3)
     D2 <- 4*a0dprime * xi * C1^2
     D3 <- (4/3) * a0dprime * xi^2 *(17*a0dprime + s)*C1^3
     D4 <- (2/3) * a0dprime * xi^3 * (221*a0dprime + 31*s)*C1^4

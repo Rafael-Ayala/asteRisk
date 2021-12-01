@@ -1,4 +1,4 @@
-Changes in version 1.2.0 (2021-XX-XX)
+Changes in version 1.2.0 (2021-12-01)
 + Added functions to convert from geodetic latitude, longitude and altitude to ITRF and GCRF frames
 + ECEF frame has been renamed to ITRF, which was the actual ECEF frame in use by the relevant functions
 + Removed redundant internal functions and constants
