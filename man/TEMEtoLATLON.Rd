@@ -34,6 +34,7 @@ degrees (or radians if specified) and the altitude in m.
 https://arc.aiaa.org/doi/10.2514/6.2006-6753
 }
 \examples{
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 # The following orbital parameters correspond to an object with NORAD catalogue
 # number 24208 (Italsat 2) the 26th of June, 2006 at 00:58:29.34 UTC.
 
@@ -57,4 +58,5 @@ state_1day_TEME <- sgdp4(n0=n0, e0=e0, i0=i0, M0=M0, omega0=omega0, OMEGA0=OMEGA
 
 state_1day_geodetic <- TEMEtoLATLON(state_1day_TEME$position*1000, 
                                     "2006-06-27 00:58:29.34")
+}
 }

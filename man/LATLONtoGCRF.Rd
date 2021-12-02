@@ -38,6 +38,7 @@ position in meters in the ECEF frame, in this order.
 https://apps.dtic.mil/sti/pdfs/ADA280358.pdf
 }
 \examples{
+if(requireNamespace("asteRiskData", quietly = TRUE)) {
 latitude <- 37.3891
 longitude <- -5.9845
 altitude <- 20000
@@ -47,4 +48,5 @@ altitude <- 20000
 
 coordinatesGCRF <- LATLONtoGCRF(c(latitude, longitude, altitude), 
                                 dateTime="2020-10-20 15:00:00")
+}
 }

@@ -292,9 +292,14 @@ to the stars to remain fixed with respect to the Earth surface as it rotates.
 Additionally, the <b>TEMEtoLATLON()</b> and <b>ITRFtoLATLON()</b> functions
 convert Cartesian coordinates to geodetic latitude, longitude and altitude
 values, from the TEME and ITRF frames respectively. This can be useful, for 
-example, to visualize the ground track followed by a satellite.
+example, to visualize the ground track followed by a satellite. 
 
-```{r tidy = TRUE}
+Several of the functions for conversion of systems of coordinates require
+Earth orientation parameters, which are provided through the <b>asteRiskData</b> 
+accessory package, which can be installed by running 
+"install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')".
+
+```{r tidy = TRUE, eval = evaluateExtraChunks}
 # Let us convert the last propagation previously calculated for the MOLNIYA 1-83
 # satellite into the ITRF frame. In order to do so, it is required to provide
 # a date-time string indicating the time for the newly calculated position and
@@ -354,8 +359,9 @@ atmospheric drag, and relativistic effects. The HPOP can be used through the
 can achieve a much higher precision, it also has much higher computational cost.
 It should also be noted that the HPOP requires access to data such as Earth 
 orientation parameters, space weather data and solar and geomagnetic storms.
-Such data is provided in the <b>asteRiskData</b> accessory package, which can be
-installed by running "install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')".
+Such data is provided in the <b>asteRiskData</b> accessory package, which, as
+previously mentioned, can be installed by running 
+"install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')".
 After having installed the accessory package, it is possible to update the data
 and coefficients to the latest available versions with the <b>getLatestSpaceData()</b>
 function.
