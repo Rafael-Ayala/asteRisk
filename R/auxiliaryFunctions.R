@@ -6,10 +6,25 @@ rad2deg <- function(radians) {
     return(radians*180/pi)
 }
 
-UTCdateTimeToGMST <- function(dateTime) {
+UTCdateTimeToGMST <- function(dateTime, convertUTCtoUT1 = FALSE) {
     # Formula is actually for converting from UT1 Julian date, but difference 
     # between UTC and UT1 JD will be below 0.9 seconds
-    daysToJ2000_0 <- as.numeric(julian(as.POSIXct(dateTime, tz="UTC"),
+    if(convertUTCtoUT1) {
+        hasData()
+        date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
+        year <- date$year + 1900
+        month <- date$mon + 1
+        day <- date$mday
+        hour <- date$hour
+        minute <- date$min
+        second <- date$sec
+        MJD_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
+        IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "n")
+        deltaUT1_UTC <- IERS_results$UT1_UTC
+    } else {
+        deltaUT1_UTC <- 0
+    }
+    daysToJ2000_0 <- as.numeric(julian(as.POSIXct(dateTime, tz="UTC") + deltaUT1_UTC,
                                        origin=as.POSIXct("2000-01-01 12:00:00", tz="UTC")))
     centuriesFromJ2000 <- daysToJ2000_0/36525
     GMST <- 67310.54841 + (876600.0*3600 + 8640184.812866)*centuriesFromJ2000+ 0.093104*centuriesFromJ2000^2 - 6.2e-6*centuriesFromJ2000^3
@@ -17,7 +32,10 @@ UTCdateTimeToGMST <- function(dateTime) {
     return(GMST*pi/43200)
 }
 
-MJDToGMST <- function(MJD) {
+MJDToGMST <- function(MJD, convertUTCtoUT1 = FALSE) {
+    if(convertUTCtoUT1) {
+        MJD <- MJDUTCtoMJDUT1(MJD)
+    }
     daysToJ2000_0 <- MJD - MJD_J2000
     centuriesFromJ2000 <- daysToJ2000_0/36525
     GMST <- 67310.54841 + (876600.0*3600 + 8640184.812866)*centuriesFromJ2000+ 0.093104*centuriesFromJ2000^2 - 6.2e-6*centuriesFromJ2000^3
