@@ -24,7 +24,11 @@ GCRFtoLATLON(position_GCRF, dateTime, degreesOutput=TRUE)
   of an object in TEME frame, in m.
   }
   \item{dateTime}{Date-time string with the date and time in UTC corresponding
-  to the provided position vector.
+  to the provided position vector. This specifies the time for which the
+  conversion from GCRF to geodetic coordinates will be performed. It is
+  important to provide an accurate value, since the point over the surface of
+  Earth to which a set of GCRF coordinates refers varies with time due to
+  the motion of Earth.
   }
   \item{degreesOutput}{Logical indicating if the output should be in sexagesimal
   degrees. If \code{degreesOutput=FALSE}, the output will be in radians.

@@ -78,21 +78,27 @@ parseTLElines <- function(lines) {
     return(parsedTLE)
 }
 
-readTLE <- function(filename) {
-    lines <- readLines(filename)
-    lines <- lines[lines != ""]
-    # Determine if TLE are actually in 2 or 3 line format
-    # if(nchar(trimws(lines[1])) <= 12) {
-    if(substr(lines[1], 1, 1) != "1" | nchar(trimws(lines[1])) <= 12) {
+readTLE <- function(filename, maxTLEs=NULL) {
+    line1 <- readLines(filename, n=1)
+    if(substr(line1, 1, 1) != "1" | nchar(trimws(line1)) <= 12) {
         numberLines <- 3
     } else {
         numberLines <- 2
     }
+    if(is.null(maxTLEs)) {
+        linesToRead <- -1
+    } else {
+        linesToRead <- maxTLEs * numberLines
+    }
+    lines <- readLines(filename, n=linesToRead)
+    lines <- lines[lines != ""]
+    # Determine if TLE are actually in 2 or 3 line format
+    # if(nchar(trimws(lines[1])) <= 12) {
     numberTLEs <- length(lines)/numberLines
     if(numberTLEs == 1) {
         parsedTLEs <- parseTLElines(lines)
     } else {
-        startingLines <- seq(1, by=numberLines, length.out = numberTLEs)
+        startingLines <- seq(1, by=numberLines, length.out=numberTLEs)
         parsedTLEs <- vector(mode = "list", length = numberTLEs)
         for(i in 1:length(startingLines)) {
             singleTLElines <- lines[startingLines[i]:(startingLines[i]+numberLines-1)]

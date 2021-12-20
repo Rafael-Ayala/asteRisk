@@ -31,7 +31,10 @@ TEMEtoGCRF(position_TEME, velocity_TEME, dateTime)
   of an object in TEME frame, in m/s.
   }
   \item{dateTime}{Date-time string with the date and time in UTC corresponding
-  to the provided position and velocity vectors.
+  to the provided position and velocity vectors. This specifies the time for 
+  which the conversion from TEME to GCRF coordinates will be performed. It is
+  required due to the change in the exact position of the rotation axis of 
+  Earth due to precesion, nutation and polar motion.
   }
 }
 \value{

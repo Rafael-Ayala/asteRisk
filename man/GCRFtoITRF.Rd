@@ -40,7 +40,11 @@ GCRFtoITRF(position_GCRF, velocity_GCRF, dateTime)
   of an object in GCRF frame, in m/s.
   }
   \item{dateTime}{Date-time string with the date and time in UTC corresponding
-  to the provided position and velocity vectors.
+  to the provided position and velocity vectors. This specifies the time for 
+  which the conversion from GCRF to ITRF coordinates will be performed. It is
+  important to provide an accurate value, since the point over the surface of
+  Earth to which a set of GCRF coordinates refers varies with time due to
+  the motion of Earth.
   }
 }
 \value{

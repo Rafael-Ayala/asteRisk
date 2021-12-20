@@ -27,7 +27,11 @@ LATLONtoGCRF(position_LATLON, dateTime, degreesInput=TRUE)
   }
   \item{degreesInput}{Logical indicating if the input latitude and longitude are
   in sexagesimal degrees. If \code{degreesInput=FALSE}, the input will be
-  considered to be in radians.
+  considered to be in radians. This specifies the time for which the conversion 
+  from geodetic coordinates to GCRF will be performed. It is important to 
+  provide an accurate value, since the point over the surface of Earth to which 
+  a set of GCRF coordinates corresponds varies with time due to the motion of 
+  Earth.
   }
 }
 \value{

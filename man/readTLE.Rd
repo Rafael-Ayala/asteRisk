@@ -12,10 +12,13 @@ Line Element is optional, and contains just the satellite name. For a detailed
 description of the TLE format, see https://celestrak.com/columns/v04n03/#FAQ01.
 }
 \usage{
-readTLE(filename)
+readTLE(filename, maxTLEs=NULL)
 }
 \arguments{
   \item{filename}{Path to the TLE file.
+  }
+  \item{maxTLEs}{Maximum number of TLEs to read, starting from the beginning of
+  the file. By default, all TLEs present in the file are read.
   }
 }
 \value{
