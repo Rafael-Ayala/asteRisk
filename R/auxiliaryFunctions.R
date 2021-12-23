@@ -68,7 +68,7 @@ vectorCrossProduct3D <- function(u, v) {
     return(w)
 }
 
-getLatestSpaceData <- function() { # TODO: MOVE TO THIS PACKAGE?
+getLatestSpaceData <- function(targets="all") { # TODO: MOVE TO THIS PACKAGE?
     hasData()
-    asteRiskData::getLatestSpaceData()
+    asteRiskData::getLatestSpaceData(targets = targets)
 }

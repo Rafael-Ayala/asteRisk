@@ -32,6 +32,15 @@ TEMEtoITRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
                                        origin=as.POSIXct("2000-01-01 12:00:00", tz="UTC")))
     julianDate <- daysToJ2000_0 + JD_J2000_0
     MJD_UTC <- julianDate - 2400000.5
+    MJD_trunc <- trunc(MJD_UTC)
+    if(MJD_trunc > asteRiskData::earthPositions[nrow(asteRiskData::earthPositions), 4]) {
+        stop(strwrap("Attempting conversion for a date for which Earth orientation
+                     parameters are not currently available. Please run 
+                     getLatestSpaceData() and try again. If the problem persists,
+                     the date is too long into the future and not even predicted
+                     parameters are available."), 
+             initial="", prefix="\n")
+    }
     MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
     T_TT <- (MJD_TT - MJD_J2000)/36525
     meanLongitudeAscendingNodeMoon <- (125.04452222 + T_TT * (-(5*360 + 134.1362608) + T_TT * (0.0020708 + T_TT * 2.2e-6))) * pi/180
@@ -50,7 +59,6 @@ TEMEtoITRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
     # Old version uses 0.002 as constant value for Length of Day (LOD)
     # omegaEarth <- c(0, 0, 7.29211514670698e-05 * (1.0  - 0.002/86400.0))
     # Now changed to get exact value from EOP tables
-    MJD_trunc <- trunc(MJD_UTC)
     LOD <- asteRiskData::earthPositions[asteRiskData::earthPositions[,4] == MJD_trunc, 8]
     omegaEarth <- c(0, 0, 7.29211514670698e-05 * (1.0  - LOD/86400.0))
     velocity_PEF <- as.vector(t(PEF_TOD_matrix) %*% velocity_TEME) -

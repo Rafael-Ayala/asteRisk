@@ -15,8 +15,15 @@ This function automatically updates the data tables, enabling such calculations
 for the most recent times.
 }
 \usage{
-getLatestSpaceData()
+getLatestSpaceData(targets="all")
 }
+\arguments{
+  \item{targets}{Character vector specifying the data that should be updated.
+  It should be a vector containing one or more of the following strings: "all"
+  (to update all data), "EOP" (Earth orientation parameters), "SW" (space weather),
+  "SS" (solar storms) or "GS" (geomagnetic storms). By default, all data are 
+  updated.
+  }}
 \value{
 This function is invoked for its side effect, which is updating the data tables
 used internally for calculations requiring \code{asteRiskData} package, such as 
@@ -37,7 +44,7 @@ asteRiskData::earthPositions[nrow(asteRiskData::earthPositions),]
 
 # The table can be easily updated to include the most recent available data
 
-getLatestSpaceData()
+getLatestSpaceData(targets="all")
 asteRiskData::earthPositions[nrow(asteRiskData::earthPositions),]
 }
 }

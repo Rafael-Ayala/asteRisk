@@ -3,6 +3,8 @@ Changes in version 1.3.9999 (2022-XX-XX)
 + Added correction to GMST when converting from TEME to other frames to apply kinematic terms of the Equation of equinoxes for dates after 1997
 + Explained in detail why date and time must be specified in some functions for conversion between reference frames
 + Now readTLE accepts argument maxTLEs to specify a maximum number of TLEs ro read from the file
++ Now functions to convert from TEME to ITRF or geodetic coordinates raise an error with an informative message if Earth orientation parameters for the specified date are not available
++ getLatestSpaceData() accepts a targets argument specifying the data that should be updated
 
 Changes in version 1.2.0 (2021-12-01)
 + Added functions to convert from geodetic latitude, longitude and altitude to ITRF and GCRF frames
