@@ -540,3 +540,190 @@ readGPSNavigationRINEX <- function(filename) {
         header=headerFields, 
         messages=parsedMessages))
 }
+
+parseOEMheader <- function(lines) {
+    OEMVersion <- trimws(strsplit(lines[1], split="=")[[1]][2])
+    creationDate <- gsub("T", " ", trimws(strsplit(lines[length(lines) - 1], split="=")[[1]][2]))
+    creator <- trimws(strsplit(lines[length(lines)], split="=")[[1]][2])
+    return(list(
+        OEMVersion=OEMVersion,
+        creationDate=creationDate,
+        creator=creator
+    ))
+}
+
+parseOEMDataBlock <- function(lines) {
+    metadataStartLineIndex <- grep("META_START", lines) + 1
+    metadataEndLineIndex <- grep("META_STOP", lines) - 1
+    covarianceMatrixStartLineIndex <- grep("COVARIANCE_START", lines) + 1
+    if(length(covarianceMatrixStartLineIndex) > 0) {
+        hasCovarianceMatrix <- TRUE
+        covarianceMatrixEndLineIndex <- grep("COVARIANCE_STOP", lines) - 1
+        ephemeridesEndLineIndex <- covarianceMatrixStartLineIndex - 2
+    } else {
+        hasCovarianceMatrix <- FALSE
+        covarianceMatrixEndLineIndex <- numeric(0)
+        ephemeridesEndLineIndex <- length(lines)
+    }
+    commentLinesIndexes <- grep("COMMENT", lines)
+    metadataCommentLinesIndexes <- commentLinesIndexes[(commentLinesIndexes >= metadataStartLineIndex) &
+                                                       (commentLinesIndexes <= metadataEndLineIndex)]
+    if(hasCovarianceMatrix) {
+        ephemeridesCommentLinesIndexes <- commentLinesIndexes[(commentLinesIndexes > metadataEndLineIndex) &
+                                                            (commentLinesIndexes < covarianceMatrixStartLineIndex)]
+        covarianceMatrixCommentLinesIndexes <- commentLinesIndexes[commentLinesIndexes >= covarianceMatrixStartLineIndex]
+    } else {
+        ephemeridesCommentLinesIndexes <- commentLinesIndexes[commentLinesIndexes > metadataEndLineIndex]
+        covarianceMatrixCommentLinesIndexes <- NULL
+    }
+    ephemeridesStartLineIndex <- max(metadataEndLineIndex + 2, ephemeridesCommentLinesIndexes[length(ephemeridesCommentLinesIndexes)] + 1)
+    objectNameLineIndex <- grep("OBJECT_NAME", lines)
+    objectName <- trimws(strsplit(lines[objectNameLineIndex], split="=")[[1]][2])
+    objectID <- trimws(strsplit(lines[objectNameLineIndex+1], split="=")[[1]][2])
+    refFrameCentralBody <- trimws(strsplit(lines[objectNameLineIndex+2], split="=")[[1]][2])
+    refFrame <- trimws(strsplit(lines[objectNameLineIndex+3], split="=")[[1]][2])
+    refFrameEpochLineIndex <-  grep("REF_FRAME_EPOCH", lines)
+    if(length(refFrameEpochLineIndex) > 0) {
+        refFrameEpoch <- gsub("T", " ", trimws(strsplit(lines[refFrameEpochLineIndex], split="=")[[1]][2]))
+    } else {
+        refFrameEpoch <- NULL
+    }
+    timeSystemLineIndex <- grep("TIME_SYSTEM", lines)
+    timeSystem <- trimws(strsplit(lines[timeSystemLineIndex], split="=")[[1]][2])
+    startTimeLineIndex <- grep("START_TIME", lines)
+    startTime <- gsub("T", " ", trimws(strsplit(lines[startTimeLineIndex], split="=")[[1]][2]))
+    stopTimeLineIndex <- grep("STOP_TIME", lines)
+    stopTime <- gsub("T", " ", trimws(strsplit(lines[stopTimeLineIndex], split="=")[[1]][2]))
+    usableStartTimeLineIndex <- grep("USEABLE_START_TIME", lines)
+    usableStartTime <- gsub("T", " ", trimws(strsplit(lines[usableStartTimeLineIndex], split="=")[[1]][2]))
+    usableStopTimeLineIndex <- grep("USEABLE_STOP_TIME", lines)
+    usableStopTime <- gsub("T", " ", trimws(strsplit(lines[usableStopTimeLineIndex], split="=")[[1]][2]))
+    interpolationMethodLineIndex <- grep("INTERPOLATION", lines)
+    if(length(interpolationMethodLineIndex) > 0) {
+        interpolationMethod <- trimws(strsplit(lines[interpolationMethodLineIndex], split="=")[[1]][2])
+        interpolationOrder <- trimws(strsplit(lines[interpolationMethodLineIndex+1], split="=")[[1]][2])
+    } else {
+        interpolationMethod <- interpolationOrder <- NULL
+    }
+    massLineIndex <- grep("MASS", lines)
+    if(length(massLineIndex) > 0) {
+        mass <- as.numeric(trimws(strsplit(lines[massLineIndex], split="=")[[1]][2]))
+    } else {
+        mass <- NULL
+    }
+    dragAreaLineIndex <- grep("DRAG_AREA", lines)
+    if(length(dragAreaLineIndex) > 0) {
+        dragArea <- as.numeric(trimws(strsplit(lines[dragAreaLineIndex], split="=")[[1]][2]))
+    } else {
+        dragArea <- NULL
+    }
+    dragCoeffLineIndex <- grep("DRAG_COEFF", lines)
+    if(length(dragCoeffLineIndex) > 0) {
+        dragCoeff <- as.numeric(trimws(strsplit(lines[dragCoeffLineIndex], split="=")[[1]][2]))
+    } else {
+        dragCoeff <- NULL
+    }
+    solarRadAreaLineIndex <- grep("SOLAR_RAD_AREA", lines)
+    if(length(solarRadAreaLineIndex) > 0) {
+        solarRadArea <- as.numeric(trimws(strsplit(lines[solarRadAreaLineIndex], split="=")[[1]][2]))
+    } else {
+        solarRadArea <- NULL
+    }
+    solarRadCoeffLineIndex <- grep("SOLAR_RAD_COEFF", lines)
+    if(length(solarRadCoeffLineIndex) > 0) {
+        solarRadCoeff <- as.numeric(trimws(strsplit(lines[solarRadCoeffLineIndex], split="=")[[1]][2]))
+    } else {
+        solarRadCoeff <- NULL
+    }
+    ephemeridesColNumbers <- length(strsplit(trimws(lines[ephemeridesStartLineIndex]), split="\\s+")[[1]])
+    if(ephemeridesColNumbers == 7) {
+        ephemeridesColNames <- c("epoch", "position_X", "position_Y", "position_Z", 
+                                 "velocity_X", "velocity_Y", "velocity_Z")
+    } else if (ephemeridesColNumbers == 10) {
+        ephemeridesColNames <- c("epoch", "position_X", "position_Y", "position_Z", 
+                                 "velocity_X", "velocity_Y", "velocity_Z",
+                                 "acceleration_X", "acceleration_Y", "acceleration_Z")
+    } else {
+        stop("Invalid number of columns in ephemerides data block.")
+    }
+    ephemerides <- read.table(header=FALSE, text=paste(lines[ephemeridesStartLineIndex:ephemeridesEndLineIndex],
+                                                       collapse="\n"),
+                              col.names = ephemeridesColNames)
+    ephemerides[, 1] <- gsub("T", " ", ephemerides[, 1])
+    if(hasCovarianceMatrix) {
+        covarianceMatrixLines <- lines[covarianceMatrixStartLineIndex:covarianceMatrixEndLineIndex]
+        singleCovarianceMatrixStartLineIndexes <- grep("EPOCH", covarianceMatrixLines)
+        singleCovarianceMatrixEndLineIndexes <- c(singleCovarianceMatrixStartLineIndexes[-1] - 1,
+                                                  covarianceMatrixEndLineIndex)
+        numberCovarianceMatrixes <- length(singleCovarianceMatrixStartLineIndexes)
+        parsedCovarianceMatrixes <- vector(mode = "list", length = numberCovarianceMatrixes)
+        for(i in 1:length(singleCovarianceMatrixStartLineIndexes)) {
+            singleCovarianceMatrixLines <- covarianceMatrixLines[singleCovarianceMatrixStartLineIndexes[i]:singleCovarianceMatrixEndLineIndexes[i]]
+            covarianceMatrixEpoch <- gsub("T", " ", trimws(strsplit(singleCovarianceMatrixLines[1], split="=")[[1]][2]))
+            covarianceMatrixRefFrameLineIndex <- grep("COV_REF_FRAME", singleCovarianceMatrixLines)
+            if(length(covarianceMatrixRefFrameLineIndex) > 0) {
+                covarianceMatrixRefFrame <- trimws(strsplit(singleCovarianceMatrixLines[covarianceMatrixRefFrameLineIndex], split="=")[[1]][2])
+                covarianceMatrixDataLines <- singleCovarianceMatrixLines[3:8]
+            } else {
+                covarianceMatrixRefFrame <- refFrame
+                covarianceMatrixDataLines <- singleCovarianceMatrixLines[2:7]
+            }
+            covarianceMatrix <- data.matrix(read.table(text=paste(covarianceMatrixDataLines, collapse="\n"), 
+                                                       fill=TRUE, header=FALSE, col.names=1:6))
+            colnames(covarianceMatrix) <- NULL
+            covarianceMatrix[upper.tri(covarianceMatrix)] <- t(covarianceMatrix)[upper.tri(covarianceMatrix)]
+            parsedCovarianceMatrixes[[i]] <- list(
+                epoch=covarianceMatrixEpoch,
+                referenceFrame=covarianceMatrixRefFrame,
+                covarianceMatrix=covarianceMatrix
+            )
+        }
+        # if(length(parsedCovarianceMatrixes) == 1) {
+        #     parsedCovarianceMatrixes <- parsedCovarianceMatrixes[[1]]
+        # }
+    } else {
+        parsedCovarianceMatrixes=NULL
+    }
+    return(list(
+        objectName=objectName,
+        objectID=objectID,
+        referenceFrame=refFrame,
+        refFrameEpoch=refFrameEpoch,
+        centerName=refFrameCentralBody,
+        timeSystem=timeSystem,
+        startTime=startTime,
+        endTime=stopTime,
+        usableStartTime=usableStartTime,
+        usableEndTime=usableStopTime,
+        interpolationMethod=interpolationMethod,
+        interpolationOrder=interpolationOrder,
+        mass=mass,
+        dragArea=dragArea,
+        dragCoefficient=dragCoeff,
+        solarRadArea=solarRadArea,
+        solarRadCoefficient=solarRadCoeff,
+        ephemerides=ephemerides,
+        covarianceMatrixes=parsedCovarianceMatrixes
+    ))
+}
+
+readOEM <- function(filename) {
+    lines <- readLines(filename)
+    lines <- lines[lines != ""]
+    endOfHeader <- grep("ORIGINATOR", lines)
+    headerFields <- parseOEMheader(lines[1:endOfHeader])
+    startLines <- grep("META_START", lines)
+    endLines <- c(startLines[-1] - 1, length(lines))
+    numberDataBlocks <- length(startLines)
+    parsedDataBlocks <- vector(mode = "list", length = numberDataBlocks)
+    for(i in 1:length(startLines)) {
+        singleDataBlockLines <- lines[startLines[i]:endLines[i]]
+        parsedDataBlocks[[i]] <- parseOEMDataBlock(singleDataBlockLines)
+    }
+    # if(length(parsedDataBlocks) == 1) {
+    #     parsedDataBlocks <- parsedDataBlocks[[1]]
+    # }
+    return(list(
+        header=headerFields, 
+        dataBlocks=parsedDataBlocks))
+}
