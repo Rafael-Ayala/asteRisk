@@ -9,16 +9,17 @@ system of coordinates), propagates its position by calculating its acceleration
 numerical integration. This allows propagation of orbits with considerably 
 higher accuracy than other propagators such as SGP4 and SDP4, but at the expense 
 of a much higher computational cost. The forces and effects currently considered 
-are gravitational attraction by the  Earth (using a geopotential model based on 
-spherical harmonics); effects of Earth ocean and solid tides; gravitational 
-attraction by the Moon, Sun and planets (considered as point masses); solar 
-radiation pressure; atmospheric drag, and relativistic effects. The force
-field is based on the forces described in Satellite Orbits: Models, Methods and 
-Applications (Oliver Montenbruck and Eberhard Gill) and Fundamentals of
-Astrodynamics and Applications (David Vallado). Parts of this implementation
-are based on a previous MATLAB implementation by Meysam Mahooti.
+are gravitational attraction by the  Earth (using the GGM05C gravity model, with
+spherical harmonics up to degree and order of 360); effects of Earth ocean and 
+solid tides; gravitational attraction by the Moon, Sun and planets (considered 
+as point masses); solar radiation pressure; atmospheric drag, and relativistic 
+effects. The forcefield is based on the forces described in Satellite Orbits: 
+Models, Methods and Applications (Oliver Montenbruck and Eberhard Gill) and 
+Fundamentals of Astrodynamics and Applications (David Vallado). Parts of this 
+implementation are based on a previous MATLAB implementation by Meysam Mahooti.
 The NRLMSISE-00 model is used to calculate atmospheric density for the
-calculation of atmospheric drag.
+calculation of atmospheric drag. The FES2014 model is used to calculate geopotential
+model corrections due to ocean tides.
 The high-precision numerical orbital propagator requires the \code{asteRiskData}
 package, which provides the data and coefficients required for calculation of
 the modeled forces. \code{asteRiskData} can be installed by running 
@@ -26,7 +27,9 @@ the modeled forces. \code{asteRiskData} can be installed by running
 }
 \usage{
 hpop(position, velocity, dateTime, times, satelliteMass, dragArea, 
-     radiationArea, dragCoefficient, radiationCoefficient, ...)
+     radiationArea, dragCoefficient, radiationCoefficient, 
+     earthSphericalHarmonicsDegree=130, solidEarthTides=TRUE,
+     oceanTides=TRUE, ...)
 }
 \arguments{
   \item{position}{Initial position of the satellite in the GCRF system of
@@ -69,6 +72,22 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
   pressure. This parameter is usually referred to as reflectivity coefficient
   (Cr) and the value varies for different satellites and orbits. If unknown,
   a value of 1.2 is usually a decent approximation.
+  }
+  \item{earthSphericalHarmonicsDegree}{Maximum degree and order that should be 
+  considered when calculating the Earth geopotential model. The model will be 
+  complete up to the specified degree/order, i.e., all zonal, sectorial and
+  tesseral spherical harmonics will be calculated. The maximum possible value
+  is 360, since that is the highest degree and order of the Stokes' coefficients
+  provided in the GGM05C model.
+  }
+  \item{solidEarthTides}{Logical indicating if corrections of the Cnm and Snm
+  Stokes' coefficients for the geopotential model due to solid Earth tides 
+  should be performed, following IERS 2010 procedures and considering anelasticity
+  of the Earth.
+  }
+  \item{oceanTides}{Logical indicating if corrections of the Cnm and Snm
+  Stokes' coefficients for the geopotential model due to ocean tides should be 
+  performed, using the FES2014 oceanic tides model.
   }
   \item{...}{Additional parameters to be passed to \link{ode} to control how
   numerical integration is performed. By default, the RADAU5 solver is used.

@@ -195,7 +195,7 @@ KOEtoECI <- function(a, e, i, M, omega, OMEGA, keplerAccuracy=10e-8, maxKeplerIt
     nu <- 2 * atan2(sqrt(1 + e) * sin(Eomega/2), sqrt(1 - e) * cos(Eomega/2))
     R <- a * (1 - e*cos(Eomega))
     orbital_position <- R * c(cos(nu), sin(nu), 0)
-    orbital_velocity <- (sqrt(GM_Earth_TCB * a)/R) * c(-sin(Eomega), sqrt(1-e^2) * cos(Eomega), 0)
+    orbital_velocity <- (sqrt(GM_Earth_TDB * a)/R) * c(-sin(Eomega), sqrt(1-e^2) * cos(Eomega), 0)
     eci_position <- c(orbital_position[1] * (cos(omega) * cos(OMEGA) - sin(omega) * cos(i) * sin(OMEGA)) -
                           orbital_position[2] * (sin(omega) * cos(OMEGA) + cos(omega) * cos(i) * sin(OMEGA)),
                       orbital_position[1] * (cos(omega) * sin(OMEGA) + sin(omega) * cos(i) * cos(OMEGA)) +
@@ -217,22 +217,22 @@ ECItoKOE <- function(position_ECI, velocity_ECI) {
     # calculate orbital momentum
     eps <- .Machine$double.eps
     h <- vectorCrossProduct3D(position_ECI, velocity_ECI)
-    e_vector <- vectorCrossProduct3D(velocity_ECI, h)/GM_Earth_TCB - position_ECI/sqrt(sum(position_ECI^2))
+    e_vector <- vectorCrossProduct3D(velocity_ECI, h)/GM_Earth_TDB - position_ECI/sqrt(sum(position_ECI^2))
     # This is equivalent to the following expression by Vallado 2007
-    # e_vector2 <- ((sum(velocity_ECI^2) - GM_Earth_TCB/sqrt(sum(position_ECI^2)))*position_ECI - 
-    # (position_ECI%*%velocity_ECI)*velocity_ECI )/GM_Earth_TCB
+    # e_vector2 <- ((sum(velocity_ECI^2) - GM_Earth_TDB/sqrt(sum(position_ECI^2)))*position_ECI - 
+    # (position_ECI%*%velocity_ECI)*velocity_ECI )/GM_Earth_TDB
     e <- sqrt(sum(e_vector^2))
     node_vector <- c(-h[2], h[1], 0)
-    E <- sum(velocity_ECI^2)/2 - GM_Earth_TCB/sqrt(sum(position_ECI^2))
+    E <- sum(velocity_ECI^2)/2 - GM_Earth_TDB/sqrt(sum(position_ECI^2))
     if(abs(E) > eps) {
-        a <- -GM_Earth_TCB/(2*E)
+        a <- -GM_Earth_TDB/(2*E)
         # p <- a*(1-e^2)
     } else {
-        # p <- sum(h^2)/GM_Earth_TCB
+        # p <- sum(h^2)/GM_Earth_TDB
         a <- Inf
     }
     # Vallado´s implementation defines p always as follows
-    p <- sum(h^2)/GM_Earth_TCB
+    p <- sum(h^2)/GM_Earth_TDB
     i <- acos(h[3]/sqrt(sum(h^2)))
     # determine special orbit cases
     orbitType <- "ei" # general case: non-circular (elliptical) orbit with inclination
@@ -483,3 +483,22 @@ rotationMODtoJ2000 <- function(MJD_UTC) {
     inverseRotation <- rotationJ2000toMOD(MJD_UTC)
     return(Conj(inverseRotation))
 }
+
+### Future user-level functions for conversions based on quaternions and DCM
+
+J2000toGCRF <- function(coordinates, dateTime) {
+    MJD <- dateTimeToMJD(dateTime)
+    DCM <- quaternionToDCM(rotationJ2000toGCRF(MJD))
+    return(drop(
+        DCM %*% coordinates
+    ))
+}
+
+GCRFtoJ2000 <- function(coordinates, dateTime) {
+    MJD <- dateTimeToMJD(dateTime)
+    DCM <- quaternionToDCM(rotationGCRFtoJ2000(MJD))
+    return(drop(
+        DCM %*% coordinates
+    ))
+}
+

@@ -74,19 +74,24 @@ JD_J2000_0 <- 2451545.0 # Julian Day of J2000.0 epoch.
 DJC <- 36525.0
 MJD_J2000 <- 51544.5 # MJD for J2000.0
 
-# Gravitational coefficients in m3/s2, all in DE436 except Earth in WGS84 system
-GM_Earth_TCB <- 398600.4418e9 # WGS84 system (TCB compatible)
-GM_Earth_TT <- 398600.4415e9 # GGM03S - TT compatible
-GM_Sun <- 132712440041.9394e9
-GM_Moon <- GM_Earth_TCB / 81.3005682168675747
-GM_Mercury <- 22031.78000000002e9
-GM_Venus <- 324858.5920000001e9
-GM_Mars <- 42828.37521400003e9
-GM_Jupiter <- 126712764.1334462e9
-GM_Saturn <- 37940585.20000001e9
-GM_Uranus <- 5794556.465751793e9
-GM_Neptune <- 6836527.100580024e9
-GM_Pluto <- 975.5011758767654e9
+# Ephemeris model constants
+EMRAT_DE440 = 81.3005682214972154
+EMRAT1_DE440 = 1/(1+EMRAT_DE440)
+
+# Gravitational coefficients in m3/s2, all from DE440 except Earth also in WGS84 system and GGM05C
+GM_Earth_TDB <- 398600.4418e9 # WGS84 system (TDB compatible)
+GM_Earth_TT <- 398600.4415e9 # GGM03S and GGM05C - TT compatible
+GM_Earth_DE440 <- 398600.435507e9
+GM_Sun_DE440 <- 132712440041.279419e9
+GM_Moon_DE440 <- 4902.800118e9
+GM_Mercury_DE440 <- 22031.78000000002e9
+GM_Venus_DE440 <- 324858.5920000001e9
+GM_Mars_DE440 <- 42828.375816e9
+GM_Jupiter_DE440 <- 126712764.1e9
+GM_Saturn_DE440 <- 37940584.841800e9
+GM_Uranus_DE440 <- 5794556.4e9
+GM_Neptune_DE440 <- 6836527.100580e9
+GM_Pluto_DE440 <- 975.500000e9
 
 # Other constants required for calculation of acceleration
 earthRadius_EGM96 <- 6378.1363e3 # radius of Earth in m, EGM96 model
@@ -96,7 +101,21 @@ AU <- 149597870699.999988 # meters in one AU
 c_light <- 299792457.999999984 # speed of light in m/s
 solarPressureConst <- 1367/c_light # solar radiation pressure at 1 AU in N/m^2 = 1367 W/m^2)
 omegaEarth <- 15.04106717866910/3600*(pi/180) # Earth rotation (derivative of GSMT at J2000) in rad/s
+# Elastic Earth solid tide Love numbers (n=2,3, m from 0 to n. n in rows, m in cols)
+# note 0 in first row to make matrix square
+knm0 <- matrix(c(0.29525, 0.29470, 0.29801, 0,
+                 0.093, 0.093, 0.093, 0.094), 
+               nrow=2, ncol=4, byrow=TRUE)
+# k2m + values, used for corrections of C4m and S4m, m from 0 to 2
+knmplus <- c(-0.00087, -0.00079, -0.00057) 
+# Anelastic Earth solid tide Love numbers. Same comments as before apply
+# In short, imaginary components are 0 in elastic Earth model, but not here when
+# n=2 (but yes when n=3)
+reKnm0An <- matrix(c(0.30190, 0.29830, 0.30102, 0,
+                       0.093, 0.093, 0.093, 0.094), 
+                     nrow=2, ncol=4, byrow=TRUE)
+imKnm0An <- matrix(c(0, -0.00144, -0.00130, 0,
+                     0, 0, 0, 0), 
+                   nrow=2, ncol=4, byrow=TRUE)
+knmplusAn <- c(-0.00089, -0.00080, -0.00057) 
 
-# Ephemeris model constants
-EMRAT = 81.3005682168675747
-EMRAT1 = 1/(1+EMRAT)

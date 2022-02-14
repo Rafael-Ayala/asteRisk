@@ -20,7 +20,7 @@ readOEM(filename)
 \value{
 A list with two elements. The first element, named \code{header}, is a list with
 the following elements:
-  \item{OEMVersion }{Version of the OEM format used in the file}
+  \item{OMVersion }{Version of the OEM format used in the file}
   \item{creationDate }{Date of creation of the file}
   \item{creator }{Individual or organization that generated the file}
 

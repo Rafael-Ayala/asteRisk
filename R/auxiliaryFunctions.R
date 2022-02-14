@@ -50,13 +50,13 @@ rem <- function(x, y) {
 
 meanMotionToSemiMajorAxis <- function(meanMotion) {
     # output will be in meters
-    a <- (GM_Earth_TCB)^(1/3) / ((2*pi*meanMotion/86400)^(2/3))
+    a <- (GM_Earth_TDB)^(1/3) / ((2*pi*meanMotion/86400)^(2/3))
     return(a)
 }
 
 semiMajorAxisToMeanMotion <- function(semiMajorAxis, outputRevsPerDay=TRUE) {
     # provide input in meters
-    n <- sqrt(GM_Earth_TCB/semiMajorAxis^3)
+    n <- sqrt(GM_Earth_TDB/semiMajorAxis^3)
     if(outputRevsPerDay) n <- n * (86400/(2*pi))
     return(n)
 }

@@ -1,7 +1,7 @@
 Package: asteRisk
 Type: Package
 Title: Computation of Satellite Position
-Version: 1.3.9999
+Version: 1.4.9999
 Authors@R: c(
     person("Rafael", "Ayala", email = "rafael.ayala@oist.jp", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9332-4623")),
     person("Daniel", "Ayala", email = "dayala1@us.es", role = "aut", comment = c(ORCID = "0000-0003-2095-1009")),
@@ -23,7 +23,9 @@ Acknowledgements: The development of this software is supported by the Spanish
     Ministry of Science and Innovation (grant code PID2019-105471RB-I00) and the
     Regional Government of Andalusia (grant code P18-RT-1060).
 License: GPL-3
-Imports: deSolve, nanotime, stats, onion
+LinkingTo: Rcpp, RcppParallel
+SystemRequirements: C++11, GNU make
+Imports: deSolve, nanotime, stats, onion, Rcpp, RcppParallel, utils
 Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown, markdown
 Additional_repositories: https://rafael-ayala.github.io/drat/
 VignetteBuilder: knitr

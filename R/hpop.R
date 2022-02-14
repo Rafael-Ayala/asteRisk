@@ -1,7 +1,8 @@
 odeModel <- function(t, state, parameters) {
     with(as.list(c(state, parameters)), {
         state_vector <- state
-        acceleration <- accel(t, state_vector, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd)
+        acceleration <- accel(t, state_vector, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd, earthSPHDegree, SETcorrections,
+                              OTcorrections)
         dx <- acceleration[1, 1]
         dy <- acceleration[1, 2]
         dz <- acceleration[1, 3]
@@ -13,7 +14,9 @@ odeModel <- function(t, state, parameters) {
 }
 
 hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea, 
-                 radiationArea, dragCoefficient, radiationCoefficient, ...) {
+                 radiationArea, dragCoefficient, radiationCoefficient, 
+                 earthSphericalHarmonicsDegree = 130, solidEarthTides=TRUE,
+                 oceanTides=TRUE, ...) {
     hasData()
     extraArgs <- list(...)
     date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
@@ -23,7 +26,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
     hour <- date$hour
     minute <- date$min
     second <- date$sec
-    initial_state <- c(position, velocity)
+    initial_state <- c(position, velocity)   
     Mjd_UTC <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     parameters = list(
         MJD_UTC = Mjd_UTC,
@@ -31,7 +34,10 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
         satelliteMass = satelliteMass,
         satelliteArea = dragArea,
         Cr = radiationCoefficient,
-        Cd = dragCoefficient)
+        Cd = dragCoefficient,
+        earthSPHDegree = earthSphericalHarmonicsDegree,
+        SETcorrections = solidEarthTides,
+        OTcorrections = oceanTides)
     integration_results <- ode(y=initial_state, times=times, func=odeModel,
                                parms=parameters, method="radau", rtol=1e-13,
                                atol=1e-16, hini=0.01, ...)

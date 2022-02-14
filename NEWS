@@ -1,4 +1,7 @@
-Changes in version 1.3.9999 (2022-XX-XX)
+Changes in version 1.4.0 (2022-XX-XX)
++ Increased performance of readTLE when providing an URL
+
+Changes in version 1.3.0 (2022-02-07)
 + Added an internal correction from UTC to UT1 before calculating GMST
 + Added correction to GMST when converting from TEME to other frames to apply kinematic terms of the Equation of equinoxes for dates after 1997
 + Explained in detail why date and time must be specified in some functions for conversion between reference frames
@@ -6,6 +9,12 @@ Changes in version 1.3.9999 (2022-XX-XX)
 + Now functions to convert from TEME to ITRF or geodetic coordinates raise an error with an informative message if Earth orientation parameters for the specified date are not available
 + getLatestSpaceData() accepts a targets argument specifying the data that should be updated
 + Added support for OEM files through readOEM()
++ Updated Earth gravity model to GGM05C (previously, GGM03S was used)
++ Updated JPL Ephemeris to DE440
++ Greatly increased accuracy of ocean tide corrections to geopotential model. These now use the FES2014 model to include corrections up to degree and order 100
++ Now an anelastic Earth model is used to calculate solid Earth tide corrections
++ Function hpop() now accepts additional arguments to specify the degree and order of the geopotential model, and to specify if solid Earth and ocean tides corrections should be performed
++ Some internal functions are now written in C++ to enhance performance, and therefore the package now requires compilation
 
 Changes in version 1.2.0 (2021-12-01)
 + Added functions to convert from geodetic latitude, longitude and altitude to ITRF and GCRF frames

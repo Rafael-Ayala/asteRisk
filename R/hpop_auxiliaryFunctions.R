@@ -22,7 +22,6 @@ IERS <- function(eop,Mjd_UTC,interp="n") {
         dx_pole <- preeop[11]+(nexteop[11]-preeop[11])*fixf
         dy_pole = preeop[12]+(nexteop[12]-preeop[12])*fixf
         TAI_UTC = preeop[13]
-        
         x_pole <- x_pole/const_Arcs  # Pole coordinate (rad)
         y_pole <- y_pole/const_Arcs  # Pole coordinate (rad)
         dpsi <- dpsi/const_Arcs
@@ -137,14 +136,15 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
     TT <- UTC + timeDiffs_results$TT_UTC/86400
     TUT <- TIME + IERS_results$UT1_UTC/86400
     UT1 <- iauCal2jd_results$DATE + TUT
-    NPB <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
+    NPB <- iauPnm06a(iauCal2jd_results$DJMJD0, TT, IERS_results$dpsi, IERS_results$deps)
     theta <- iauRz(iauGst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT, NPB), diag(3))
     PMM <- iauPom00(IERS_results$x_pole, IERS_results$y_pole, iauSp00(iauCal2jd_results$DJMJD0, TT))
     S <- matrix(c(0, 1, 0,
                   -1, 0, 0,
                   0, 0, 0),
                 nrow = 3, byrow = TRUE)
-    omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
+    # omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
+    omega <- omegaEarth - 8.43994809e-10*IERS_results$LOD
     dTheta <- omega*S%*%theta
     U <- PMM%*%theta%*%NPB
     dU <- PMM%*%dTheta%*%NPB
@@ -157,6 +157,8 @@ ECEFtoECI <- function(MJD_UTC, Y0) {
 }
 
 ECItoECEF <- function(MJD_UTC, Y0) {
+    # This and the inverse follow the protocol established by IERS 2010 
+    # technical note to convert between GCRF and ITRF
     IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, interp = "l")
     timeDiffs_results <- timeDiffs(IERS_results$UT1_UTC, IERS_results$TAI_UTC)
     invjday_results <- invjday(MJD_UTC+2400000.5)
@@ -166,14 +168,15 @@ ECItoECEF <- function(MJD_UTC, Y0) {
     TT <- UTC + timeDiffs_results$TT_UTC/86400
     TUT <- TIME + IERS_results$UT1_UTC/86400
     UT1 <- iauCal2jd_results$DATE + TUT
-    NPB <- iauPnm06a(iauCal2jd_results$DJMJD0, TT)
+    NPB <- iauPnm06a(iauCal2jd_results$DJMJD0, TT, IERS_results$dpsi, IERS_results$deps)
     theta <- iauRz(iauGst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT, NPB), diag(3))
     PMM <- iauPom00(IERS_results$x_pole, IERS_results$y_pole, iauSp00(iauCal2jd_results$DJMJD0, TT))
     S <- matrix(c(0, 1, 0,
                   -1, 0, 0,
                   0, 0, 0),
                 nrow = 3, byrow = TRUE)
-    omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
+    # omega <- 7292115.8553e-11+4.3e-15*((MJD_UTC-MJD_J2000)/36525)
+    omega <- omegaEarth - 8.43994809e-10*IERS_results$LOD
     dTheta <- omega*S%*%theta
     U <- PMM%*%theta%*%NPB
     dU <- PMM%*%dTheta%*%NPB
@@ -198,309 +201,149 @@ Mjday_TDB <- function(Mjd_TT) {
     return(Mjd_TDB)
 }
 
-cheb3D <- function(t, N, Ta, Tb, Cx, Cy, Cz) {
+clenshaw <- function(t, N, Ta, Tb, Coeffs) {
+    # See page 75 from chapter 3 of Vallado's book. 
+    # Uses Clenshaw algorithm for sum of Chebyshev polynomial
     if ((t<Ta) | (t>Tb)) {
         stop('Time out of range for Chebyshev approximation')
     }
     tau <- (2*t-Ta-Tb)/(Tb-Ta)
-    f1 <- rep(0, 3)
+    f1 <- rep(0, ncol(Coeffs))
     f2 <- f1
     for(i in N:2) {
         old_f1 <- f1
-        f1 <- 2*tau*f1-f2+c(Cx[[i]],Cy[[i]],Cz[[i]])
+        f1 <- 2*tau*f1-f2+Coeffs[i, ]
         f2 <- old_f1
     }
-    cheb_approximation <- tau*f1-f2+c(Cx[[1]],Cy[[1]],Cz[[1]])
-    return(cheb_approximation)
+    chebyshevSum <- tau*f1-f2+ Coeffs[1, ]
+    return(chebyshevSum)
 }
 
-JPL_Eph_DE436 <- function(Mjd_TDB) {
-    # calculate equatorial position of sun, moon, and major planets 
-    # using JPL Ephemerides
-    JD <- Mjd_TDB + 2400000.5
-    i <- which(JD > asteRiskData::DE436coeffs[, 1] & JD <= asteRiskData::DE436coeffs[, 2])[1]
-    current_DE436coeffs <- asteRiskData::DE436coeffs[i, ]
-    t1 <- current_DE436coeffs[[1]] - 2400000.5
-    dt <- Mjd_TDB - t1
-    indexes <- c(231, 244, 257, 270)
-    Cx_earth <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_earth <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_earth <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    indexes <- indexes+39
-    Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    Cx_earth <- c(Cx_earth, Cx)
-    Cy_earth <- c(Cy_earth, Cy)
-    Cz_earth <- c(Cz_earth, Cz)
-    if(dt >= 0 & dt <= 16) {
-        j <- 0
-        Mjd0 <- t1
-    } else if (dt > 16 & dt <= 32) {
-        j <- 1
-        Mjd0 <- t1 + 16*j
-    }
-    r_earth <- 1000*cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+16, 
-                           Cx_earth[(13*j+1):(13*j+13)], 
-                           Cy_earth[(13*j+1):(13*j+13)], 
-                           Cz_earth[(13*j+1):(13*j+13)])
-    indexes <- c(441, 454, 467, 480)
-    Cx_moon <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_moon <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_moon <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    for (i in 1:7) {
-        indexes <- indexes + 39
-        Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-        Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-        Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-        Cx_moon <- c(Cx_moon,Cx)
-        Cy_moon <- c(Cy_moon,Cy)
-        Cz_moon <- c(Cz_moon,Cz) 
-    }
-    if (dt>=0 & dt<=4) {
-        j <- 0
-        Mjd0 <- t1
-    } else if(dt>4 & dt<=8) {
-        j <- 1
-        Mjd0 <- t1+4*j
-    } else if(dt>8 & dt<=12) {
-        j <- 2
-        Mjd0 <- t1+4*j
-    } else if(dt>12 & dt<=16) {
-        j <- 3
-        Mjd0 <- t1+4*j
-    } else if(dt>16 & dt<=20) {
-        j <- 4
-        Mjd0 <- t1+4*j
-    } else if(dt>20 & dt<=24) {
-        j <- 5
-        Mjd0 <- t1+4*j
-    } else if(dt>24 & dt<=28) {
-        j <- 6
-        Mjd0 <- t1+4*j
-    } else if(dt>28 & dt<=32) {
-        j <- 7
-        Mjd0 <- t1+4*j
-    }
-    r_moon <- 1000*cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+4, 
-                          Cx_moon[(13*j+1):(13*j+13)],
-                          Cy_moon[(13*j+1):(13*j+13)], 
-                          Cz_moon[(13*j+1):(13*j+13)])
-    indexes <- c(753, 764, 775, 786)
-    Cx_sun <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_sun <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_sun <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    indexes <- indexes + 33
-    Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    Cx_sun <- c(Cx_sun, Cx)
-    Cy_sun <- c(Cy_sun, Cy)
-    Cz_sun <- c(Cz_sun, Cz)
-    if(dt >= 0 & dt <= 16) {
-        j <- 0
-        Mjd0 <- t1
-    } else if (dt > 16 & dt <= 32) {
-        j <- 1
-        Mjd0 <- t1 + 16*j
-    }
-    r_sun <- 1000*cheb3D(Mjd_TDB, 11, Mjd0, Mjd0+16, 
-                         Cx_sun[(11*j+1):(11*j+11)],
-                         Cy_sun[(11*j+1):(11*j+11)], 
-                         Cz_sun[(11*j+1):(11*j+11)])
-    indexes <- c(3, 17, 31, 45)
-    Cx_mercury <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_mercury <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_mercury <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    for (i in 1:3) {
-        indexes <- indexes + 42
-        Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-        Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-        Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-        Cx_mercury <- c(Cx_mercury,Cx)
-        Cy_mercury <- c(Cy_mercury,Cy)
-        Cz_mercury <- c(Cz_mercury,Cz) 
-    }
-    if (dt>=0 & dt<=8) {
-        j <- 0
-        Mjd0 <- t1
-    } else if(dt>8 & dt<=16) {
-        j <- 1
-        Mjd0 <- t1+8*j
-    } else if(dt>16 & dt<=24) {
-        j <- 2
-        Mjd0 <- t1+8*j
-    } else if(dt>24 & dt<=32) {
-        j <- 3
-        Mjd0 <- t1+8*j
-    }
-    r_mercury <- 1e3*cheb3D(Mjd_TDB, 14, Mjd0, Mjd0+8, 
-                            Cx_mercury[(14*j+1):(14*j+14)],
-                            Cy_mercury[(14*j+1):(14*j+14)], 
-                            Cz_mercury[(14*j+1):(14*j+14)])
-    indexes <- c(171, 181, 191, 201)
-    Cx_venus <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_venus <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_venus <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    indexes <- indexes+30
-    Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    Cx_venus <- c(Cx_venus, Cx)
-    Cy_venus <- c(Cy_venus, Cy)
-    Cz_venus <- c(Cz_venus, Cz)
-    if(dt >= 0 & dt <= 16) {
-        j <- 0
-        Mjd0 <- t1
-    } else if (dt > 16 & dt <= 32) {
-        j <- 1
-        Mjd0 <- t1 + 16*j
-    }
-    r_venus <- 1000*cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+16, 
-                           Cx_venus[(10*j+1):(10*j+10)],
-                           Cy_venus[(10*j+1):(10*j+10)], 
-                           Cz_venus[(10*j+1):(10*j+10)])
-    indexes <- c(309, 320, 331, 342)
-    Cx_mars <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_mars <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_mars <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_mars = 1000*cheb3D(Mjd_TDB, 11, Mjd0, Mjd0+32, 
-                         Cx_mars[(11*j+1):(11*j+11)],
-                         Cy_mars[(11*j+1):(11*j+11)], 
-                         Cz_mars[(11*j+1):(11*j+11)])
-    indexes <- c(342, 350, 358, 366)
-    Cx_jupiter <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_jupiter <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_jupiter <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_jupiter <- 1000*cheb3D(Mjd_TDB, 8, Mjd0, Mjd0+32, 
-                             Cx_jupiter[(8*j+1):(8*j+8)],
-                             Cy_jupiter[(8*j+1):(8*j+8)], 
-                             Cz_jupiter[(8*j+1):(8*j+8)])
-    indexes <- c(366, 373, 380, 387)
-    Cx_saturn <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_saturn <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_saturn <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_saturn <- 1000*cheb3D(Mjd_TDB, 7, Mjd0, Mjd0+32, 
-                            Cx_saturn[(7*j+1):(7*j+7)],
-                            Cy_saturn[(7*j+1):(7*j+7)], 
-                            Cz_saturn[(7*j+1):(7*j+7)])
-    indexes <- c(387, 393, 399, 405)
-    Cx_uranus <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_uranus <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_uranus <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_uranus <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                            Cx_uranus[(6*j+1):(6*j+6)],
-                            Cy_uranus[(6*j+1):(6*j+6)],
-                            Cz_uranus[(6*j+1):(6*j+6)])
-    indexes <- c(405, 411, 417, 423)
-    Cx_neptune <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_neptune <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_neptune <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_neptune <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                             Cx_neptune[(6*j+1):(6*j+6)],
-                             Cy_neptune[(6*j+1):(6*j+6)], 
-                             Cz_neptune[(6*j+1):(6*j+6)])
-    indexes <- c(423, 429, 435, 441)
-    Cx_pluto <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_pluto <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_pluto <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    j <- 0
-    Mjd0 <- t1
-    r_pluto <- 1000*cheb3D(Mjd_TDB, 6, Mjd0, Mjd0+32, 
-                           Cx_pluto[(6*j+1):(6*j+6)],
-                           Cy_pluto[(6*j+1):(6*j+6)], 
-                           Cz_pluto[(6*j+1):(6*j+6)])
-    indexes <- c(819, 829, 839)
-    Cx_nutations <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_nutations <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    for (i in 1:3) {
-        indexes <- indexes + 20
-        Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-        Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-        Cx_nutations <- c(Cx_nutations,Cx)
-        Cy_nutations <- c(Cy_nutations,Cy)
-    }
-    if (dt>=0 & dt<=8) {
-        j <- 0
-        Mjd0 <- t1
-    } else if(dt>8 & dt<=16) {
-        j <- 1
-        Mjd0 <- t1+8*j
-    } else if(dt>16 & dt<=24) {
-        j <- 2
-        Mjd0 <- t1+8*j
-    } else if(dt>24 & dt<=32) {
-        j <- 3
-        Mjd0 <- t1+8*j
-    }
-    nutations <- cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+8, 
-                        Cx_nutations[(10*j+1):(10*j+10)],
-                        Cy_nutations[(10*j+1):(10*j+10)],
-                        rep(0,10))
-    indexes <- c(899, 909, 919, 929)
-    Cx_libration <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-    Cy_libration <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-    Cz_libration <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-    for (i in 1:3) {
-        indexes <- indexes + 30
-        Cx <- current_DE436coeffs[indexes[1]:(indexes[2]-1)]
-        Cy <- current_DE436coeffs[indexes[2]:(indexes[3]-1)]
-        Cz <- current_DE436coeffs[indexes[3]:(indexes[4]-1)]
-        Cx_libration <- c(Cx_libration,Cx)
-        Cy_libration <- c(Cy_libration,Cy)
-        Cz_libration <- c(Cz_libration,Cz) 
-    }
-    if (dt>=0 & dt<=8) {
-        j <- 0
-        Mjd0 <- t1
-    } else if(dt>8 & dt<=16) {
-        j <- 1
-        Mjd0 <- t1+8*j
-    } else if(dt>16 & dt<=24) {
-        j <- 2
-        Mjd0 <- t1+8*j
-    } else if(dt>24 & dt<=32) {
-        j <- 3
-        Mjd0 <- t1+8*j
-    }
-    librations <- cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+8, 
-                         Cx_libration[(10*j+1):(10*j+10)], 
-                         Cy_libration[(10*j+1):(10*j+10)], 
-                         Cz_libration[(10*j+1):(10*j+10)])
-    r_earth <- r_earth-EMRAT1*r_moon
-    r_mercury <- -r_earth+r_mercury
-    r_venus <- -r_earth+r_venus
-    r_mars <- -r_earth+r_mars
-    r_jupiter <- -r_earth+r_jupiter
-    r_saturn <- -r_earth+r_saturn
-    r_uranus <- -r_earth+r_uranus
-    r_neptune <- -r_earth+r_neptune
-    r_pluto <- -r_earth+r_pluto
-    r_sunSSB <- r_sun
-    r_sun <- -r_earth+r_sun
+JPLephemeridesDE440 <- function(MJD_TDB) {
+    JD <- MJD_TDB + 2400000.5
+    ephStartJD <- asteRiskData::DE440coeffs[1,1]
+    targetRow <- (JD - ephStartJD)%/%32 + 1
+    coeffs <- asteRiskData::DE440coeffs[targetRow, ]
+    rowStartJD <- coeffs[1]
+    rowStartMJD <- rowStartJD - 2400000.5
+    dt <- JD - rowStartJD
+    ## Sun ##
+    subInt <- dt %/% 16 + 1
+    subIntStartMJD <- rowStartMJD + 16*(subInt - 1)
+    idxs <- seq(753 + 33*(subInt-1), by=11, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+10)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+10)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+10)]
+    positionSun <- 1000 * clenshaw(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    ## Mercury ##
+    subInt <- dt %/% 8 + 1
+    subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
+    idxs <- seq(3 + 42*(subInt-1), by=14, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+13)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+13)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+13)]
+    positionMercury <- 1000 * clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cx, Cy, Cz))
+    ## Venus ##
+    subInt <- dt %/% 16 + 1
+    subIntStartMJD <- rowStartMJD + 16*(subInt - 1)
+    idxs <- seq(171 + 30*(subInt-1), by=10, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+9)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+9)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+9)]
+    positionVenus <- 1000 * clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    ## Earth ## (actually Earth-Moon barycenter)
+    subInt <- dt %/% 16 + 1 # 16 derived from 32/numberSubInts
+    subIntStartMJD <- rowStartMJD + 16*(subInt - 1) 
+    idxs <- seq(231 + 39*(subInt-1), by=13, length.out=3) 
+    # 231 is the start index of EMB coeffs, 13 is the number of coeffs,
+    # 39 coming from 13*3 (3 parameters X Y Z for each coeff)
+    Cx <- coeffs[idxs[1]:(idxs[1]+12)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+12)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+12)]
+    positionEMB <- 1000 * clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    ## Moon ## (already geocentric)
+    subInt <- dt %/% 4 + 1
+    subIntStartMJD <- rowStartMJD + 4*(subInt - 1)
+    idxs <- seq(441 + 39*(subInt-1), by=13, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+12)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+12)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+12)]
+    positionMoon <- 1000 * clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, cbind(Cx, Cy, Cz))
+    ## Mars ## No subintervals for Mars, Jupiter, Saturn, Uranus, Neptune and Pluto
+    idxs <- seq(309, by=11, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+10)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+10)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+10)]
+    positionMars <- 1000 * clenshaw(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## Jupiter ##
+    idxs <- seq(342, by=8, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+7)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+7)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+7)]
+    positionJupiter <- 1000 * clenshaw(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## Saturn ##
+    idxs <- seq(366, by=7, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+6)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+6)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+6)]
+    positionSaturn <- 1000 * clenshaw(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## Uranus ##
+    idxs <- seq(387, by=6, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+5)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+5)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    positionUranus <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## Neptune ##
+    idxs <- seq(405, by=6, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+5)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+5)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    positionNeptune <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## Pluto ##
+    idxs <- seq(423, by=6, length.out=3)
+    Cx <- coeffs[idxs[1]:(idxs[1]+5)]
+    Cy <- coeffs[idxs[2]:(idxs[2]+5)]
+    Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    positionPluto <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    ## The following 2 sections are commented out because they are not currently used
+    # ## Earth Nutations ##
+    # subInt <- dt %/% 8 + 1
+    # subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
+    # idxs <- seq(819 + 20*(subInt-1), by=10, length.out=2)
+    # Cdpsi <- coeffs[idxs[1]:(idxs[1]+9)]
+    # Cdeps <- coeffs[idxs[2]:(idxs[2]+9)]
+    # earthNutation <- 1000 * clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cdpsi, Cdeps))
+    # ## Lunar Mantle Librations ##
+    # subInt <- dt %/% 8 + 1
+    # subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
+    # idxs <- seq(899 + 30*(subInt-1), by=10, length.out=3)
+    # Cphi <- coeffs[idxs[1]:(idxs[1]+9)]
+    # Ctheta <- coeffs[idxs[2]:(idxs[2]+9)]
+    # Cpsi <- coeffs[idxs[3]:(idxs[3]+9)]
+    # lunarLibration <- 1000 * clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi))
+    positionEarth <- positionEMB - positionMoon*EMRAT1_DE440
+    positionMercury <- positionMercury - positionEarth
+    positionVenus <- positionVenus - positionEarth
+    positionMars <- positionMars - positionEarth
+    positionJupiter <- positionJupiter - positionEarth
+    positionSaturn <- positionSaturn - positionEarth
+    positionUranus <- positionUranus - positionEarth
+    positionNeptune <- positionNeptune - positionEarth
+    positionPluto <- positionPluto - positionEarth
+    positionSunGeocentric <- positionSun - positionEarth
     return(list(
-        positionMercury = r_mercury,
-        positionVenus = r_venus,
-        positionEarth = r_earth,
-        positionMars = r_mars,
-        positionJupiter = r_jupiter,
-        positionSaturn = r_saturn,
-        positionUranus = r_uranus,
-        positionNeptune = r_neptune,
-        positionPluto = r_pluto,
-        positionMoon = r_moon,
-        positionSunGeocentric = r_sun,
-        positionSunBarycentric = r_sunSSB
+        positionSunGeocentric = positionSunGeocentric,
+        positionSunSSBarycentric = positionSun,
+        positionMercury = positionMercury,
+        positionVenus = positionVenus,
+        positionEarth = positionEarth,
+        positionMars = positionMars,
+        positionJupiter = positionJupiter,
+        positionSaturn = positionSaturn,
+        positionUranus = positionUranus,
+        positionNeptune = positionNeptune,
+        positionPluto = positionPluto,
+        positionMoon = positionMoon
     ))
 }
 
@@ -528,42 +371,35 @@ CartesianToPolar <- function(cartesianVector) {
     return(c(phi, theta, r))
 }
 
-legendre <- function(n, m, angle) {
-    pnm <- matrix(0, nrow=n+1, ncol=m+1)
-    dpnm <- matrix(0, nrow=n+1, ncol=m+1)
-    pnm[1,1] <- 1
-    pnm[2,2] <- sqrt(3)*cos(angle)
-    dpnm[2,2] <- -sqrt(3)*sin(angle)
-    # diagonal coefficients
-    for (i in 2:n) {
-        pnm[i+1, i+1] <- sqrt((2*i+1)/(2*i))*cos(angle)*pnm[i,i]
-        dpnm[i+1, i+1] <- sqrt((2*i+1)/(2*i))*((cos(angle)*dpnm[i,i]) - (sin(angle)*pnm[i,i]))
-    }
-    # horizontal first step coefficients
-    for (i in 1:n) {
-        pnm[i+1, i] <- sqrt(2*i+1)*sin(angle)*pnm[i,i]
-        dpnm[i+1, i] <- sqrt(2*i+1)*((cos(angle)*pnm[i,i])+(sin(angle)*dpnm[i,i]))
-    }
-    # horizontal second step coefficients
-    j <- 0
-    k <- 2
-    while(j <= m & k <= n) {
-        for(i in k:n) {
-            pnm[i+1,j+1] <- sqrt((2*i+1)/((i-j)*(i+j)))*
-                ((sqrt(2*i-1)*sin(angle)*pnm[i,j+1]) - 
-                     (sqrt(((i+j-1)*(i-j-1))/(2*i-3))*pnm[i-1,j+1]))
-            dpnm[i+1,j+1] <- sqrt((2*i+1)/((i-j)*(i+j)))*
-                ((sqrt(2*i-1)*sin(angle)*dpnm[i,j+1]) + 
-                     (sqrt(2*i-1)*cos(angle)*pnm[i,j+1]) - 
-                     (sqrt(((i+j-1)*(i-j-1))/(2*i-3))*dpnm[i-1,j+1]))
-        }
-        j <- j + 1
-        k <- k + 1
-    }
-    return(list(
-        normLegendreValues=pnm, 
-        normLegendreDerivativeValues=dpnm))
-}
+# 
+# .legendre <- function(n, m, phi) {
+#     # Lear normalized algorithm
+#     pnm <- matrix(0, nrow=n+1, ncol=m+1)
+#     dpnm <- matrix(0, nrow=n+1, ncol=m+1)
+#     pnm[1,1] <- 1
+#     dpnm[1,1] <- 0
+#     pnm[2,1] <- sqrt(3) * sin(phi)
+#     dpnm[2,1] <- sqrt(3) * cos(phi)
+#     pnm[2,2] <- sqrt(3) * cos(phi)
+#     # normalization factors are named N1, N2, etc
+#     # these refer to the lambda normalization parameters described in equations
+#     # 3.1 to 3.5 of NASA document
+#     # Zonal terms, m=0
+#     for(i in 2:n) {
+#         N1 <- sqrt((2*n+1) / (2*n-1)) 
+#         N2 <- sqrt((2*i + 1) / (2*i-3))
+#         pnm[i+1, 1] <- (N1 * (2*i-1) * sin(phi) * pnm[i, 1] - 
+#                             N2 * (n-1) * pnm[i-1, 1])/i
+#         dpnm[i+1, 1] <- N1 * (sin(phi) * dpnm[i, 1] + i * pnm[i, 1])
+#     }
+#     # Sectorial terms, m=n
+#     for(i in 2:n) {
+#         N3 <- sqrt((2*i+1) / (2*i))
+#         # original parameter 3.3 is divided by 2n-1, but after multiplied by
+#         # same value, so we can remove it
+#         pnm[i+1, i+1] <- N3 * cos(phi) * pnm[i, i]
+#     } TODO
+# }
 
 cylindricalShadow <- function(r, positionSun) {
     sunDirection <- positionSun/sqrt(sum(positionSun^2))

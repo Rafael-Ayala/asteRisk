@@ -239,11 +239,15 @@ iauFw2m <- function(gamb, phib, psi, eps) {
     return(r)
 }
 
-iauPnm06a <- function(date1, date2) {
+iauPnm06a <- function(date1, date2, dDeps=0, dDpsi=0) {
     # Fukushima-Williams angles for frame bias and precession
     iauPfw06_result <- iauPfw06(date1, date2)
     # Nutation components
     iauNut06a_result <- iauNut06a(date1, date2)
+    # Note the following is NOT in original SOFA code
+    # but it allows to add corrections to dpsi and deps
+    iauNut06a_result$dpsi <- iauNut06a_result$dpsi + dDpsi
+    iauNut06a_result$deps <- iauNut06a_result$deps + dDeps
     # Equinox based nutation x precession x bias matrix
     iauFw2m_result <- iauFw2m(iauPfw06_result$gamb, iauPfw06_result$phib, 
                        iauPfw06_result$psib + iauNut06a_result$dpsi, 
