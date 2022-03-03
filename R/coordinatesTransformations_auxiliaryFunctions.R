@@ -24,6 +24,12 @@ MJDUT1toMJDUTC <- function(MJD_UT1) {
     return(MJD_UTC)
 }
 
+MJDUTCtoMJDTDB <- function(MJD_UTC) {
+    MJD_TT <- MJDUTCtoMJDTT(MJD_UTC)
+    MJD_TDB <- Mjday_TDB(MJD_TT)
+    return(MJD_TT)
+}
+
 IAU76_precession <- function(MJD_TT) {
     T_TT <- (MJD_TT - MJD_J2000)/36525 # Julian centuries in TT
     zeta <- T_TT * (2306.2181 + T_TT * (0.30188 + T_TT * 0.017998)) * pi/648000

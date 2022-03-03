@@ -92,6 +92,7 @@ GM_Saturn_DE440 <- 37940584.841800e9
 GM_Uranus_DE440 <- 5794556.4e9
 GM_Neptune_DE440 <- 6836527.100580e9
 GM_Pluto_DE440 <- 975.500000e9
+GM_Moon_GRGM1200B <- 4902.8001224453001e9
 
 # Other constants required for calculation of acceleration
 earthRadius_EGM96 <- 6378.1363e3 # radius of Earth in m, EGM96 model
@@ -119,3 +120,14 @@ imKnm0An <- matrix(c(0, -0.00144, -0.00130, 0,
                    nrow=2, ncol=4, byrow=TRUE)
 knmplusAn <- c(-0.00089, -0.00080, -0.00057) 
 
+# Radius of sphere of influence, from Table 4.1 Lunar Transfer Orbits by W. Seefelder
+SOIradii <- c(0.112, 0.616, 0.929, 0.578, 48.2, 54.5, 51.9, 86.8, 34.1)*1e9
+names(SOIradii) <- c("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto")
+SOIMoon <- 0.0661e9 # in relation to the Earth
+
+# Vector of numbers with names set to the possible central bodies. This is necessary
+# because the solver does not seem to allow to return values other than numbers
+
+centralBodiesNum <- 1:11
+names(centralBodiesNum) <- c("SSB", "Mercury", "Venus", "Earth", "Moon",
+                             "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto")

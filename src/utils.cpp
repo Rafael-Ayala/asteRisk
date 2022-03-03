@@ -69,6 +69,7 @@ NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
     double x1;
     double x2;
     for(double i = 0 ; i <= n ; i++) {
+        // for(double i = 2 ; i < n ; i++) {
         x1 = g1 * (i + 1) * pow((R/d), i);
         x2 = g2 * pow((R/d), i);
         for(double j = 0; j <= i; j++) {
@@ -78,6 +79,7 @@ NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
             // already included in the values calculated by function legendre
             // so I don't include it here
             dUlat += x2*dPnm(i,j)*(Cnm(i,j)*cos(j*lon) + Snm(i,j)*sin(j*lon));
+            // dUlat += x2*(Pnm(i,j+1)-j*tan(lat)*Pnm(i,j))*(Cnm(i,j)*cos(j*lon) + Snm(i,j)*sin(j*lon));
             dUlon += x2* j * Pnm(i,j) * (Snm(i,j)*cos(j*lon) - Cnm(i,j)*sin(j*lon));
         }
     }

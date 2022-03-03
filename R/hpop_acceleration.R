@@ -1,14 +1,15 @@
 anelasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
                                      TT_UTC, x_pole, y_pole, earthSPHDegree, SETcorrections,
                                      OTcorrections) {
-    if((earthSPHDegree+1) > nrow(asteRiskData::Cnm)) {
-        stop(strwrap(paste("Spherical harmonics coefficients are only available
-                            up to degree ", nrow(asteRiskData::Cnm)-1, ". Please choose a degree for the
-                            spherical harmonics of Earth gravity equal to or
-                            lower than ", nrow(asteRiskData::Cnm)-1, ".")))
+    if((earthSPHDegree+1) > nrow(asteRiskData::GGM05C_Cnm)) {
+        warning(strwrap(paste("Spherical harmonics coefficients for Earth are only available
+                            up to degree ", nrow(asteRiskData::GGM05C_Cnm)-1, ", but ",
+                              earthSPHDegree, " was input. Defaulting to the maximum
+                            available degree and order of ", nrow(asteRiskData::GGM05C_Cnm)-1, ".")))
+        earthSPHDegree <- nrow(asteRiskData::GGM05C_Cnm)-1
     }
-    C <- asteRiskData::Cnm[1:(earthSPHDegree+1), 1:(earthSPHDegree+1)]
-    S <- asteRiskData::Snm[1:(earthSPHDegree+1), 1:(earthSPHDegree+1)]
+    C <- asteRiskData::GGM05C_Cnm[1:(earthSPHDegree+1), 1:(earthSPHDegree+1)]
+    S <- asteRiskData::GGM05C_Snm[1:(earthSPHDegree+1), 1:(earthSPHDegree+1)]
     r_moon <- E %*% r_moon
     moon_polar <- CartesianToPolar(r_moon)
     r_sun <- E %*% r_sun
@@ -17,145 +18,147 @@ anelasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     Mjd_UT1 <- Mjd_UTC + UT1_UTC/86400
     Time <- (Mjd_TT-MJD_J2000)/36525
     Time_years <- (Mjd_TT-MJD_J2000)/365.25
-    ## Secular variations of low order coefficients
-    C[3,1] <- C[3,1] + 11.6e-12*Time_years
-    C[4,1] <- C[4,1] + 4.9e-12*Time_years
-    C[5,1] <- C[5,1] + 4.7e-12*Time_years
-    if(SETcorrections) {
-        dCnmSET <- matrix(0, nrow=5, ncol=5)
-        dSnmSET <- matrix(0, nrow=5, ncol=5)
-        # First, let's apply the secular long-term effects
-        # Secular variation of low degree coefficients (section 6.1 of IERS note, eq. 6.4 and Table 6.2)
-        dCnmSET[3, 1] <- 11.6e-12*(Time_years)
-        dCnmSET[4, 1] <- 4.9e-12*(Time_years)
-        dCnmSET[5, 1] <- 4.7e-12*(Time_years)
-        # Start corrections for solid Earth tides
-        legendre_moonTheta <- legendre(4, 4, moon_polar[2])[[1]]
-        legendre_sunTheta <- legendre(4, 4, sun_polar[2])[[1]]
-        # step 1 of corrections for solid Earth tides
-        # matrixes for corrections due to solid Earth tides (SET)
-        # not all coefficients (n 0,1) are corrected, but using 5x5 matrix because
-        # up to n=4 is corrected. note not all m for each n are corrected either
-        # (for n=4, only m 0, 1 and 2). See section 6.2 of IERS notes on Geopotential
-        GMratioMoonEarth <- GM_Moon_DE440/GM_Earth_TT
-        GMratioSunEarth <- GM_Sun_DE440/GM_Earth_TT
-        for(n in c(2,3)) {
-            correctionFactorMoon <- GMratioMoonEarth*((earthRadius_EGM96/moon_polar[3])^(n+1))
-            correctionFactorSun <- GMratioSunEarth*((earthRadius_EGM96/sun_polar[3])^(n+1))
-            for(m in 0:n) {
-                correctionFactorLoveRe <- reKnm0An[n-1, m+1]/(2*n+1)
-                correctionFactorLoveIm <- imKnm0An[n-1, m+1]/(2*n+1)
-                dCnm <- correctionFactorLoveRe * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
-                                                      correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1])) +
-                    correctionFactorLoveIm * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
-                                                  correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1]))
-                dSnm <- correctionFactorLoveRe * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
-                                                      correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1])) -
-                    correctionFactorLoveIm * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
-                                                  correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1]))
+    if(earthSPHDegree >= 4) {
+        ## Secular variations of low order coefficients
+        C[3,1] <- C[3,1] + 11.6e-12*Time_years
+        C[4,1] <- C[4,1] + 4.9e-12*Time_years
+        C[5,1] <- C[5,1] + 4.7e-12*Time_years
+        if(SETcorrections) {
+            dCnmSET <- matrix(0, nrow=5, ncol=5)
+            dSnmSET <- matrix(0, nrow=5, ncol=5)
+            # First, let's apply the secular long-term effects
+            # Secular variation of low degree coefficients (section 6.1 of IERS note, eq. 6.4 and Table 6.2)
+            dCnmSET[3, 1] <- 11.6e-12*(Time_years)
+            dCnmSET[4, 1] <- 4.9e-12*(Time_years)
+            dCnmSET[5, 1] <- 4.7e-12*(Time_years)
+            # Start corrections for solid Earth tides
+            legendre_moonTheta <- legendre(4, 4, moon_polar[2])[[1]]
+            legendre_sunTheta <- legendre(4, 4, sun_polar[2])[[1]]
+            # step 1 of corrections for solid Earth tides
+            # matrixes for corrections due to solid Earth tides (SET)
+            # not all coefficients (n 0,1) are corrected, but using 5x5 matrix because
+            # up to n=4 is corrected. note not all m for each n are corrected either
+            # (for n=4, only m 0, 1 and 2). See section 6.2 of IERS notes on Geopotential
+            GMratioMoonEarth <- GM_Moon_DE440/GM_Earth_TT
+            GMratioSunEarth <- GM_Sun_DE440/GM_Earth_TT
+            for(n in c(2,3)) {
+                correctionFactorMoon <- GMratioMoonEarth*((earthRadius_EGM96/moon_polar[3])^(n+1))
+                correctionFactorSun <- GMratioSunEarth*((earthRadius_EGM96/sun_polar[3])^(n+1))
+                for(m in 0:n) {
+                    correctionFactorLoveRe <- reKnm0An[n-1, m+1]/(2*n+1)
+                    correctionFactorLoveIm <- imKnm0An[n-1, m+1]/(2*n+1)
+                    dCnm <- correctionFactorLoveRe * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
+                                                          correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1])) +
+                        correctionFactorLoveIm * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
+                                                      correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1]))
+                    dSnm <- correctionFactorLoveRe * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
+                                                          correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1])) -
+                        correctionFactorLoveIm * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
+                                                      correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1]))
+                    dCnmSET[n+1, m+1] <- dCnm
+                    dSnmSET[n+1, m+1] <- dSnm
+                }
+            }
+            n <- 4
+            correctionFactorMoon <- GMratioMoonEarth*((earthRadius_EGM96/moon_polar[3])^3)
+            correctionFactorSun <- GMratioSunEarth*((earthRadius_EGM96/sun_polar[3])^3)
+            for(m in 0:2) {
+                correctionFactorLove <- knmplusAn[m+1]/(5)
+                dCnm <- correctionFactorLove * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
+                                                    correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1]))
+                dSnm <- correctionFactorLove * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
+                                                    correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1]))
                 dCnmSET[n+1, m+1] <- dCnm
                 dSnmSET[n+1, m+1] <- dSnm
             }
-        }
-        n <- 4
-        correctionFactorMoon <- GMratioMoonEarth*((earthRadius_EGM96/moon_polar[3])^3)
-        correctionFactorSun <- GMratioSunEarth*((earthRadius_EGM96/sun_polar[3])^3)
-        for(m in 0:2) {
-            correctionFactorLove <- knmplusAn[m+1]/(5)
-            dCnm <- correctionFactorLove * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*cos(m*moon_polar[1]) + 
-                                                correctionFactorSun*legendre_sunTheta[n+1, m+1]*cos(m*sun_polar[1]))
-            dSnm <- correctionFactorLove * (correctionFactorMoon*legendre_moonTheta[n+1, m+1]*sin(m*moon_polar[1]) + 
-                                                correctionFactorSun*legendre_sunTheta[n+1, m+1]*sin(m*sun_polar[1]))
-            dCnmSET[n+1, m+1] <- dCnm
-            dSnmSET[n+1, m+1] <- dSnm
-        }
-        # step 2 of corrections for solid Earth tides
-        ## Calculation of theta_g
-        invjday_results <- invjday(Mjd_UTC+2400000.5)
-        iauCal2jd_results <- iauCal2jd(invjday_results$year,
-                                       invjday_results$month,
-                                       invjday_results$day)
-        TIME <- (60*(60*invjday_results$hour+invjday_results$min)+invjday_results$sec)/86400
-        UTC <- iauCal2jd_results$DATE+TIME
-        TT <- UTC+TT_UTC/86400
-        TUT <- TIME+UT1_UTC/86400
-        UT1 <- iauCal2jd_results$DATE+TUT
-        theta_g <- iauGmst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT)
-        #theta_g <- alternativeGmst(Mjd_UT1)
-        theta_gPi <- theta_g + pi
-        delaunayVars <- delaunayVariables(Time)
-        theta_f0 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC20))
-        for(i in 1:nrow(asteRiskData::solidEarthTides_dC20)) {
-            theta_f0[i] <- -drop(asteRiskData::solidEarthTides_dC20[i, 1:5] %*% delaunayVars)
-            # m(thetag + pi) is 0 because m=0
-        }
-        dC20 <- 1e-12*sum(asteRiskData::solidEarthTides_dC20[, 6]*cos(theta_f0) - 
-                              asteRiskData::solidEarthTides_dC20[, 7]*sin(theta_f0))
-        # 1e-12 multiplier because units of IERS table 6.5a and b are 1e-12
-        # m = 1
-        dCnmSET[3, 1] <- dCnmSET[3, 1] + dC20
-        theta_f1 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC21dS21))
-        for(i in 1:nrow(asteRiskData::solidEarthTides_dC21dS21)) {
-            theta_f1[i] <- theta_gPi - drop(asteRiskData::solidEarthTides_dC21dS21[i, 1:5] %*% delaunayVars)
-        }
-        dC21 <- 1e-12*sum(asteRiskData::solidEarthTides_dC21dS21[, 6]*sin(theta_f1) + 
-                              asteRiskData::solidEarthTides_dC21dS21[, 7]*cos(theta_f1))
-        dS21 <- 1e-12*sum(asteRiskData::solidEarthTides_dC21dS21[, 6]*cos(theta_f1) - 
-                              asteRiskData::solidEarthTides_dC21dS21[, 7]*sin(theta_f1))
-        dCnmSET[3,2] <- dCnmSET[3,2] + dC21
-        dSnmSET[3,2] <- dSnmSET[3,2] + dS21
-        # m = 2
-        theta_f2 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC22dS22))
-        for(i in 1:nrow(asteRiskData::solidEarthTides_dC22dS22)) {
-            theta_f2[i] <- 2*theta_gPi - drop(asteRiskData::solidEarthTides_dC21dS21[i, 1:5] %*% delaunayVars)
-        }
-        dC22 <- 1e-12*sum(asteRiskData::solidEarthTides_dC22dS22[, 6]*sin(theta_f2))
-        dS22 <- 1e-12*sum(asteRiskData::solidEarthTides_dC22dS22[, 6]*cos(theta_f2))
-        dCnmSET[3,3] <- dCnmSET[3,3] + dC22
-        dSnmSET[3,3] <- dCnmSET[3,3] + dS22
-        # step 3 of corrections for solid Earth tides: removal of duplicate zero-tide correction
-        # necessary because the C20 of GGM0X is a zero-tide coefficient
-        dC20perm <- 4.4228e-8*(-0.31460)*0.30190 # 0.30190 is the nominal value of k20
-        dCnmSET[3,1] <- dCnmSET[3,1] - dC20perm
-        # Solid Earth pole tides
-        # Section 7.1.4 of IERS technical note 2018
-        # secular x and y pole coordinates in milliarcseconds
-        xs <- 55 + 1.677 * Time_years 
-        ys <- 320.5 + 3.46 * Time_years
-        # m1 and m2 parameters in arcseconds
-        m1 <- x_pole * const_Arcs - xs/1000
-        m2 <- -(y_pole * const_Arcs - ys/1000)
-        dC21solidEarthPoleTide <- -1.333e-9*(m1 + 0.0115*m2)
-        dS21solidEarthPoleTide <- -1.333e-9*(m2 - 0.0115*m2)
-        dCnmSET[3,2] <- dCnmSET[3,2] + dC21solidEarthPoleTide
-        dSnmSET[3,2] <- dSnmSET[3,2] + dS21solidEarthPoleTide
-        # Add the corrections so far (i.e. all solid Earth tides)
-        C[1:5, 1:5] <- C[1:5, 1:5] + dCnmSET
-        S[1:5, 1:5] <- S[1:5, 1:5] + dSnmSET
-    }
-    # End corrections for solid Earth tides
-    # Start corrections for ocean tides
-    if(OTcorrections){
-        # Calculate Doodson variables from Delaunay's
-        if(SETcorrections) {
-            doodsonVars <- delaunayToDoodsonVariables(delaunayVars, theta_g)
-        } else {
+            # step 2 of corrections for solid Earth tides
+            ## Calculation of theta_g
+            invjday_results <- invjday(Mjd_UTC+2400000.5)
+            iauCal2jd_results <- iauCal2jd(invjday_results$year,
+                                           invjday_results$month,
+                                           invjday_results$day)
+            TIME <- (60*(60*invjday_results$hour+invjday_results$min)+invjday_results$sec)/86400
+            UTC <- iauCal2jd_results$DATE+TIME
+            TT <- UTC+TT_UTC/86400
+            TUT <- TIME+UT1_UTC/86400
+            UT1 <- iauCal2jd_results$DATE+TUT
             theta_g <- iauGmst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT)
+            #theta_g <- alternativeGmst(Mjd_UT1)
+            theta_gPi <- theta_g + pi
             delaunayVars <- delaunayVariables(Time)
-            doodsonVars <- delaunayToDoodsonVariables(delaunayVars, theta_g)
-            
+            theta_f0 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC20))
+            for(i in 1:nrow(asteRiskData::solidEarthTides_dC20)) {
+                theta_f0[i] <- -drop(asteRiskData::solidEarthTides_dC20[i, 1:5] %*% delaunayVars)
+                # m(thetag + pi) is 0 because m=0
+            }
+            dC20 <- 1e-12*sum(asteRiskData::solidEarthTides_dC20[, 6]*cos(theta_f0) - 
+                                  asteRiskData::solidEarthTides_dC20[, 7]*sin(theta_f0))
+            # 1e-12 multiplier because units of IERS table 6.5a and b are 1e-12
+            # m = 1
+            dCnmSET[3, 1] <- dCnmSET[3, 1] + dC20
+            theta_f1 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC21dS21))
+            for(i in 1:nrow(asteRiskData::solidEarthTides_dC21dS21)) {
+                theta_f1[i] <- theta_gPi - drop(asteRiskData::solidEarthTides_dC21dS21[i, 1:5] %*% delaunayVars)
+            }
+            dC21 <- 1e-12*sum(asteRiskData::solidEarthTides_dC21dS21[, 6]*sin(theta_f1) + 
+                                  asteRiskData::solidEarthTides_dC21dS21[, 7]*cos(theta_f1))
+            dS21 <- 1e-12*sum(asteRiskData::solidEarthTides_dC21dS21[, 6]*cos(theta_f1) - 
+                                  asteRiskData::solidEarthTides_dC21dS21[, 7]*sin(theta_f1))
+            dCnmSET[3,2] <- dCnmSET[3,2] + dC21
+            dSnmSET[3,2] <- dSnmSET[3,2] + dS21
+            # m = 2
+            theta_f2 <- vector(mode="numeric", length=nrow(asteRiskData::solidEarthTides_dC22dS22))
+            for(i in 1:nrow(asteRiskData::solidEarthTides_dC22dS22)) {
+                theta_f2[i] <- 2*theta_gPi - drop(asteRiskData::solidEarthTides_dC21dS21[i, 1:5] %*% delaunayVars)
+            }
+            dC22 <- 1e-12*sum(asteRiskData::solidEarthTides_dC22dS22[, 6]*sin(theta_f2))
+            dS22 <- 1e-12*sum(asteRiskData::solidEarthTides_dC22dS22[, 6]*cos(theta_f2))
+            dCnmSET[3,3] <- dCnmSET[3,3] + dC22
+            dSnmSET[3,3] <- dCnmSET[3,3] + dS22
+            # step 3 of corrections for solid Earth tides: removal of duplicate zero-tide correction
+            # necessary because the C20 of GGM0X is a zero-tide coefficient
+            dC20perm <- 4.4228e-8*(-0.31460)*0.30190 # 0.30190 is the nominal value of k20
+            dCnmSET[3,1] <- dCnmSET[3,1] - dC20perm
+            # Solid Earth pole tides
+            # Section 7.1.4 of IERS technical note 2018
+            # secular x and y pole coordinates in milliarcseconds
+            xs <- 55 + 1.677 * Time_years 
+            ys <- 320.5 + 3.46 * Time_years
+            # m1 and m2 parameters in arcseconds
+            m1 <- x_pole * const_Arcs - xs/1000
+            m2 <- -(y_pole * const_Arcs - ys/1000)
+            dC21solidEarthPoleTide <- -1.333e-9*(m1 + 0.0115*m2)
+            dS21solidEarthPoleTide <- -1.333e-9*(m2 - 0.0115*m2)
+            dCnmSET[3,2] <- dCnmSET[3,2] + dC21solidEarthPoleTide
+            dSnmSET[3,2] <- dSnmSET[3,2] + dS21solidEarthPoleTide
+            # Add the corrections so far (i.e. all solid Earth tides)
+            C[1:5, 1:5] <- C[1:5, 1:5] + dCnmSET
+            S[1:5, 1:5] <- S[1:5, 1:5] + dSnmSET
         }
-        #doodsonVars <- doodsonVariables(TT)
-        OTcorrected <- parallelOceanTidesCorrections(asteRiskData::oceanTides_fes2014_dCnmdSnm_tideNames,
-                                                     asteRiskData::oceanTides_fes2014_dCnmdSnm_data,
-                                                     doodsonVars, C, S, m1, m2)
-        C <- OTcorrected[[1]]
-        S <- OTcorrected[[2]]
+        # End corrections for solid Earth tides
+        # Start corrections for ocean tides
+        if(OTcorrections){
+            # Calculate Doodson variables from Delaunay's
+            if(SETcorrections) {
+                doodsonVars <- delaunayToDoodsonVariables(delaunayVars, theta_g)
+            } else {
+                theta_g <- iauGmst06(iauCal2jd_results$DJMJD0, UT1, iauCal2jd_results$DJMJD0, TT)
+                delaunayVars <- delaunayVariables(Time)
+                doodsonVars <- delaunayToDoodsonVariables(delaunayVars, theta_g)
+                
+            }
+            #doodsonVars <- doodsonVariables(TT)
+            OTcorrected <- parallelOceanTidesCorrections(asteRiskData::oceanTides_fes2014_dCnmdSnm_tideNames,
+                                                         asteRiskData::oceanTides_fes2014_dCnmdSnm_data,
+                                                         doodsonVars, C, S, m1, m2)
+            C <- OTcorrected[[1]]
+            S <- OTcorrected[[2]]
+        }
+        # End of ocean tide correction
+        # Ocean pole tide: currently only for C21 and S21, but should extend to degree 10
+        # included in parallelOceanTidesCorrections in C++ code
+        # End of all corrections
     }
-    # End of ocean tide correction
-    # Ocean pole tide: currently only for C21 and S21, but should extend to degree 10
-    # included in parallelOceanTidesCorrections in C++ code
-    # End of all corrections
     r_bf <- E %*% r
     d <- sqrt(sum(r_bf^2))
     latgc <- asin(r_bf[3]/d)
@@ -165,7 +168,7 @@ anelasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     legendre_latgc <- legendre(n, m, latgc)
     legendre_latgc_Pnm <- legendre_latgc[[1]]
     legendre_latgc_dPnm <- legendre_latgc[[2]]
-    gradient = gravityGradientSphericalCoords(legendre_latgc_Pnm, legendre_latgc_dPnm,
+    gradient <- gravityGradientSphericalCoords(legendre_latgc_Pnm, legendre_latgc_dPnm,
                                               C, S, latgc, lon, d, earthRadius_EGM96, GM_Earth_TT, n, m)
     # for(n in 0:n) {
     #     b1 <- (-GM_Earth_TT/d^2)*(earthRadius_EGM96/d)^n*(n+1)
@@ -197,6 +200,50 @@ anelasticEarthAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
     az <- 1/d*dUdr*r_bf[3]+sqrt(r2xy)/d^2*dUdlatgc
     a_bf <- c(ax, ay, az)
     a <- t(E) %*% a_bf
+    return(a)
+}
+
+elasticMoonAcceleration <- function(Mjd_UTC, r, moonLibrations, UT1_UTC,
+                                    TT_UTC, moonSPHDegree) {
+    ## GRAIL gravity fields use the Moon Principal Axes reference frame
+    if((moonSPHDegree+1) > nrow(asteRiskData::GRGM1200B_Cnm)) {
+        warning(strwrap(paste("Spherical harmonics coefficients are only available
+                            up to degree ", nrow(asteRiskData::GRGM1200B_Cnm)-1, ", but ",
+                              moonSPHDegree, " was input. Defaulting to the maximum
+                            available degree and order of ", nrow(asteRiskData::GRGM1200B_Cnm)-1, ".")))
+        moonSPHDegree <- nrow(asteRiskData::GRGM1200B_Cnm)-1
+    }
+    C <- asteRiskData::GRGM1200B_Cnm[1:(moonSPHDegree+1), 1:(moonSPHDegree+1)]
+    S <- asteRiskData::GRGM1200B_Snm[1:(moonSPHDegree+1), 1:(moonSPHDegree+1)]
+    ## Rotation from Moon Principal Axes frame to Lunar Celestial Reference Frame
+    ## (Lunar cenetered ICRF). See Eq 8 at https://iopscience.iop.org/article/10.3847/1538-3881/abd414
+    ## TODO : check if actually conversion from lunar frames ME to PA is required
+    MPAtoLCRF <- iauRz(-moonLibrations[1], 
+                       iauRx(-moonLibrations[2], 
+                             iauRz(-moonLibrations[3], diag(3))
+                       )
+    )
+    pos_LCRF <- r
+    pos_MPA <- t(MPAtoLCRF) %*% pos_LCRF
+    d <- sqrt(sum(pos_MPA^2))
+    latgc <- asin(pos_MPA[3]/d)
+    lon <- atan2(pos_MPA[2], pos_MPA[1])
+    # Define order of Legendre functions
+    n <- m <- moonSPHDegree
+    legendre_latgc <- legendre(n, m, latgc)
+    legendre_latgc_Pnm <- legendre_latgc[[1]]
+    legendre_latgc_dPnm <- legendre_latgc[[2]]
+    gradient <- gravityGradientSphericalCoords(legendre_latgc_Pnm, legendre_latgc_dPnm,
+                                               C, S, latgc, lon, d, moonRadius, GM_Moon_GRGM1200B, n, m)
+    dUdr <- gradient[1]
+    dUdlatgc <- gradient[2]
+    dUdlon <- gradient[3]
+    r2xy <- pos_MPA[1]^2+pos_MPA[2]^2
+    ax <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[1]-(1/r2xy*dUdlon)*pos_MPA[2]
+    ay <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[2]+(1/r2xy*dUdlon)*pos_MPA[1]
+    az <- 1/d*dUdr*pos_MPA[3]+sqrt(r2xy)/d^2*dUdlatgc
+    a_bf <- c(ax, ay, az)
+    a <- MPAtoLCRF %*% a_bf
     return(a)
 }
 
@@ -246,7 +293,8 @@ relativity <- function(r, v) {
 }
 
 accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd, 
-                  earthSPHDegree, SETcorrections, OTcorrections) {
+                  earthSPHDegree, SETcorrections, OTcorrections, moonSPHDegree, 
+                  centralBody) {
     MJD_UTC <- MJD_UTC + t/86400
     IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, "l")
     x_pole <- IERS_results$x_pole[[1]]
@@ -285,17 +333,48 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     theta <- iauRz(iauGst06(DJMJD0, UT1, DJMJD0, TT, NPB), diag(3))
     E <- PMM %*% theta %*% NPB
     MJD_TDB <- Mjday_TDB(TT)
-    JPL_ephemerides <- JPLephemeridesDE440(MJD_TDB)
-    # Acceleration due to Earth, with zonal harmonics
-    a <- anelasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSunGeocentric,
-                                  JPL_ephemerides$positionMoon, Y[1:3], E,
-                                  UT1_UTC, TT_UTC,
-                                  x_pole, y_pole, earthSPHDegree, SETcorrections,
-                                  OTcorrections)
+    JPL_ephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody)
+    realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[-c(1, 2, 12, 13)], JPL_ephemerides[[12]])
+    if(centralBody == "Earth") {
+        # Acceleration due to Earth, with zonal harmonics
+        a <- anelasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSun,
+                                        JPL_ephemerides$positionMoon, Y[1:3], E,
+                                        UT1_UTC, TT_UTC,
+                                        x_pole, y_pole, earthSPHDegree, SETcorrections,
+                                        OTcorrections)
+        # Acceleration due to Moon as point mass
+        a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionMoon,GM_Moon_DE440)
+        # Acceleration due to solar radiation pressure
+        a <- a + solarRadiationAcceleration(Y[1:3], JPL_ephemerides$positionEarth, 
+                                            JPL_ephemerides$positionMoon, 
+                                            JPL_ephemerides$positionSun,
+                                            JPL_ephemerides$positionSunSSBarycentric, 
+                                            solarArea,
+                                            satelliteMass,
+                                            Cr, solarPressureConst, AU, "geometrical")
+        # Acceleration due to atmospheric drag
+        # Omega according to section III from https://hpiers.obspm.fr/iers/bul/bulb/explanatory.html
+        Omega <- omegaEarth - 8.43994809e-10*LOD
+        dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC, TT_UTC)["Total"]
+        # a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], NPB, satelliteArea, 
+        #                           satelliteMass, Cd, Omega)
+        a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], E, satelliteArea, 
+                                  satelliteMass, Cd, Omega)
+        # Relativistic effects
+        a <- a + relativity(Y[1:3], Y[4:6])
+    } else if(centralBody == "Moon") {
+        # Acceleration due to Moon with spherical harmonics
+        a <- elasticMoonAcceleration(MJD_UTC, Y[1:3], JPL_ephemerides$lunarLibrationAngles,
+                                     UT1_UTC, TT_UTC, moonSPHDegree)
+        # Acceleration due to Earth as point mass
+        a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionEarth,GM_Earth_DE440)
+    } else {
+        # Acceleration due to Earth and Moon as point masses
+        a <- pointMassAcceleration(Y[1:3], JPL_ephemerides$positionEarth, GM_Earth_DE440)
+        a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionMoon, GM_Moon_DE440)
+    }
     # Acceleration due to Sun
-    a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionSunGeocentric,GM_Sun_DE440)
-    # Acceleration due to Moon
-    a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionMoon,GM_Moon_DE440)
+    a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionSun,GM_Sun_DE440)
     # Accelerations due to planets
     a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionMercury, GM_Mercury_DE440)
     a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionVenus, GM_Venus_DE440)
@@ -305,33 +384,8 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionUranus, GM_Uranus_DE440)    
     a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionNeptune, GM_Neptune_DE440)
     a <- a + pointMassAcceleration(Y[1:3], JPL_ephemerides$positionPluto, GM_Pluto_DE440)
-    # Acceleration due to solar radiation pressure
-    a <- a + solarRadiationAcceleration(Y[1:3], JPL_ephemerides$positionEarth, 
-                                        JPL_ephemerides$positionMoon, 
-                                        JPL_ephemerides$positionSunGeocentric,
-                                        JPL_ephemerides$positionSunSSBarycentric, 
-                                        solarArea,
-                                        satelliteMass,
-                                        Cr, solarPressureConst, AU, "geometrical")
-    # Acceleration due to atmospheric drag
-    # Omega according to section III from https://hpiers.obspm.fr/iers/bul/bulb/explanatory.html
-    Omega <- omegaEarth - 8.43994809e-10*LOD
-    dens <- NRLMSISE00(MJD_UTC, E%*%Y[1:3], UT1_UTC, TT_UTC)["Total"]
-    # a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], NPB, satelliteArea, 
-    #                           satelliteMass, Cd, Omega)
-    a <- a + dragAcceleration(dens, Y[1:3], Y[4:6], E, satelliteArea, 
-                              satelliteMass, Cd, Omega)
-    # Relativistic effects
-    a <- a + relativity(Y[1:3], Y[4:6])
     dY <- matrix(c(Y[4:6], a), byrow=TRUE, ncol=3, nrow=2)
     colnames(dY) <- c("X", "Y", "Z")
     rownames(dY) <- c("Velocity", "Acceleration")
-    return(dY)
-}
-
-elasticMoonAcceleration <- function(Mjd_UTC, r_sun, r_moon, r, E, UT1_UTC,
-                                    TT_UTC, moonSPHDegree) {
-    
-    
-
+    return(list(dY, realCentralBody))
 }

@@ -3,23 +3,32 @@
 \title{High-precision numerical orbital propagator
 }
 \description{
-Given the position and velocity of a satellite at a given time (in the GCRF
-system of coordinates), propagates its position by calculating its acceleration 
+Given the position and velocity of a satellite at a given time (in the ICRF
+system of coordinates centered on the Solar System Barycenter, any of the main planets,
+Earth's Moon or Pluto), propagates its position by calculating its acceleration 
 (based on a force model) and solving the resulting second-order ODE through 
 numerical integration. This allows propagation of orbits with considerably 
 higher accuracy than other propagators such as SGP4 and SDP4, but at the expense 
 of a much higher computational cost. The forces and effects currently considered 
 are gravitational attraction by the  Earth (using the GGM05C gravity model, with
 spherical harmonics up to degree and order of 360); effects of Earth ocean and 
-solid tides; gravitational attraction by the Moon, Sun and planets (considered 
-as point masses); solar radiation pressure; atmospheric drag, and relativistic 
+solid tides; gravitational attraction by the Moon (using the GRGM1200B gravity
+model with spherical harmonics up to degree and order of 1200), Sun and planets 
+(considered as point masses); solar radiation pressure; atmospheric drag, and relativistic 
 effects. The forcefield is based on the forces described in Satellite Orbits: 
 Models, Methods and Applications (Oliver Montenbruck and Eberhard Gill) and 
-Fundamentals of Astrodynamics and Applications (David Vallado). Parts of this 
-implementation are based on a previous MATLAB implementation by Meysam Mahooti.
+Fundamentals of Astrodynamics and Applications (David Vallado).
 The NRLMSISE-00 model is used to calculate atmospheric density for the
-calculation of atmospheric drag. The FES2014 model is used to calculate geopotential
-model corrections due to ocean tides.
+calculation of atmospheric drag. The FES2014 model is used to calculate Earth 
+geopotential model corrections due to ocean tides.
+As mentioned before, the central body for the frame of reference can be any of the
+Solar System Barycenter (SSB), any of the main planets, Earth's Moon or Pluto.
+By default, it is assumed to be Earth, corresponding to GCRF (Geocentric ICRF).
+The initial position will be checked against the position of said celestial bodies,
+to identify if it falls under the Laplacian gravitational sphere of influence of any of them.
+If this is the case, and it differs from the specified central body, the coordinate
+system will be changed to be centered on the celestial body whose sphere of influence
+includes the object of interest. This avoids instability in propagation.
 The high-precision numerical orbital propagator requires the \code{asteRiskData}
 package, which provides the data and coefficients required for calculation of
 the modeled forces. \code{asteRiskData} can be installed by running 
@@ -29,7 +38,7 @@ the modeled forces. \code{asteRiskData} can be installed by running
 hpop(position, velocity, dateTime, times, satelliteMass, dragArea, 
      radiationArea, dragCoefficient, radiationCoefficient, 
      earthSphericalHarmonicsDegree=130, solidEarthTides=TRUE,
-     oceanTides=TRUE, ...)
+     oceanTides=TRUE, moonSphericalHarmonicsDegree=150, centralBody="Earth", ...)
 }
 \arguments{
   \item{position}{Initial position of the satellite in the GCRF system of
@@ -78,7 +87,9 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
   complete up to the specified degree/order, i.e., all zonal, sectorial and
   tesseral spherical harmonics will be calculated. The maximum possible value
   is 360, since that is the highest degree and order of the Stokes' coefficients
-  provided in the GGM05C model.
+  provided in the GGM05C model. Note that spherical harmonics for Earth gravity
+  field will only be used if Earth is the central body for propagation; otherwise,
+  only a point-mass attraction will be calculated.
   }
   \item{solidEarthTides}{Logical indicating if corrections of the Cnm and Snm
   Stokes' coefficients for the geopotential model due to solid Earth tides 
@@ -88,6 +99,25 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
   \item{oceanTides}{Logical indicating if corrections of the Cnm and Snm
   Stokes' coefficients for the geopotential model due to ocean tides should be 
   performed, using the FES2014 oceanic tides model.
+  }
+  \item{moonSphericalHarmonicsDegree}{Maximum degree and order that should be 
+  considered when calculating the Moon gravity model. The model will be 
+  complete up to the specified degree/order, i.e., all zonal, sectorial and
+  tesseral spherical harmonics will be calculated. The maximum possible value
+  is 1200, since that is the highest degree and order of the Stokes' coefficients
+  provided in the GRGM1200B model. Note that spherical harmonics for Moon gravity
+  field will only be used if Moon is the central body for propagation; otherwise,
+  only a point-mass attraction will be calculated.
+  }
+  \item{centralBody}{Character string indicating the celestial body on which the
+  supplied initial position (in ICRF) are centered. Should be one of "SSB" (meaning
+  Solar System Barycenter), "Mercury", "Venus", "Earth", "Moon", "Mars", "Jupiter",
+  "Saturn", "Uranus", "Neptune" or "Pluto". The initial position will be checked 
+  against the position of said celestial bodies, to identify if it falls under the 
+  Laplacian gravitational sphere of influence of any of them. If this is the case, 
+  and it differs from the specified central body, the coordinate system will be 
+  changed to be centered on the celestial body whose sphere of influence includes 
+  the object of interest.
   }
   \item{...}{Additional parameters to be passed to \link{ode} to control how
   numerical integration is performed. By default, the RADAU5 solver is used.
@@ -100,7 +130,11 @@ contains seven columns: time (indicating the time for the corresponding row
 in seconds since the initial time), X, Y, Z (indicating the X, Y and Z
 components of the position for that time in meters), dX, dY and dZ (indicating
 the X, Y and Z components of the velocity for that time in meters/second).
-Positions and velocities are returned in the GCRF frame of reference.
+Positions and velocities are returned in the ICRF frame of reference, centered
+in the celestial body whose sphere of influence includes the object of interest
+(note that, if none of the spheres of influence of the planets, Moon or Pluto 
+included the object of interest, the center of the ICRF frame will be placed at 
+the Solar System Barycenter).
 }
 \references{
 Satellite Orbits: Models, Methods and Applications. Oliver Montenbruck and Eberhard Gill.

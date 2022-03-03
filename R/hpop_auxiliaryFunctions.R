@@ -201,7 +201,64 @@ Mjday_TDB <- function(Mjd_TT) {
     return(Mjd_TDB)
 }
 
-clenshaw <- function(t, N, Ta, Tb, Coeffs) {
+clenshaw_old <- function(t, N, Ta, Tb, Coeffs, derivatives=FALSE) {
+    # See page 75 from chapter 3 of Vallado's book. 
+    # Uses Clenshaw algorithm for sum of Chebyshev polynomial
+    if ((t<Ta) | (t>Tb)) {
+        stop('Time out of range for Chebyshev approximation')
+    }
+    tau <- (2*t-Ta-Tb)/(Tb-Ta)
+    f1 <- rep(0, ncol(Coeffs))
+    f2 <- f1
+    if(derivatives) {
+        df1 <- rep(0, ncol(Coeffs))
+        df2 <- df1
+    }
+    for(i in N:2) {
+        old_f1 <- f1
+        f1 <- 2*tau*f1-f2+Coeffs[i, ]
+        f2 <- old_f1
+    }
+    chebyshevSum <- tau*f1-f2+ Coeffs[1, ]
+    return(chebyshevSum)
+}
+
+clenshaw <- function(t, N, Ta, Tb, Coeffs, derivatives=FALSE) {
+    # See page 75 from chapter 3 of Vallado's book. 
+    # Uses Clenshaw algorithm for sum of Chebyshev polynomial
+    if ((t<Ta) | (t>Tb)) {
+        stop('Time out of range for Chebyshev approximation')
+    }
+    tau <- (2*t-Ta-Tb)/(Tb-Ta)
+    f0 <- rep(0, ncol(Coeffs))
+    f1 <- f0
+    if(derivatives) {
+        df0 <- rep(0, ncol(Coeffs))
+        df1 <- df0
+    }
+    for(i in N:2) {
+        f2 <- f1
+        f1 <- f0
+        f0 <- 2*tau*f1-f2+Coeffs[i, ]
+        if(derivatives) {
+            df2 <- df1
+            df1 <- df0
+            df0 <- 2*f1 + 2*tau*df1 - df2
+        }
+    }
+    chebyshevSum <- tau*f0 - f1 + Coeffs[1, ]
+    if(derivatives) {
+        chebyshevSumDerivative <- (tau*df0 - df1 + f0)/((Tb-Ta)/2 * 86400)
+        return(list(
+            chebyshevSum=chebyshevSum,
+            chebyshevSumDerivative=chebyshevSumDerivative
+        ))
+    } else {
+        return(chebyshevSum)
+    }
+}
+
+clenshawDerivative <- function(t, N, Ta, Tb, Coeffs) {
     # See page 75 from chapter 3 of Vallado's book. 
     # Uses Clenshaw algorithm for sum of Chebyshev polynomial
     if ((t<Ta) | (t>Tb)) {
@@ -219,7 +276,7 @@ clenshaw <- function(t, N, Ta, Tb, Coeffs) {
     return(chebyshevSum)
 }
 
-JPLephemeridesDE440 <- function(MJD_TDB) {
+JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivatives=FALSE) {
     JD <- MJD_TDB + 2400000.5
     ephStartJD <- asteRiskData::DE440coeffs[1,1]
     targetRow <- (JD - ephStartJD)%/%32 + 1
@@ -234,7 +291,7 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     Cx <- coeffs[idxs[1]:(idxs[1]+10)]
     Cy <- coeffs[idxs[2]:(idxs[2]+10)]
     Cz <- coeffs[idxs[3]:(idxs[3]+10)]
-    positionSun <- 1000 * clenshaw(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    clenshawSun <- clenshaw(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Mercury ##
     subInt <- dt %/% 8 + 1
     subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
@@ -242,7 +299,7 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     Cx <- coeffs[idxs[1]:(idxs[1]+13)]
     Cy <- coeffs[idxs[2]:(idxs[2]+13)]
     Cz <- coeffs[idxs[3]:(idxs[3]+13)]
-    positionMercury <- 1000 * clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cx, Cy, Cz))
+    clenshawMercury <- clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cx, Cy, Cz), derivatives)
     ## Venus ##
     subInt <- dt %/% 16 + 1
     subIntStartMJD <- rowStartMJD + 16*(subInt - 1)
@@ -250,7 +307,7 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     Cx <- coeffs[idxs[1]:(idxs[1]+9)]
     Cy <- coeffs[idxs[2]:(idxs[2]+9)]
     Cz <- coeffs[idxs[3]:(idxs[3]+9)]
-    positionVenus <- 1000 * clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    clenshawVenus <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Earth ## (actually Earth-Moon barycenter)
     subInt <- dt %/% 16 + 1 # 16 derived from 32/numberSubInts
     subIntStartMJD <- rowStartMJD + 16*(subInt - 1) 
@@ -260,7 +317,7 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     Cx <- coeffs[idxs[1]:(idxs[1]+12)]
     Cy <- coeffs[idxs[2]:(idxs[2]+12)]
     Cz <- coeffs[idxs[3]:(idxs[3]+12)]
-    positionEMB <- 1000 * clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz))
+    clenshawEMB <- clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Moon ## (already geocentric)
     subInt <- dt %/% 4 + 1
     subIntStartMJD <- rowStartMJD + 4*(subInt - 1)
@@ -268,44 +325,44 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     Cx <- coeffs[idxs[1]:(idxs[1]+12)]
     Cy <- coeffs[idxs[2]:(idxs[2]+12)]
     Cz <- coeffs[idxs[3]:(idxs[3]+12)]
-    positionMoon <- 1000 * clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, cbind(Cx, Cy, Cz))
+    clenshawMoon <- clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, cbind(Cx, Cy, Cz), derivatives)
     ## Mars ## No subintervals for Mars, Jupiter, Saturn, Uranus, Neptune and Pluto
     idxs <- seq(309, by=11, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+10)]
     Cy <- coeffs[idxs[2]:(idxs[2]+10)]
     Cz <- coeffs[idxs[3]:(idxs[3]+10)]
-    positionMars <- 1000 * clenshaw(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    clenshawMars <- clenshaw(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Jupiter ##
     idxs <- seq(342, by=8, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+7)]
     Cy <- coeffs[idxs[2]:(idxs[2]+7)]
     Cz <- coeffs[idxs[3]:(idxs[3]+7)]
-    positionJupiter <- 1000 * clenshaw(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    clenshawJupiter <- clenshaw(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Saturn ##
     idxs <- seq(366, by=7, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+6)]
     Cy <- coeffs[idxs[2]:(idxs[2]+6)]
     Cz <- coeffs[idxs[3]:(idxs[3]+6)]
-    positionSaturn <- 1000 * clenshaw(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    clenshawSaturn <- clenshaw(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Uranus ##
     idxs <- seq(387, by=6, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
-    positionUranus <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    clenshawUranus <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Neptune ##
     idxs <- seq(405, by=6, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
-    positionNeptune <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
+    clenshawNeptune <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Pluto ##
     idxs <- seq(423, by=6, length.out=3)
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
-    positionPluto <- 1000 * clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz))
-    ## The following 2 sections are commented out because they are not currently used
+    clenshawPluto <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
+    ## The following 2 sections are commented out because they are not currently used. Actually lunar librations are now used
     # ## Earth Nutations ##
     # subInt <- dt %/% 8 + 1
     # subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
@@ -313,26 +370,109 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
     # Cdpsi <- coeffs[idxs[1]:(idxs[1]+9)]
     # Cdeps <- coeffs[idxs[2]:(idxs[2]+9)]
     # earthNutation <- 1000 * clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cdpsi, Cdeps))
-    # ## Lunar Mantle Librations ##
-    # subInt <- dt %/% 8 + 1
-    # subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
-    # idxs <- seq(899 + 30*(subInt-1), by=10, length.out=3)
-    # Cphi <- coeffs[idxs[1]:(idxs[1]+9)]
-    # Ctheta <- coeffs[idxs[2]:(idxs[2]+9)]
-    # Cpsi <- coeffs[idxs[3]:(idxs[3]+9)]
-    # lunarLibration <- 1000 * clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi))
+    ## Lunar Mantle Librations ##
+    subInt <- dt %/% 8 + 1
+    subIntStartMJD <- rowStartMJD + 8*(subInt - 1)
+    idxs <- seq(899 + 30*(subInt-1), by=10, length.out=3)
+    Cphi <- coeffs[idxs[1]:(idxs[1]+9)]
+    Ctheta <- coeffs[idxs[2]:(idxs[2]+9)]
+    Cpsi <- coeffs[idxs[3]:(idxs[3]+9)]
+    # units directly in radians. Order of angles is phi, theta and psi
+    clenshawLunarLibration <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi), derivatives)
+    lunarLibration <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi), derivatives)
+    if(derivatives) {
+        velocitySun <- clenshawSun[[2]] * 1000
+        velocityMercury <- clenshawMercury[[2]] * 1000
+        velocityVenus <- clenshawVenus[[2]] * 1000
+        velocityEMB <- clenshawEMB[[2]] * 1000
+        velocityMoon <- clenshawMoon[[2]] * 1000
+        velocityMars <- clenshawMars[[2]] * 1000
+        velocityJupiter <- clenshawJupiter[[2]] * 1000
+        velocitySaturn <- clenshawSaturn[[2]] * 1000
+        velocityUranus <- clenshawUranus[[2]] * 1000
+        velocityNeptune <- clenshawNeptune[[2]] * 1000
+        velocityPluto <- clenshawPluto[[2]] * 1000
+        derivativesLunarLibration <- clenshawLunarLibration[[2]]
+        positionSun <- clenshawSun[[1]] * 1000
+        positionMercury <- clenshawMercury[[1]] * 1000
+        positionVenus <- clenshawVenus[[1]] * 1000
+        positionEMB <- clenshawEMB[[1]] * 1000
+        positionMoon <- clenshawMoon[[1]] * 1000
+        positionMars <- clenshawMars[[1]] * 1000
+        positionJupiter <- clenshawJupiter[[1]] * 1000
+        positionSaturn <- clenshawSaturn[[1]] * 1000
+        positionUranus <- clenshawUranus[[1]] * 1000
+        positionNeptune <- clenshawNeptune[[1]] * 1000
+        positionPluto <- clenshawPluto[[1]] * 1000
+        lunarLibration <- clenshawLunarLibration[[1]]
+    } else {
+        positionSun <- clenshawSun * 1000
+        positionMercury <- clenshawMercury * 1000
+        positionVenus <- clenshawVenus * 1000
+        positionEMB <- clenshawEMB * 1000
+        positionMoon <- clenshawMoon * 1000
+        positionMars <- clenshawMars * 1000
+        positionJupiter <- clenshawJupiter * 1000
+        positionSaturn <- clenshawSaturn * 1000
+        positionUranus <- clenshawUranus * 1000
+        positionNeptune <- clenshawNeptune * 1000
+        positionPluto <- clenshawPluto * 1000
+        lunarLibration <- clenshawLunarLibration
+    }
     positionEarth <- positionEMB - positionMoon*EMRAT1_DE440
-    positionMercury <- positionMercury - positionEarth
-    positionVenus <- positionVenus - positionEarth
-    positionMars <- positionMars - positionEarth
-    positionJupiter <- positionJupiter - positionEarth
-    positionSaturn <- positionSaturn - positionEarth
-    positionUranus <- positionUranus - positionEarth
-    positionNeptune <- positionNeptune - positionEarth
-    positionPluto <- positionPluto - positionEarth
-    positionSunGeocentric <- positionSun - positionEarth
-    return(list(
-        positionSunGeocentric = positionSunGeocentric,
+    centralBodySSBPosition <- switch(EXPR = centralBody,
+                                     SSB = 0,
+                                     Mercury = positionMercury,
+                                     Venus = positionVenus,
+                                     Earth = positionEarth,
+                                     Moon = positionMoon + positionEarth,
+                                     Mars = positionMars,
+                                     Jupiter = positionJupiter,
+                                     Saturn = positionSaturn,
+                                     Uranus = positionUranus,
+                                     Neptune = positionNeptune,
+                                     Pluto = positionPluto,
+                                     positionEarth)
+    positionEarth <- positionEarth - centralBodySSBPosition
+    positionMercury <- positionMercury - centralBodySSBPosition
+    positionVenus <- positionVenus - centralBodySSBPosition
+    positionMars <- positionMars - centralBodySSBPosition
+    positionJupiter <- positionJupiter - centralBodySSBPosition
+    positionSaturn <- positionSaturn - centralBodySSBPosition
+    positionUranus <- positionUranus - centralBodySSBPosition
+    positionNeptune <- positionNeptune - centralBodySSBPosition
+    positionPluto <- positionPluto - centralBodySSBPosition
+    positionSunBodycentric <- positionSun - centralBodySSBPosition
+    positionMoon <- positionMoon + positionEarth
+    if(derivatives) {
+        velocityEarth <- velocityEMB - velocityMoon*EMRAT1_DE440
+        centralBodySSBVelocity <- switch(EXPR = centralBody,
+                                         SSB = 0,
+                                         Mercury = velocityMercury,
+                                         Venus = velocityVenus,
+                                         Earth = velocityEarth,
+                                         Moon = velocityMoon + velocityEarth,
+                                         Mars = velocityMars,
+                                         Jupiter = velocityJupiter,
+                                         Saturn = velocitySaturn,
+                                         Uranus = velocityUranus,
+                                         Neptune = velocityNeptune,
+                                         Pluto = velocityPluto,
+                                         velocityEarth)
+        velocityEarth <- velocityEarth - centralBodySSBVelocity
+        velocityMercury <- velocityMercury - centralBodySSBVelocity
+        velocityVenus <- velocityVenus - centralBodySSBVelocity
+        velocityMars <- velocityMars - centralBodySSBVelocity
+        velocityJupiter <- velocityJupiter - centralBodySSBVelocity
+        velocitySaturn <- velocitySaturn - centralBodySSBVelocity
+        velocityUranus <- velocityUranus - centralBodySSBVelocity
+        velocityNeptune <- velocityNeptune - centralBodySSBVelocity
+        velocityPluto <- velocityPluto - centralBodySSBVelocity
+        velocitySunBodycentric <- velocitySun - centralBodySSBVelocity
+        velocityMoon <- velocityMoon + velocityEarth
+    }
+    output <- list(
+        positionSun = positionSunBodycentric,
         positionSunSSBarycentric = positionSun,
         positionMercury = positionMercury,
         positionVenus = positionVenus,
@@ -343,8 +483,28 @@ JPLephemeridesDE440 <- function(MJD_TDB) {
         positionUranus = positionUranus,
         positionNeptune = positionNeptune,
         positionPluto = positionPluto,
-        positionMoon = positionMoon
-    ))
+        positionMoon = positionMoon,
+        lunarLibrationAngles = lunarLibration
+    )
+    if(derivatives) {
+        derivativesOutput <- list(
+            velocitySun = velocitySunBodycentric,
+            velocitySunSSBarycentric = velocitySun,
+            velocityMercury = velocityMercury,
+            velocityVenus = velocityVenus,
+            velocityEarth = velocityEarth,
+            velocityMars = velocityMars,
+            velocityJupiter = velocityJupiter,
+            velocitySaturn = velocitySaturn,
+            velocityUranus = velocityUranus,
+            velocityNeptune = velocityNeptune,
+            velocityPluto = velocityPluto,
+            velocityMoon = velocityMoon,
+            lunarLibrationAnglesDerivatives = derivativesLunarLibration
+        )
+        output <- c(output, derivativesOutput)
+    }
+    return(output)
 }
 
 CartesianToPolar <- function(cartesianVector) {
@@ -508,4 +668,18 @@ fractionalDays <- function(year, month, day, hour, min, sec) {
     }
     days <- sum(monthDays[1:(month - 1)]) + day + hour/24 + min/1440 + sec/86400
     return(days)
+}
+
+determineCentralBody <- function(position, planetEphemerides, moonEphemeris) {
+    distances <- sapply(planetEphemerides, FUN=function(x) {sqrt(sum((x - position)^2))})
+    centralBody <- substring(names(which(distances < SOIradii)), 9)
+    if(length(centralBody) == 0) {
+        centralBody <- "SSB"
+    }
+    if(centralBody=="Earth") {
+        if(sqrt(sum((moonEphemeris - position)^2)) < SOIMoon) {
+            centralBody <- "Moon"
+        }
+    }
+    return(centralBody)
 }
