@@ -414,7 +414,7 @@ geodetic_matrix_hpop <- matrix(nrow=nrow(hpop_results), ncol=3)
 
 for(i in 1:nrow(geodetic_matrix_hpop)) {
     new_dateTime <- as.character(as.POSIXct(molniya$dateTime, tz="UTC") + targetTimes[i])
-    new_geodetic <- GCRFtoLATLON(hpop_results[i, 2:4], new_dateTime)
+    new_geodetic <- GCRFtoLATLON(as.numeric(hpop_results[i, 2:4]), new_dateTime)
     geodetic_matrix_hpop[i,] <- new_geodetic
 }
 

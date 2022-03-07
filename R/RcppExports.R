@@ -17,3 +17,7 @@ gravityGradientSphericalCoords <- function(Pnm, dPnm, Cnm, Snm, lat, lon, d, R, 
     .Call('_asteRisk_gravityGradientSphericalCoords', PACKAGE = 'asteRisk', Pnm, dPnm, Cnm, Snm, lat, lon, d, R, GM, n, m)
 }
 
+iauDtdb <- function(MJDTT) {
+    .Call('_asteRisk_iauDtdb', PACKAGE = 'asteRisk', MJDTT)
+}
+

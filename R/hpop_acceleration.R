@@ -294,7 +294,7 @@ relativity <- function(r, v) {
 
 accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd, 
                   earthSPHDegree, SETcorrections, OTcorrections, moonSPHDegree, 
-                  centralBody) {
+                  centralBody, autoCentralBodyChange) {
     MJD_UTC <- MJD_UTC + t/86400
     IERS_results <- IERS(asteRiskData::earthPositions, MJD_UTC, "l")
     x_pole <- IERS_results$x_pole[[1]]
@@ -334,7 +334,12 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     E <- PMM %*% theta %*% NPB
     MJD_TDB <- Mjday_TDB(TT)
     JPL_ephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody)
-    realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[-c(1, 2, 12, 13)], JPL_ephemerides[[12]])
+    if(autoCentralBodyChange) {
+        realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[-c(1, 2, 12, 13)], JPL_ephemerides[[12]])
+    }
+    else {
+        realCentralBody <- centralBody
+    }
     if(centralBody == "Earth") {
         # Acceleration due to Earth, with zonal harmonics
         a <- anelasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSun,

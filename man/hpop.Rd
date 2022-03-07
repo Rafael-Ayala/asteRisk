@@ -38,7 +38,8 @@ the modeled forces. \code{asteRiskData} can be installed by running
 hpop(position, velocity, dateTime, times, satelliteMass, dragArea, 
      radiationArea, dragCoefficient, radiationCoefficient, 
      earthSphericalHarmonicsDegree=130, solidEarthTides=TRUE,
-     oceanTides=TRUE, moonSphericalHarmonicsDegree=150, centralBody="Earth", ...)
+     oceanTides=TRUE, moonSphericalHarmonicsDegree=150, centralBody="Earth", 
+     autoCentralBodyChange=TRUE, ...)
 }
 \arguments{
   \item{position}{Initial position of the satellite in the GCRF system of
@@ -119,22 +120,39 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
   changed to be centered on the celestial body whose sphere of influence includes 
   the object of interest.
   }
+  \item{autoCentralBodyChange}{Logical indicating if the celestial object used as
+  the center of coordinates should be automatically updated during propagation
+  based on the radii of the spheres of influence of the main planets, the Moon
+  and Pluto. By default, \code{autoCentralBodyChange=TRUE}.
+  }
   \item{...}{Additional parameters to be passed to \link{ode} to control how
   numerical integration is performed. By default, the RADAU5 solver is used.
   }
 }
 \value{
-A matrix with the results of the numerical integration at the requested times.
-Each row contains the results for one of the requested times. The matrix 
-contains seven columns: time (indicating the time for the corresponding row
+A data frame with the results of the numerical integration at the requested times.
+Each row contains the results for one of the requested times. The data frame 
+contains eight columns: time (indicating the time for the corresponding row
 in seconds since the initial time), X, Y, Z (indicating the X, Y and Z
 components of the position for that time in meters), dX, dY and dZ (indicating
-the X, Y and Z components of the velocity for that time in meters/second).
+the X, Y and Z components of the velocity for that time in meters/second) and 
+centralBody, indicating the central body of the frame of reference for the
+results for the corresponding time.
 Positions and velocities are returned in the ICRF frame of reference, centered
-in the celestial body whose sphere of influence includes the object of interest
-(note that, if none of the spheres of influence of the planets, Moon or Pluto 
-included the object of interest, the center of the ICRF frame will be placed at 
-the Solar System Barycenter).
+in the celestial body specified in column centralBody. If \code{autoCentralBodyChange=TRUE},
+the celestial body whose sphere of influence includes the object of interest
+will be automatically used as the central body. Additionally, if transitions in
+or out of the spheres of influence of the main celestial bodies are detected
+during propagation of the trajectory, the central body will be automatically 
+modified accordingly. If \code{autoCentralBodyChange=FALSE}, such automatic
+changes of the central body will not be performed, and instead the user-specified
+central body will be used at all times. Note, however, that it is not recommended
+to perform propagation in a frame center at an object different than the celestial
+body whose sphere of influence includes the target of propagation, since this
+can lead to a substantial loss of accuracy. For details, see \href{https://etd.auburn.edu/bitstream/handle/10415/1133/Vautier_Mana_34.pdf}{M. Vautier, 2008}. 
+Note that, if none of the spheres of influence of the 
+planets, Moon or Pluto  included the object of interest, the center of the ICRF 
+frame will be placed at the Solar System Barycenter.
 }
 \references{
 Satellite Orbits: Models, Methods and Applications. Oliver Montenbruck and Eberhard Gill.
@@ -144,6 +162,7 @@ https://ccmc.gsfc.nasa.gov/modelweb/models/nrlmsise00.php
 https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=1144&context=smallsat
 https://iopscience.iop.org/article/10.1088/1742-6596/911/1/012009/pdf
 https://www.sciencedirect.com/science/article/pii/S1110016821000016
+https://etd.auburn.edu/bitstream/handle/10415/1133/Vautier_Mana_34.pdf?sequence=1
 }
 \examples{
 if(requireNamespace("asteRiskData", quietly = TRUE)) {

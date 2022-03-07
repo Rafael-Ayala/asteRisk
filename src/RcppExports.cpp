@@ -78,12 +78,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iauDtdb
+double iauDtdb(double MJDTT);
+RcppExport SEXP _asteRisk_iauDtdb(SEXP MJDTTSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type MJDTT(MJDTTSEXP);
+    rcpp_result_gen = Rcpp::wrap(iauDtdb(MJDTT));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_asteRisk_serialOceanTidesCorrections", (DL_FUNC) &_asteRisk_serialOceanTidesCorrections, 7},
     {"_asteRisk_parallelOceanTidesCorrections", (DL_FUNC) &_asteRisk_parallelOceanTidesCorrections, 7},
     {"_asteRisk_legendre", (DL_FUNC) &_asteRisk_legendre, 3},
     {"_asteRisk_gravityGradientSphericalCoords", (DL_FUNC) &_asteRisk_gravityGradientSphericalCoords, 11},
+    {"_asteRisk_iauDtdb", (DL_FUNC) &_asteRisk_iauDtdb, 1},
     {NULL, NULL, 0}
 };
 
