@@ -90,6 +90,24 @@ xprod <- function(...) {
            })
 }
 
+JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", includeVelocities=TRUE) {
+    hasData()
+    if(!(timeSystem %in% c("UTC", "UT1", "TT", "TDB"))) {
+        stop(strwrap("Please choose a time system from UTC, UT1, TT and TDB"))
+    }
+    if(length(centralBody) != 1 | !(centralBody %in% c("SSB", "Mercury", "Venus", "Earth",
+                                                       "Moon", "Jupiter", "Saturn", "Uranus",
+                                                       "Neptune", "Pluto")))
+    if(timeSystem == "UTC") {
+        MJD <- Mjday_TDB(MJDUTCtoMJDTT(MJD))
+    } else if(timeSystem == "UT1") {
+        MJD <- Mjday_TDB(MJDUTCtoMJDTT(MJDUT1toMJDUTC(MJD)))
+    } else if(timeSystem == "TT") {
+        MJD <- Mjday_TDB(MJD)
+    }
+    return(JPLephemeridesDE440(MJD, centralBody=centralBody, derivatives=includeVelocities))
+}
+
 # doodsonVariables <- function(MJD_TT) {
 #     Tu0 <- (floor(MJD_TT)-51544.5)/36525.0
 #     gmst0 <- (6.0/24 + 41.0/(24*60) + 50.54841/(24*60*60))
