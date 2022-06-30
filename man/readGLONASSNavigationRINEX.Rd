@@ -5,11 +5,11 @@
 \description{
 RINEX (Receiver Independent Exchange Format) is one of the most widely used
 formats for providing data of satellite navigation systems. The RINEX standard
-defines several file types, among which navigation files are used to distribute
-positional information of the satellites. The exact information provided in a
-RINEX navigation file varies for each satellite navigation system. This function
-reads RINEX navigation files for satellites of the GLONASS constellation,
-operated by Russia.
+defines several structured text file types, among which navigation files are used 
+to distribute positional information of the satellites. The exact information 
+provided in a RINEX navigation file varies for each satellite navigation system. 
+This function reads RINEX navigation files for satellites of the GLONASS 
+constellation, operated by Russia.
 }
 \usage{
 readGLONASSNavigationRINEX(filename)

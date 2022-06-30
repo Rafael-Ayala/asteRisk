@@ -3,13 +3,13 @@
 \title{Read a TLE file
 }
 \description{
-TLE (Two-/Three- Line Element) is a standard format for representing orbital
-state vectors. This function reads a TLE file containing one or more TLEs. The
-TLE file can contain either Two Line Elements or Three Line Elements, but all
-the TLE in a single file must be of the same type. The two lines of a Two Line
-Element contain all the ephemeris information. The additional line in a Three
-Line Element is optional, and contains just the satellite name. For a detailed
-description of the TLE format, see https://celestrak.com/columns/v04n03/#FAQ01.
+TLE (Two-/Three- Line Element) is a standard structured text file format for 
+representing orbital state vectors. This function reads a TLE file containing 
+one or more TLEs. The TLE file can contain either Two Line Elements or Three Line 
+Elements, but all the TLE in a single file must be of the same type. The two 
+lines of a Two Line Element contain all the ephemeris information. The additional 
+line in a Three Line Element is optional, and contains just the satellite name. 
+For a detailed description of the TLE format, see https://celestrak.com/columns/v04n03/#FAQ01.
 }
 \usage{
 readTLE(filename, maxTLEs=NULL)

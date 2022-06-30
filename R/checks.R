@@ -44,3 +44,13 @@ checkTimeInput <- function(initialTime, targetTime, algorithm) {
         }
     }
 }
+
+checkTLElist <- function(readTLE) {
+    if(!all(c("NORADcatalogNumber", "classificationLevel", "internationalDesignator",
+              "launchYear", "launchNumber", "launchPiece", "dateTime", "elementNumber",
+              "inclination", "ascension", "eccentricity", "perigeeArgument", "meanAnomaly",
+              "meanMotion", "meanMotionDerivative", "meanMotionSecondDerivative",
+              "Bstar", "ephemerisType", "epochRevolutionNumber", "objectName") %in% names(readTLE))) {
+        stop("Please provide a valid TLE read by either the readTLE or parseTLElines functions")
+    }
+}

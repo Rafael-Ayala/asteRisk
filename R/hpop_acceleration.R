@@ -272,6 +272,11 @@ solarRadiationAcceleration <- function(r, r_earth, r_moon, r_sun, r_sunSSB,
     return(a)
 }
 
+solarRadiationAcceleration2 <- function(rSatellite, rEarth, rMoon, rSun, rSunSSB,
+                                        solarPressureConstant) {
+    
+}
+
 dragAcceleration <- function(dens, r, v, T, area, mass, CD, Omega) {
     omega = c(0, 0, Omega)
     r_bf <- T %*% r

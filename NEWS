@@ -1,3 +1,6 @@
+Changes in version 1.4.0 (2022-06-30)
++ Functions deg2rad(), rad2deg() and revDays2radMin() for conversion of units are provided
+
 Changes in version 1.4.0 (2022-03-08)
 + Increased performance of readTLE when providing an URL
 + Function hpop() can now perform automatic changes of the celestial body used as the center of coordinates, therefore making it suitable to propagate the trajectory of any spacecraft in the Solar System, and not just those orbiting Earth

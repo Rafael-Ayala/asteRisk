@@ -888,4 +888,7 @@ parseOMMDataBlock <- function(lines) {
     ))
 }
 
+readPlanetLabsStateVectors <- function(filename) {
+    
+}
 

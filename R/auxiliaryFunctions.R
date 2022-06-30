@@ -6,6 +6,10 @@ rad2deg <- function(radians) {
     return(radians*180/pi)
 }
 
+revDay2radMin <- function(revPerDay) {
+    return(revPerDay*((2*pi)/(1440)))
+}
+
 UTCdateTimeToGMST <- function(dateTime, convertUTCtoUT1 = FALSE) {
     # Formula is actually for converting from UT1 Julian date, but difference 
     # between UTC and UT1 JD will be below 0.9 seconds
