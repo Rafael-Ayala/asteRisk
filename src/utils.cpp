@@ -89,6 +89,41 @@ NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
 
 // [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::export]]
+NumericVector clenshawAllDerivatives(double t, int N, double Ta, double Tb, NumericVector Coeffs, int derivativesOrder) {
+    const double tau = (2*t-Ta-Tb)/(Tb-Ta);
+    // tau is the same as s in SPICE algorithm
+    double helperValues[derivativesOrder + 1][3];
+    memset(helperValues, 0, sizeof helperValues);
+    helperValues[0][0] = helperValues[0][1] = helperValues[0][2] = 0;
+    double scale;
+    for(double i = N; i > 1; i--) {
+        helperValues[0][2] = helperValues[0][1];
+        helperValues[0][1] = helperValues[0][0];
+        helperValues[0][0] = 2*tau*helperValues[0][1]-helperValues[0][2] + Coeffs[i - 1];
+        scale=2.0;
+        for(int j = 1; j <= derivativesOrder; j++) {
+            helperValues[j][2] = helperValues[j][1];
+            helperValues[j][1] = helperValues[j][0];
+            helperValues[j][0] = scale*helperValues[j-1][1] + 2*tau*helperValues[j][1] - helperValues[j][2];
+            scale += 2.0;
+        }
+    }
+    NumericVector output(derivativesOrder + 1);
+    output[0] = tau*helperValues[0][0] - helperValues[0][1] + Coeffs[0];
+    scale = 1.0;
+    double scale2initial = ((Tb-Ta)/2 * 86400.0), scale2 = scale2initial;
+    // double scale2initial = ((Tb-Ta)/2), scale2 = scale2initial;
+    //Rprintf("\n 1 is %f, 2 is %f and 3 is %f \n", helperValues[1][0], helperValues[1][1], helperValues[1][2]);
+    for(R_xlen_t j = 1; j <= derivativesOrder; j++) {
+        output[j] = (scale*helperValues[j-1][0] + tau*helperValues[j][0] - helperValues[j][1]) / (scale2);
+        scale += 1.0;
+        scale2 = scale2 * scale2initial;
+    }
+    return output;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
 double iauDtdb(double MJDTT) {
     double t, w, wt, w0, w1, w2, w3, w4, wf, wj;
     t = w = wt = w0 = w1 = w2 = w3 = w4 = wf = wj = 0;

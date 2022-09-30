@@ -65,7 +65,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
         }
     }
     MJD_TDB <- Mjday_TDB(MJDUTCtoMJDTT(Mjd_UTC))
-    JPLephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody=centralBody, derivatives=TRUE)
+    JPLephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody=centralBody, derivativesOrder=2)
     realCentralBody <- determineCentralBody(position, JPLephemerides[3:11], JPLephemerides[[12]])
     if(centralBody != realCentralBody) {
         message(strwrap(paste(centralBody, " was selected as the central body,
@@ -107,7 +107,8 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
             newTimes <- times[changePoint:length(times)] - times[changePoint]
             newMjd_UTC <- Mjd_UTC + times[changePoint]/86400
             newMJD_TDB <- Mjday_TDB(MJDUTCtoMJDTT(newMjd_UTC))
-            JPLephemerides_oldCentralBody <- JPLephemeridesDE440(newMJD_TDB, centralBody=names(centralBodiesNum[oldCentralBody]), derivatives=TRUE)
+            JPLephemerides_oldCentralBody <- JPLephemeridesDE440(newMJD_TDB, centralBody=names(centralBodiesNum[oldCentralBody]), 
+                                                                 derivativesOrder=2)
             newPosition <- integration_results[changePoint, 2:4] -
                 JPLephemerides_oldCentralBody[[paste("position", names(centralBodiesNum[newCentralBody]), sep="")]]
             newVelocity <- integration_results[changePoint, 5:7] -

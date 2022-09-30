@@ -17,6 +17,10 @@ gravityGradientSphericalCoords <- function(Pnm, dPnm, Cnm, Snm, lat, lon, d, R, 
     .Call('_asteRisk_gravityGradientSphericalCoords', PACKAGE = 'asteRisk', Pnm, dPnm, Cnm, Snm, lat, lon, d, R, GM, n, m)
 }
 
+clenshawAllDerivatives <- function(t, N, Ta, Tb, Coeffs, derivativesOrder) {
+    .Call('_asteRisk_clenshawAllDerivatives', PACKAGE = 'asteRisk', t, N, Ta, Tb, Coeffs, derivativesOrder)
+}
+
 iauDtdb <- function(MJDTT) {
     .Call('_asteRisk_iauDtdb', PACKAGE = 'asteRisk', MJDTT)
 }

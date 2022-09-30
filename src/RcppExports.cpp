@@ -78,6 +78,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// clenshawAllDerivatives
+NumericVector clenshawAllDerivatives(double t, int N, double Ta, double Tb, NumericVector Coeffs, int derivativesOrder);
+RcppExport SEXP _asteRisk_clenshawAllDerivatives(SEXP tSEXP, SEXP NSEXP, SEXP TaSEXP, SEXP TbSEXP, SEXP CoeffsSEXP, SEXP derivativesOrderSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< double >::type Ta(TaSEXP);
+    Rcpp::traits::input_parameter< double >::type Tb(TbSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Coeffs(CoeffsSEXP);
+    Rcpp::traits::input_parameter< int >::type derivativesOrder(derivativesOrderSEXP);
+    rcpp_result_gen = Rcpp::wrap(clenshawAllDerivatives(t, N, Ta, Tb, Coeffs, derivativesOrder));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iauDtdb
 double iauDtdb(double MJDTT);
 RcppExport SEXP _asteRisk_iauDtdb(SEXP MJDTTSEXP) {
@@ -95,6 +111,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asteRisk_parallelOceanTidesCorrections", (DL_FUNC) &_asteRisk_parallelOceanTidesCorrections, 7},
     {"_asteRisk_legendre", (DL_FUNC) &_asteRisk_legendre, 3},
     {"_asteRisk_gravityGradientSphericalCoords", (DL_FUNC) &_asteRisk_gravityGradientSphericalCoords, 11},
+    {"_asteRisk_clenshawAllDerivatives", (DL_FUNC) &_asteRisk_clenshawAllDerivatives, 6},
     {"_asteRisk_iauDtdb", (DL_FUNC) &_asteRisk_iauDtdb, 1},
     {NULL, NULL, 0}
 };

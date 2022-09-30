@@ -1,4 +1,8 @@
-Changes in version 1.4.0 (2022-06-30)
+Changes in version 1.4.2 (2022-XX-XX)
++ Function JPLephemerides() can now also calculate accelerations
++ Now spherical harmonics gravity field of Moon can be applied for Earth-centered trajectories and viceversa
+
+Changes in version 1.4.1 (2022-06-30)
 + Functions deg2rad(), rad2deg() and revDays2radMin() for conversion of units are provided
 
 Changes in version 1.4.0 (2022-03-08)

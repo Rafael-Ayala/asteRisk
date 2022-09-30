@@ -90,10 +90,13 @@ xprod <- function(...) {
            })
 }
 
-JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", includeVelocities=TRUE) {
+JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", derivatives="acceleration") {
     hasData()
     if(!(timeSystem %in% c("UTC", "UT1", "TT", "TDB"))) {
         stop(strwrap("Please choose a time system from UTC, UT1, TT and TDB"))
+    }
+    if(!(derivatives %in% c("none", "velocity", "acceleration"))) {
+        stop(strwrap("Please choose a derivatives level from none, velocities or acceleration"))
     }
     if(length(centralBody) != 1 | !(centralBody %in% c("SSB", "Mercury", "Venus", "Earth",
                                                        "Moon", "Jupiter", "Saturn", "Uranus",
@@ -105,7 +108,8 @@ JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", includeVelo
     } else if(timeSystem == "TT") {
         MJD <- Mjday_TDB(MJD)
     }
-    return(JPLephemeridesDE440(MJD, centralBody=centralBody, derivatives=includeVelocities))
+    derivativesOrder <- switch(derivatives, velocity=1, acceleration=2, 0)
+    return(JPLephemeridesDE440(MJD, centralBody=centralBody, derivativesOrder=derivativesOrder))
 }
 
 # doodsonVariables <- function(MJD_TT) {

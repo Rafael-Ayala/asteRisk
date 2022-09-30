@@ -338,9 +338,19 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
     theta <- iauRz(iauGst06(DJMJD0, UT1, DJMJD0, TT, NPB), diag(3))
     E <- PMM %*% theta %*% NPB
     MJD_TDB <- Mjday_TDB(TT)
-    JPL_ephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody)
+    JPL_ephemerides <- JPLephemeridesDE440(MJD_TDB, centralBody, derivativesOrder=2)
     if(autoCentralBodyChange) {
-        realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[-c(1, 2, 12, 13)], JPL_ephemerides[[12]])
+        # realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[-c(1, 2, 12, 13)], JPL_ephemerides[[12]])
+        realCentralBody <- determineCentralBody(Y[1:3], JPL_ephemerides[c("positionMercury",
+                                                                          "positionVenus",
+                                                                          "positionEarth",
+                                                                          "positionMars",
+                                                                          "positionJupiter",
+                                                                          "positionSaturn",
+                                                                          "positionUranus",
+                                                                          "positionNeptune",
+                                                                          "positionPluto")], 
+                                                JPL_ephemerides[["positionMoon"]])
     }
     else {
         realCentralBody <- centralBody
@@ -352,8 +362,14 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                                         UT1_UTC, TT_UTC,
                                         x_pole, y_pole, earthSPHDegree, SETcorrections,
                                         OTcorrections)
-        # Acceleration due to Moon as point mass
-        a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionMoon,GM_Moon_DE440)
+        # Acceleration due to Moon as point mass only if Moon spherical degree is 1
+        if(moonSPHDegree == 1) {
+            a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionMoon,GM_Moon_DE440)
+        } else {
+            a <- a + elasticMoonAcceleration(MJD_UTC, Y[1:3] - JPL_ephemerides$positionMoon, JPL_ephemerides$lunarLibrationAngles,
+                                         UT1_UTC, TT_UTC, moonSPHDegree) - 
+                GM_Moon_GRGM1200B * JPL_ephemerides$positionMoon/(sqrt(sum(JPL_ephemerides$positionMoon^2)))^3
+        }
         # Acceleration due to solar radiation pressure
         a <- a + solarRadiationAcceleration(Y[1:3], JPL_ephemerides$positionEarth, 
                                             JPL_ephemerides$positionMoon, 
@@ -376,8 +392,17 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
         # Acceleration due to Moon with spherical harmonics
         a <- elasticMoonAcceleration(MJD_UTC, Y[1:3], JPL_ephemerides$lunarLibrationAngles,
                                      UT1_UTC, TT_UTC, moonSPHDegree)
-        # Acceleration due to Earth as point mass
-        a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionEarth,GM_Earth_DE440)
+        # Acceleration due to Earth as point mass if spherical harmonics degree is set to 1
+        if(earthSPHDegree == 1) {
+            a <- a + pointMassAcceleration(Y[1:3],JPL_ephemerides$positionEarth,GM_Earth_DE440)
+        }
+        else {
+            a <- a + anelasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSun - JPL_ephemerides$positionEarth,
+                                                JPL_ephemerides$positionMoon - JPL_ephemerides$positionEarth,
+                                                Y[1:3] - JPL_ephemerides$positionEarth, E,
+                                                UT1_UTC, TT_UTC, x_pole, y_pole, earthSPHDegree,
+                                                SETcorrections, OTcorrections) - GM_Earth_TT * JPL_ephemerides$positionEarth/(sqrt(sum(JPL_ephemerides$positionEarth^2)))^3
+        }
     } else {
         # Acceleration due to Earth and Moon as point masses
         a <- pointMassAcceleration(Y[1:3], JPL_ephemerides$positionEarth, GM_Earth_DE440)

@@ -24,7 +24,7 @@ provides the Chebyshev coefficients, and can be installed by running
 \code{install.packages("asteRiskData", repos="https://rafael-ayala.github.io/drat/")}
 }
 \usage{
-JPLephemerides(MJD, timeSystem="UTC", centralBody="SSB", includeVelocities=TRUE)
+JPLephemerides(MJD, timeSystem="UTC", centralBody="SSB", derivatives="acceleration")
 }
 \arguments{
   \item{MJD}{Modified Julian Date of the time for which celestial object ephemerides
@@ -41,17 +41,21 @@ JPLephemerides(MJD, timeSystem="UTC", centralBody="SSB", includeVelocities=TRUE)
   Must be one of "SSB" (Solar System Barycenter), "Mercury", "Venus", "Earth",
   "Moon", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune" or "Pluto".
   }
-  \item{includeVelocities}{Logical indicating if velocities of the celestial
-  objects should be calculated in addition to their positions. By default,
-  they are calculated. Additionally, if set to TRUE, the first order derivatives
-  of the libration angles of the Moon are also calculated.
+  \item{derivatives}{String indicating what derivatives of positions should be
+  calculated. Must be one of "none", "velocity" or "acceleration". If "none",
+  only position is calculated. If "velocity", velocities are calculated, as well
+  as first order derivatives of Moon libration angles. If "acceleration", 
+  both velocities and accelerations (as well as second order derivatives of Moon 
+  libration angles) are calculated.
   }
 }
 \value{
 A list of vectors providing the positions (in meters), velocities (in m/s; only
-if requested), Moon libration angles (in radians) and first derivatives of Moon
-libration angles (in radians/s; only if velocities were requested) of celestial
-objects with respect to the specified central body. For position and velocity
+if requested), accelerations (in m/s^2; only if requested), Moon libration angles 
+(in radians), first derivatives of Moon libration angles (in radians/s; only if 
+velocities were requested) and second derivatives of Moon libration angles (in
+radians/s^2; only if accelerations were requested) of celestial objects with 
+respect to the specified central body. For position, velocity and acceleration 
 vectors, X, Y and Z components are given in this order. For Moon libration angles
 and their derivatives, they are given in the following order: phi, theta and psi.
 }
