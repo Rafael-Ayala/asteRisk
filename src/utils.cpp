@@ -92,8 +92,7 @@ NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
 NumericVector clenshawAllDerivatives(double t, int N, double Ta, double Tb, NumericVector Coeffs, int derivativesOrder) {
     const double tau = (2*t-Ta-Tb)/(Tb-Ta);
     // tau is the same as s in SPICE algorithm
-    double helperValues[derivativesOrder + 1][3];
-    memset(helperValues, 0, sizeof helperValues);
+    std::vector<std::vector<double> > helperValues(derivativesOrder + 1, std::vector<double>(3));
     helperValues[0][0] = helperValues[0][1] = helperValues[0][2] = 0;
     double scale;
     for(double i = N; i > 1; i--) {
