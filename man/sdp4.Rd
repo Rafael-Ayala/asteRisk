@@ -74,8 +74,8 @@ indicates the algorithm used to propagate the orbit (sdp4).
 }
 \references{
 https://juliapackages.com/p/satellitetoolbox
-https://celestrak.com/NORAD/documentation/spacetrk.pdf
-http://www.celestrak.com/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
+https://celestrak.org/NORAD/documentation/spacetrk.pdf
+http://www.celestrak.org/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
 }
 \examples{
 # The following orbital parameters correspond to an object with NORAD catalogue

@@ -94,8 +94,8 @@ the following elements):
   }
 }
 \references{
-https://celestrak.com/columns/v04n03/#FAQ01
-http://www.celestrak.com/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
+https://celestrak.org/columns/v04n03/#FAQ01
+http://www.celestrak.org/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
 }
 \examples{
 # The file testTLE.txt provided with the package includes 29 TLE covering a

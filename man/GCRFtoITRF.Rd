@@ -55,7 +55,7 @@ elements contains three values, corresponding to the X, Y and Z components of
 position and velocity in this order.
 }
 \references{
-https://celestrak.com/columns/v02n01/
+https://celestrak.org/columns/v02n01/
 }
 \examples{
 if(requireNamespace("asteRiskData", quietly = TRUE)) {

@@ -9,7 +9,7 @@ represents a line of the TLE. The supplied character vector can have either 2
 (for Two Line Elements) or 3 (for Three Line Elements) elements. The two lines
 of a Two Line Element contain all the information. The additional line in a
 Three Line Element is optional, and contains just the satellite name. For a
-detailed description of the TLE format, see https://celestrak.com/columns/v04n03/#FAQ01.
+detailed description of the TLE format, see https://celestrak.org/columns/v04n03/#FAQ01.
 }
 \usage{
 parseTLElines(lines)
@@ -89,7 +89,7 @@ satellite:
   }
 }
 \references{
-https://celestrak.com/columns/v04n03/#FAQ01
+https://celestrak.org/columns/v04n03/#FAQ01
 }
 \examples{
 # The following lines correspond to a TLE for Italsat 2 the 26th of June, 2006

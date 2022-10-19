@@ -30,8 +30,8 @@ used internally for calculations requiring \code{asteRiskData} package, such as
 those performed by \link{hpop}.
 }
 \references{
-http://www.celestrak.com/SpaceData/EOP-All.txt
-https://celestrak.com/SpaceData/SW-All.txt
+http://www.celestrak.org/SpaceData/EOP-All.txt
+https://celestrak.org/SpaceData/SW-All.txt
 https://sol.spacenvironment.net/jb2008/indices.html
 }
 \examples{

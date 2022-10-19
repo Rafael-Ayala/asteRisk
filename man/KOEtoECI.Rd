@@ -64,7 +64,7 @@ order.
 }
 \references{
 https://www.gsc-europa.eu/system-service-status/orbital-and-technical-parameters
-https://celestrak.com/columns/v02n01/
+https://celestrak.org/columns/v02n01/
 https://downloads.rene-schwarz.com/download/M001-Keplerian_Orbit_Elements_to_Cartesian_State_Vectors.pdf
 }
 \examples{

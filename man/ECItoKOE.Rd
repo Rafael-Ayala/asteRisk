@@ -80,7 +80,7 @@ A list with the following standard and alternative orbital elements:
 }
 \references{
 https://www.gsc-europa.eu/system-service-status/orbital-and-technical-parameters
-https://celestrak.com/columns/v02n01/
+https://celestrak.org/columns/v02n01/
 https://www.faa.gov/about/office_org/headquarters_offices/avs/offices/aam/cami/library/online_libraries/aerospace_medicine/tutorial/media/iii.4.1.4_describing_orbits.pdf
 }
 \examples{

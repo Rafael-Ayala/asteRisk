@@ -67,8 +67,8 @@ X, Y and Z components of position and velocity in this order. The third element
 indicates the algorithm used to propagate the orbit (sgp4 or sdp4).
 }
 \references{
-https://celestrak.com/NORAD/documentation/spacetrk.pdf
-http://www.celestrak.com/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
+https://celestrak.org/NORAD/documentation/spacetrk.pdf
+http://www.celestrak.org/publications/aiaa/2006-6753/AIAA-2006-6753.pdf
 }
 \examples{
 # The following orbital parameters correspond to an object with NORAD catalogue
