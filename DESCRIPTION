@@ -1,7 +1,7 @@
 Package: asteRisk
 Type: Package
 Title: Computation of Satellite Position
-Version: 1.4.1.9999
+Version: 1.4.2
 Authors@R: c(
     person("Rafael", "Ayala", email = "rafael.ayala@oist.jp", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9332-4623")),
     person("Daniel", "Ayala", email = "dayala1@us.es", role = "aut", comment = c(ORCID = "0000-0003-2095-1009")),

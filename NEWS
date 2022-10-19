@@ -1,6 +1,7 @@
-Changes in version 1.4.2 (2022-XX-XX)
+Changes in version 1.4.2 (2022-10-19)
 + Function JPLephemerides() can now also calculate accelerations
 + Now spherical harmonics gravity field of Moon can be applied for Earth-centered trajectories and viceversa
++ Fixed a conflict with the name of getLatestSpaceData from the accessory asteRiskData package
 
 Changes in version 1.4.1 (2022-06-30)
 + Functions deg2rad(), rad2deg() and revDays2radMin() for conversion of units are provided
