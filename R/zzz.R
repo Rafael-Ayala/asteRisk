@@ -19,7 +19,7 @@
 hasData <- function(has_data = .pkgenv$has_data) {                                
     if (!has_data) {
         msg <- strwrap("To use this function, you must have the
-                       `asteriskData` package installed and loaded.")
+                       `asteRiskData` package installed.")
         msg <- paste(msg, collapse="\n")
         stop(msg) 
     }
