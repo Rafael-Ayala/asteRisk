@@ -23,6 +23,7 @@ odeModel <- function(t, state, parameters) {
         d2x <- acceleration[2, 1]
         d2y <- acceleration[2, 2]
         d2z <- acceleration[2, 3]
+        setTxtProgressBar(progressBar, t)
         list(c(dx, dy, dz, d2x, d2y, d2z),
              centralBodiesNum[centralBody])
     })
@@ -79,6 +80,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
     latestCentralBody <- realCentralBody
     timeOfLastCentralBodyChange <- 0
     initial_state <- c(position, velocity)
+    progressBar <- txtProgressBar(min = 0, max = max(times))
     parameters = list(
         MJD_UTC = Mjd_UTC,
         solarArea = radiationArea,
@@ -92,10 +94,12 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
         OTcorrections = oceanTides,
         centralBody = realCentralBody,
         autoCentralBodyChange = autoCentralBodyChange,
+        progressBar = progressBar,
         globalVarsEnv = environment())
     integration_results <- ode(y=initial_state, times=times, func=odeModel,
                                parms=parameters, method="radau", rtol=1e-13,
                                atol=1e-16, hini=0.01, ...)
+    close(progressBar)
     previousStepCentralBodies <- integration_results[, 8]
     oldCentralBody <- previousStepCentralBodies[1]
     if(autoCentralBodyChange & length(unique(previousStepCentralBodies)) > 1) {
@@ -114,6 +118,7 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
             newVelocity <- integration_results[changePoint, 5:7] -
                 JPLephemerides_oldCentralBody[[paste("velocity", names(centralBodiesNum[newCentralBody]), sep="")]]
             newInitial_state <- c(newPosition, newVelocity)
+            progressBar <- txtProgressBar(min = 0, max = max(newTimes))
             newParameters <- list(
                 MJD_UTC = newMjd_UTC,
                 solarArea = radiationArea,
@@ -127,11 +132,13 @@ hpop <- function(position, velocity, dateTime, times, satelliteMass, dragArea,
                 OTcorrections = oceanTides,
                 centralBody = names(which(centralBodiesNum == newCentralBody)),
                 autoCentralBodyChange = autoCentralBodyChange,
+                progressBar = progressBar,
                 globalVarsEnv = environment()
             )
             newIntegration_results <- ode(y=newInitial_state, times=newTimes, func=odeModel,
                                           parms=newParameters, method="radau", rtol=1e-13,
                                           atol=1e-16, hini=0.01, ...)
+            close(progressBar)
             totalChangePoint <- totalChangePoint + changePoint 
             combinedResults[totalChangePoint:nrow(combinedResults), ] <- newIntegration_results
             previousStepCentralBodies <- newIntegration_results[, 8]

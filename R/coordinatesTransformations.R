@@ -502,3 +502,39 @@ GCRFtoJ2000 <- function(coordinates, dateTime) {
     ))
 }
 
+### Other frames: SEZ/ENU/NEZ
+
+rotationITRFtoENU <- function(coordinatesITRF) {
+    latlonalt <- ITRFtoLATLON(coordinatesITRF, degreesOutput = FALSE)
+    lat <- latlonalt[1]
+    lon <- latlonalt[2]
+    DCM <- matrix(c(-sin(lon), cos(lon), 0,
+                    -cos(lon)*sin(lat), -sin(lon)*sin(lat), cos(lat),
+                    cos(lon)*cos(lat), sin(lon)*cos(lat), sin(lat)),
+                  nrow=3, byrow = TRUE)
+    return(DCM)
+}
+
+ITRFtoENU <- function(coordinates) {
+    DCM <- rotationITRFtoENU(coordinates)
+    return(drop(
+        DCM %*% coordinates
+    ))
+}
+
+calculateRazel <- function(geocentricObserver, geocentricSatellite, degreesOutput=TRUE) {
+    rangeVector <- geocentricSatellite - geocentricObserver
+    elevation <- acos(sum(geocentricObserver * rangeVector)/sqrt(sum(geocentricObserver^2)*sum(rangeVector^2)))
+    elevation <- pi/2 - elevation
+    azimuthCos <- (-geocentricObserver[3]*(sum(geocentricObserver[1:2]*rangeVector[1:2])) + sum(geocentricObserver[1:2]^2)*rangeVector[3])/
+        sqrt(sum(geocentricObserver[1:2]^2)*sum(geocentricObserver^2)*sum(rangeVector^2))
+    azimuthSin <- (-geocentricObserver[2]*rangeVector[1] + geocentricObserver[1]*rangeVector[2])/
+        sqrt(sum(geocentricObserver[1:2]^2)*sum(rangeVector^2))
+    azimuth <- atan2(azimuthSin, azimuthCos)
+    range <- sqrt(sum(rangeVector^2))
+    RAZEL <- if(degreesOutput)  c(rad2deg(azimuth), rad2deg(elevation), range) else c(azimuth, elevation, range)
+    names(RAZEL) <- c("azimuth", "elevation", "range")
+    return(RAZEL)
+}
+
+

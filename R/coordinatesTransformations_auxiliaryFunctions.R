@@ -269,3 +269,15 @@ quaternionToDCM <- function(quaternion) {
                     2*(q1*q3 + q0 * q2), 2*(q2*q3 - q0*q1), q0^2 - q1^2 - q2^2 + q3^2),
                   nrow=3, byrow = TRUE))
 }
+
+latitudeToGeocentric <- function(geodeticLatitude, degreesInput=TRUE,
+                                 degreesOutput=TRUE, flatteningFactor=earthFlatteningFactor_WGS84) {
+    if(degreesInput) {
+        geodeticLatitude <- deg2rad(geodeticLatitude)
+    }
+    geocentricLatitude <- atan((1 - flatteningFactor)^2*tan(geodeticLatitude))
+    if(degreesOutput) {
+        geocentricLatitude <- rad2deg(geocentricLatitude)
+    }
+    return(geocentricLatitude)
+}

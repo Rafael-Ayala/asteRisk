@@ -1,3 +1,7 @@
+Changes in version 1.4.3 (2023-13-01)
++ Function hpop() now displays a progress bar
++ New function calculateRazel() can be used to calculate azimuth, elevation and range of a satellite from an obnservation point
+
 Changes in version 1.4.2 (2022-10-19)
 + Function JPLephemerides() can now also calculate accelerations
 + Now spherical harmonics gravity field of Moon can be applied for Earth-centered trajectories and viceversa
