@@ -31,6 +31,7 @@ LinkingTo: Rcpp, RcppParallel
 SystemRequirements: C++11, GNU make
 Imports: deSolve, nanotime, stats, onion, Rcpp, RcppParallel, utils
 Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown, markdown
+BugReports: https://github.com/Rafael-Ayala/asteRisk/issues
 Additional_repositories: https://rafael-ayala.github.io/drat/
 VignetteBuilder: knitr
 Encoding: UTF-8
