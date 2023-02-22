@@ -44,6 +44,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// testProj
+int testProj(int argc, std::string argv);
+RcppExport SEXP _asteRisk_testProj(SEXP argcSEXP, SEXP argvSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type argc(argcSEXP);
+    Rcpp::traits::input_parameter< std::string >::type argv(argvSEXP);
+    rcpp_result_gen = Rcpp::wrap(testProj(argc, argv));
+    return rcpp_result_gen;
+END_RCPP
+}
 // legendre
 List legendre(int n, int m, double angle);
 RcppExport SEXP _asteRisk_legendre(SEXP nSEXP, SEXP mSEXP, SEXP angleSEXP) {
@@ -109,6 +121,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_asteRisk_serialOceanTidesCorrections", (DL_FUNC) &_asteRisk_serialOceanTidesCorrections, 7},
     {"_asteRisk_parallelOceanTidesCorrections", (DL_FUNC) &_asteRisk_parallelOceanTidesCorrections, 7},
+    {"_asteRisk_testProj", (DL_FUNC) &_asteRisk_testProj, 2},
     {"_asteRisk_legendre", (DL_FUNC) &_asteRisk_legendre, 3},
     {"_asteRisk_gravityGradientSphericalCoords", (DL_FUNC) &_asteRisk_gravityGradientSphericalCoords, 11},
     {"_asteRisk_clenshawAllDerivatives", (DL_FUNC) &_asteRisk_clenshawAllDerivatives, 6},

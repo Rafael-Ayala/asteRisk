@@ -129,5 +129,5 @@ SOIMoon <- 0.0661e9 # in relation to the Earth
 # because the solver does not seem to allow to return values other than numbers
 
 centralBodiesNum <- 1:11
-names(centralBodiesNum) <- c("SSB", "Mercury", "Venus", "Earth", "Moon",
+names(centralBodiesNum) <- c("SunSSBarycentric", "Mercury", "Venus", "Earth", "Moon",
                              "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto")

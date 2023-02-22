@@ -51,6 +51,158 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     D2 <- 4*a0dprime * xi * C1^2
     D3 <- (4/3) * a0dprime * xi^2 *(17*a0dprime + s)*C1^3
     D4 <- (2/3) * a0dprime * xi^3 * (221*a0dprime + 31*s)*C1^4
+    # Up to here initialization step
+    
+    MDF <- M0 + ( 1 + ( (3*k2*(-1+3*theta^2) ) / (2*a0dprime^2*beta0^3) ) + ( (3*k2^2*(13-78*theta^2+137*theta^4)) / (16*a0dprime^4*beta0^7) ) ) * n0dprime*(t - t0)
+    omegaDF <- omega0 + ( ( -(3*k2*(1-5*theta^2)) / (2*a0dprime^2*beta0^4) ) + ( (3*k2^2*(7-114*theta^2+395*theta^4)) / (16*a0dprime^4*beta0^8) ) + ( (5*k4*(3-36*theta^2+49*theta^4)) / (4*a0dprime^4*beta0^8) ) )*n0dprime*(t - t0)
+    OMEGADF <- OMEGA0 + ( ( (-3*k2*theta) / (a0dprime^2*beta0^4) ) + ( (3*k2^2*(4*theta-19*theta^3)) / (2*a0dprime^4*beta0^8) ) + ( (5*k4*theta*(3-7*theta^2)) / (2*a0dprime^4*beta0^8) ) ) * n0dprime * (t - t0)
+    deltaomega <-Bstar*C3*(cos(omega0))*(t - t0)
+    # Introduction of deltaM = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
+    if(e0 > 1e-4) {
+        deltaM <- (-2/3) * qzms24*Bstar*xi^4*(ae/(e0*eta)) * ( (1 + eta*cos(MDF))^3 - (1 + eta*cos(M0))^3 )
+    } else {
+        deltaM <- 0
+    }
+    # Mp <- MDF + deltaomega + deltaM # Changed to match Vallado's implementation 
+    Mp <- MDF + high_perigee_flag*deltaomega + high_perigee_flag*deltaM 
+    omega <- omegaDF - deltaomega - deltaM
+    OMEGA <- OMEGADF - (21/2)*( (n0dprime*k2*theta) / (a0dprime^2 * beta0^2) )*C1*(t - t0)^2
+    e <- e0 - Bstar*C4*(t-t0) - Bstar*C5*(sin(Mp) - sin(M0))
+    a <- a0dprime*((1 - C1*(t - t0) - high_perigee_flag*D2*(t - t0)^2 - high_perigee_flag*D3*(t - t0)^3 - high_perigee_flag*D4 * (t - t0)^4)^2)
+    IL <- Mp + omega + OMEGA + n0dprime * (1.5*C1*(t - t0)^2 + high_perigee_flag*(D2 + 2*C1^2)*(t-t0)^3 + high_perigee_flag*0.25*(3*D3+12*C1*D2+10*C1^3)*(t-t0)^4 + high_perigee_flag*0.2*(3*D4 + 12*C1*D3 + 6*D2^2 + 30*C1^2*D2 + 15*C1^4)*(t-t0)^5)
+    beta <- sqrt(1-e^2)
+    n <- ke/(a^(1.5))
+    axN <- e*cos(omega)
+    ILL <- ( (A30*sin(i0)) / (8*k2*a*beta^2) ) * e * cos(omega) * ( (3 + 5* theta) / (1 + theta) )
+    ayNL <- (A30*sin(i0))/(4*k2*a*beta^2)
+    ILT <- IL + ILL
+    # ILT <- rem(IL + ILL, 2*pi)
+    ayN <- e * sin(omega) + ayNL
+    U <- rem(ILT - OMEGA, 2*pi)
+    kepler_sol_1 <- U
+    kepler_sol_current <- kepler_sol_1
+    convergence <- FALSE
+    iterations <- 0
+    while(!convergence) {
+        iterations <- iterations + 1
+        delta_kepler_sol <- ( (U-ayN*cos(kepler_sol_current) + axN*sin(kepler_sol_current) - kepler_sol_current) / (-ayN*sin(kepler_sol_current) - axN*cos(kepler_sol_current) + 1) )
+        kepler_sol_current <- kepler_sol_current + delta_kepler_sol
+        if(iterations > maxKeplerIterations | abs(delta_kepler_sol) < keplerAccuracy) {
+            convergence <- TRUE
+        }
+    }
+    kepler_sol <- kepler_sol_current
+    ecosE <- axN*cos(kepler_sol) + ayN*sin(kepler_sol)
+    esinE <- axN*sin(kepler_sol) - ayN*cos(kepler_sol)
+    eL <- sqrt((axN^2 + ayN^2))
+    pL <- a*(1 - eL^2)
+    r <- a*(1 - ecosE)
+    # rderivative <- ke*(sqrt(a)/r)*esinE # Changed to match Vallado's implementation
+    rderivative <- (sqrt(a)/r)*esinE
+    # rfderivative <- ke*sqrt(pL)/r # Changed to match Vallado's implementation
+    rfderivative <- sqrt(pL)/r
+    cosu <- (a/r) * (cos(kepler_sol) - axN + ( (ayN*esinE) / (1 + sqrt(1 - eL^2)) ))
+    sinu <- (a/r)*(sin(kepler_sol) - ayN - ( (axN*esinE) / (1+ sqrt(1 - eL^2)) ))
+    u <- atan2(sinu,cosu)
+    Deltar <- (k2/(2*pL)) * (1-theta^2) * cos(2*u)
+    Deltau <- (-k2/(4*pL^2)) * (7*theta^2 - 1) * sin(2*u)
+    DeltaOMEGA <- ( (3*k2*theta) / (2*pL^2) ) * sin(2*u)
+    Deltai <- ( (3*k2*theta) / (2*pL^2) ) * sin(i0) * cos(2*u)
+    # Deltarderivative <- ( (-k2*n) / pL ) * (1-theta^2) *sin(2*u) # Changed to match Vallado's implementation
+    Deltarderivative <- ( (-k2*n) / pL ) * (1-theta^2) *sin(2*u)/ke
+    # Deltarfderivative <- ( (k2*n) / pL ) * ( (1-theta^2) * cos(2*u) - 1.5*(1-3*theta^2) ) # Changed to match Vallado's implementation
+    Deltarfderivative <- ( (k2*n) / pL ) * ( (1-theta^2) * cos(2*u) - 1.5*(1-3*theta^2) )/ke
+    rk <- r * (1 - 1.5*k2*( ( sqrt(1-eL^2) ) / ( pL^2 ) ) * (3*theta^2-1) ) + Deltar
+    uk <- u + Deltau
+    OMEGAk <- OMEGA + DeltaOMEGA
+    ik <- i0 + Deltai
+    rkderivative <- rderivative + Deltarderivative
+    rfkderivative <- rfderivative + Deltarfderivative
+    Mx <- -sin(OMEGAk) * cos(ik)
+    My <- cos(OMEGAk) * cos(ik)
+    Mz <- sin(ik)
+    Mvector <- c(Mx, My, Mz)
+    Nx <- cos(OMEGAk)
+    Ny <- sin(OMEGAk)
+    Nz <- 0
+    Nvector <- c(Nx, Ny, Nz)
+    Uvector <- Mvector*sin(uk) + Nvector*cos(uk)
+    Vvector <- Mvector*cos(uk) - Nvector*sin(uk)
+    rvector <- rk*Uvector
+    # rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector # Changed to match Vallado's implementation
+    rderivativevector <- rkderivative*Uvector + rfkderivative * Vvector
+    position_result <- rvector*earthRadius_SGP4
+    # velocity_result <- rderivativevector*earthRadius_SGP4*1440/86400 # Changed to match Vallado's implementation
+    velocity_result <- rderivativevector*earthRadius_SGP4*ke/60
+    return(list(
+        position=position_result,
+        velocity=velocity_result,
+        algorithm="sgp4"))
+}
+
+
+sgp4_multi <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTimes,
+                 keplerAccuracy=10e-12, maxKeplerIterations=10) {
+    for(targetTime in targetTimes) {
+        checkTimeInput(initialDateTime, targetTime, "sgp4")
+    }
+    if(2*pi/n0 >= 225) {
+        deep_space <- TRUE
+    }
+    a1 <- (ke/n0)^(2/3) # Note: ke is the inverse of tumin in Vallados implementation
+    delta1 <- 1.5 * (k2/(a1^2)) * (((3*(cos(i0))^2) - 1)/((1-e0^2)^(3/2)))
+    a0 <- a1 * (1 - (1/3)*delta1 - delta1^2 - (134/81) * delta1^3)
+    delta0 <- 1.5 * (k2/(a0^2)) * (((3*(cos(i0))^2) - 1)/((1-e0^2)^(3/2))) #TODO replace common term of delta1 and delta0 by variable definition, divide in each case by a1 and a0
+    n0dprime <- n0/(1+delta0) # un_kozai mean motion, called no_unkozai
+    #a0dprime <- a0/(1-delta0)
+    # use no_unkozai semi major axis
+    a0dprime <- (ke/n0dprime)^(2/3) # called ao in Vallado's implementation
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4 # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
+    high_perigee_flag <- TRUE
+    qzms24 <- qzms2t
+    if(perigee >= 98 & perigee <= 156) {
+        s <- a0dprime*(1-e0) - s + ae # equivalent to: (perigee - 78)/6378.135 + 1
+        sfour <- perigee - 78
+        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+    } else if(perigee < 98) {
+        s <- 20/earthRadius_SGP4 + ae # equivalent to 20/6378.135 + 1
+        sfour <- 20
+        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+    }
+    if(perigee < 220) {
+        high_perigee_flag <- FALSE # Vallado's implementation uses isimp, which is a low perigee flag (therefore values are inverted)
+    }
+    theta <- cos(i0)
+    xi <- 1/(a0dprime - s) # called tsi in Vallado's implementation
+    beta0 <- sqrt(1-e0^2)
+    eta <- a0dprime * e0 * xi
+    C2 <-qzms24 * xi^4 * n0dprime * (abs(1 - eta^2))^(-7/2) * (a0dprime * (1 + 1.5*eta^2 + 4*e0*eta + e0*eta^3) + 1.5 * ((k2*xi)/abs(1 - eta^2)) * (-0.5 + 1.5*theta^2) * (8+ 24*eta^2+ 3*eta^4))
+    C1 <- Bstar * C2
+    # Introduction of C3 = 0 if eccentricity lower than 1e-4 to match Vallado's implementation
+    if(e0 > 1e-4) {
+        C3 <- qzms24 * xi^5 * A30 * n0dprime * ae * sin(i0) *2/J2 *(1/e0)
+    } else {
+        C3 <- 0
+    }
+    # C3 <- (q0 - s)^4 * xi^5 * A30 * n0dprime * ae * sin(i0)
+    C4 <- 2 * n0dprime * qzms24 * xi^4 * a0dprime * beta0^2 * abs(1-eta^2)^(-7/2) * ( (2*eta*(1+e0*eta) + 0.5*e0 + 0.5*eta^3) - ((2*k2*xi)/(a0dprime*abs(1-eta^2))) *  (3*(1-3*theta^2) * (1+1.5*eta^2-2*e0*eta-0.5*e0*eta^3) + 0.75*(1-theta^2)*(2*eta^2 - e0*eta - e0*eta^3)*cos(2*omega0)) )
+    C5 <- 2*qzms24*xi^4*a0dprime*beta0^2*abs(1-eta^2)^(-7/2)*(1+(11/4)*eta*(eta+e0)+e0*eta^3)
+    D2 <- 4*a0dprime * xi * C1^2
+    D3 <- (4/3) * a0dprime * xi^2 *(17*a0dprime + s)*C1^3
+    D4 <- (2/3) * a0dprime * xi^3 * (221*a0dprime + 31*s)*C1^4
+    # Up to here initialization step
+    t0 <- 0
+    nTargetTimes <- length(targetTimes)
+    results <- matrix(ncol=7, nrow=nTargetTimes)
+    # From here, target time-dependent steps
+    for(i in 1:nTargetTimes) {
+        targetTime <- targetTimes[i]
+        if(is.character(initialDateTime) & is.character(targetTime)) {
+            t <- as.numeric(difftime(targetTime, initialDateTime, units="secs"))/60
+        } else {
+            t <- targetTime
+        }
+    }
     MDF <- M0 + ( 1 + ( (3*k2*(-1+3*theta^2) ) / (2*a0dprime^2*beta0^3) ) + ( (3*k2^2*(13-78*theta^2+137*theta^4)) / (16*a0dprime^4*beta0^7) ) ) * n0dprime*(t - t0)
     omegaDF <- omega0 + ( ( -(3*k2*(1-5*theta^2)) / (2*a0dprime^2*beta0^4) ) + ( (3*k2^2*(7-114*theta^2+395*theta^4)) / (16*a0dprime^4*beta0^8) ) + ( (5*k4*(3-36*theta^2+49*theta^4)) / (4*a0dprime^4*beta0^8) ) )*n0dprime*(t - t0)
     OMEGADF <- OMEGA0 + ( ( (-3*k2*theta) / (a0dprime^2*beta0^4) ) + ( (3*k2^2*(4*theta-19*theta^3)) / (2*a0dprime^4*beta0^8) ) + ( (5*k4*theta*(3-7*theta^2)) / (2*a0dprime^4*beta0^8) ) ) * n0dprime * (t - t0)

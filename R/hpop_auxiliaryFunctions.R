@@ -729,8 +729,8 @@ geometricShadow <- function(pccor,ccor,pscor,sbcor,bcor,sbpcor) {
     lambda <- 1 # lambda ranges 0 to 1, 1 = no shadow, 0 = full shadow
     eclipse <- "none" # eclipse type
     ubcor <- rep(0, 3)
-    rb <- sqrt(sum(bcor^2))
-    rc <- sqrt(sum(ccor^2))
+    rb <- sqrt(sum(bcor^2)) # distance between satellite and Sun
+    rc <- sqrt(sum(ccor^2)) # distance between Sun and SSB
     if (rb > rc) {
         ubcor <- bcor/rb # direction of satellite relative to sun
         sepp <- c(sbcor[2]*ubcor[3] - sbcor[3]*ubcor[2],
@@ -945,3 +945,13 @@ geometricShadow <- function(pccor,ccor,pscor,sbcor,bcor,sbpcor) {
         eclipseType = eclipse
     ))
 }
+
+calculateLuneArea <- function(a, b, c) {
+    auxiliaryTriangle <- 0.25 * sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
+    luneArea <- 2*auxiliaryTriangle + a^2*acos((b^2-a^2-c^2)/(2*a*c)) - b^2*acos((b^2+c^2-a^2)/(2*b*c))
+    return(luneArea)
+}
+
+
+
+

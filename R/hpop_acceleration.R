@@ -256,12 +256,12 @@ pointMassAcceleration <- function(r, s, GM) {
 
 solarRadiationAcceleration <- function(r, r_earth, r_moon, r_sun, r_sunSSB, 
                                        area, mass, Cr, P0, AU, shm) {
-    pccor <- r_moon
-    ccor <- r_earth - r_sunSSB
-    pscor <- r_moon - r_sun
-    sbcor <- r
-    bcor <- r - r_sun
-    sbpcor <- r - r_moon
+    pccor <- r_moon # position of the moon relative to Earth
+    ccor <- r_earth - r_sunSSB # position of the Solar System Barycenter relative to Sun
+    pscor <- r_moon - r_sun # Position of Moon relative to Sun
+    sbcor <- r # position of Satellite relative to Earth
+    bcor <- r - r_sun # Position of Satellite relative to Sun
+    sbpcor <- r - r_moon # Position of Satellite relative to Moon
     if(shm == "cylindrical") {
         warning("Using cylindrical shadow model for solar radiation pressure")
         nu <- cylindricalShadow(r, r_sun)
@@ -272,10 +272,269 @@ solarRadiationAcceleration <- function(r, r_earth, r_moon, r_sun, r_sunSSB,
     return(a)
 }
 
-solarRadiationAcceleration2 <- function(rSatellite, rEarth, rMoon, rSun, rSunSSB,
-                                        solarPressureConstant) {
-    
+solarRadiationAcceleration2 <- function(rSatellite, JPLEphemerides, centralBody, 
+                                        area, mass, Cr, solarPressureConstant, AU) {
+    # rCentralBody <- JPLEphemerides[[paste("position", centralBody, sep="")]]
+    # in principle should be 0 but doing it this way allows using ephemerides with different central body
+    rSun <- JPLEphemerides[[paste("position", "Sun", sep="")]]
+    # Variables starting with r are position vectors
+    # Variables starting with d are distances (norm of position vectors)
+    # variables starting with alpha are apparent sizes
+    # variables starting with beta are angular separations
+    if(centralBody %in% c("Earth", "Moon")) {
+        rEarth <- JPLEphemerides[[paste("position", "Earth", sep="")]]
+        rEarth_Sun <- rEarth - rSun 
+        rMoon <- JPLEphemerides[[paste("position", "Moon", sep="")]]
+        rMoon_Sun <- rMoon - rSun
+        rSatellite_Sun <- rSatellite - rSun
+        rSatellite_Moon <- rSatellite - rMoon
+        rSatellite_Earth <- rSatellite - rEarth
+        dSatellite_Sun <- sqrt(sum(rSatellite_Sun^2))
+        dEarth_Sun <- sqrt(sum(rEarth_Sun^2))
+        dMoon_Sun <- sqrt(sum(rMoon_Sun^2))
+        dSatellite_Earth <- sqrt(sum(rSatellite_Earth^2))
+        alphaSun <- asin(sunRadius/dSatellite_Sun) # apparent radius of Sun from satellite
+        if(dSatellite_Sun > dEarth_Sun) {
+            # only if distance from Sun to satellite is larger than from Sun
+            # to Earth there is a chance that there is occultation of Sun by Earth
+            alphaEarth <- asin(earthRadius_EGM96/dSatellite_Earth) # apparent radius of Earth from satellite
+            betaEarthSun <- acos((rSatellite_Sun %*% rSatellite_Earth)/(dSatellite_Sun * dSatellite_Earth)) 
+            # angular separation Earth-Sun from satellite
+            if(betaEarthSun < (alphaEarth - alphaSun)) {
+                # Earth completely eclipses Sun, no need to check for Moon eclipse
+                eclipseFactor <- 0
+                eclipseType <- "EarthTotal"
+            } else {
+                dSatellite_Moon <- sqrt(sum(rSatellite_Moon^2))
+                alphaMoon <- asin(moonRadius/dSatellite_Moon)
+                betaMoonSun <- acos((rSatellite_Sun %*% rSatellite_Moon)/(dSatellite_Sun * dSatellite_Moon)) 
+                # angular separation Moon-Sun from satellite
+                if (betaEarthSun > (alphaEarth + alphaSun)) {
+                    # Earth does not eclipse Sun at all, but we need to check for Moon eclipse
+                    if(betaMoonSun < (alphaMoon - alphaSun)) {
+                        # Moon completely eclipses Sun
+                        eclipseFactor <- 0
+                        eclipseType <- "MoonTotal"
+                    } else {
+                        if(betaMoonSun > (alphaMoon + alphaSun)) {
+                            # Moon does not eclipse Sun at all either
+                            eclipseFactor <- 1
+                            eclipseType <- "None"
+                        } else {
+                            # We are therefore in a situation that:
+                            # (alphaMoon - alphaSun) < betaMoonSun < (alphaMoon + alphaSun)
+                            # which means there is partial occultation (penumbra) of Sun by Moon
+                            a <- min(alphaMoon, alphaSun)
+                            b <- max(alphaMoon, alphaSun) # in principle b will be Moon apparent size
+                            c <- betaMoonSun
+                            luneArea <- calculateLuneArea(a, b, c)
+                            if(alphaMoon >= alphaSun) {
+                                # Angular diameter of Moon > of Sun, so the fraction of
+                                # visible Sun is the lune area
+                                eclipseFactor <- luneArea/(pi*alphaSun^2)
+                                eclipseType <- "MoonPartial-1"
+                            } else {
+                                # Angular diameter of Moon < of Sun, so we need
+                                # to subtract lune area from Moon apparent area
+                                # and then subtract that from Sun apparent area
+                                moonOccultingArea <- pi*alphaMoon^2 - luneArea
+                                eclipseFactor <- (pi*alphaSun^2 - moonOccultingArea)/(pi*alphaSun^2)
+                                eclipseType <- "MoonPartial-2"
+                            }
+                        }
+                    }
+                } else {
+                    # This is a situation where:
+                    # (alphaEarth - alphaSun) < betaEarthSun < (alphaEarth + alphaSun)
+                    # Which means there is partial eclipse caused by Earth.
+                    # We now need to check if there is also occultation by Moon
+                    if(betaMoonSun < (alphaMoon - alphaSun)) {
+                        # Moon completely eclipses Sun, therefore partial occultation
+                        # by Earth irrelevant. 
+                        # TODO: refactor control flow for situations
+                        eclipseFactor <- 0
+                        eclipseType <- "MoonTotal"
+                    } else {
+                        if(betaMoonSun > (alphaMoon + alphaSun)) {
+                            # Moon does not eclipse Sun at all, so we just calculate
+                            # partial eclipse by Earth
+                            a <- min(alphaEarth, alphaSun)
+                            b <- max(alphaEarth, alphaSun) # in principle b will be Moon apparent size
+                            c <- betaEarthSun
+                            luneArea <- calculateLuneArea(a, b, c)
+                            if(alphaEarth >= alphaSun) {
+                                # Angular diameter of Earth > of Sun, so the fraction of
+                                # visible Sun is the lune area
+                                eclipseFactor <- luneArea/(pi*alphaSun^2)
+                                eclipseType <- "EarthPartial-1"
+                            } else {
+                                # Angular diameter of Earth < of Sun, so we need
+                                # to subtract lune area from Earth apparent area
+                                # and then subtract that from Sun apparent area
+                                earthOccultingArea <- pi*alphaEarth^2 - luneArea
+                                eclipseFactor <- (pi*alphaSun^2 - earthOccultingArea)/(pi*alphaSun^2)
+                                eclipseType <- "EarthPartial-2"
+                            }
+                        } else {
+                            # This is the most complex situation. There is partial
+                            # occultation caused by both the Earth and Moon
+                            # Simpler case: Earth and Moon disks do not overlap,
+                            # their occultations of Sun are independent. We need to check
+                            # eclipse between Earth and Moon
+                            betaMoonEarth <- acos((rSatellite_Earth %*% rSatellite_Moon)/(dSatellite_Earth * dSatellite_Moon))
+                            # This is the angular separation between Moon and Earth from satellite
+                            if(betaMoonEarth > (alphaMoon + alphaEarth)) {
+                                # Earth and Moon do not overlap at all. So we calculate
+                                # their contributions to Sun occultation independently
+                                a1 <- min(alphaEarth, alphaSun)
+                                b1 <- max(alphaEarth, alphaSun) 
+                                c1 <- betaEarthSun
+                                luneArea_Earth <- calculateLuneArea(a1, b1, c1)
+                                sunDiskArea <- pi*alphaSun^2
+                                if(alphaEarth >= alphaSun) {
+                                    # Angular diameter of Earth > of Sun, so the area of
+                                    # visible Sun is the lune area (considering only Earth eclipse)
+                                    sunVisibleArea <- luneArea_Earth
+                                } else {
+                                    # Angular diameter of Earth < of Sun, so we need
+                                    # to subtract lune area from Earth apparent area
+                                    # and then subtract that from Sun apparent area
+                                    # to get the area of visible Sun considering
+                                    # only Earth eclipse
+                                    earthOccultingArea <- pi*alphaEarth^2 - luneArea_Earth
+                                    sunVisibleArea <- sunDiskArea - earthOccultingArea
+                                }
+                                # And now apply Moon contribution
+                                a2 <- min(alphaMoon, alphaSun)
+                                b2 <- max(alphaMoon, alphaSun) 
+                                c2 <- betaMoonSun
+                                luneArea_Moon <- calculateLuneArea(a2, b2, c2)
+                                if(alphaMoon >= alphaSun) {
+                                    # Angular diameter of Moon > of Sun, so the area of
+                                    # visible Sun is the lune area (considering only Moon eclipse)
+                                    # What we will do is, subtract such lune area from 
+                                    # area of total Sun disk, to obtain the area eclipsed by
+                                    # Moon, and then subtract this from the previously calculated
+                                    # Sun visible area considering Earth eclipse
+                                    sunVisibleArea <- sunVisibleArea - (sunDiskArea - luneArea_Moon)
+                                } else {
+                                    # Angular diameter of Moon < of Sun, so we need
+                                    # to subtract lune area from Moon apparent area
+                                    # and then subtract that from Sun cisible area
+                                    # to get the area of visible Sun considering
+                                    # both Earth and Moon eclipses
+                                    moonOccultingArea <- pi*alphaMoon^2 - luneArea_Earth
+                                    sunVisibleArea <- sunVisibleArea - moonOccultingArea
+                                }
+                                eclipseFactor <- sunVisibleArea/sunDiskArea
+                                eclipseType <- "EarthMoonMixed-1"
+                            } else {
+                                if(betaMoonEarth < (alphaMoon - alphaEarth)) {
+                                    # Moon completely eclipses Earth, so we only 
+                                    # need to calculate occultation by Moon
+                                    a <- min(alphaMoon, alphaSun)
+                                    b <- max(alphaMoon, alphaSun) # in principle b will be Moon apparent size
+                                    c <- betaMoonSun
+                                    luneArea <- calculateLuneArea(a, b, c)
+                                    if(alphaMoon >= alphaSun) {
+                                        # Angular diameter of Moon > of Sun, so the fraction of
+                                        # visible Sun is the lune area
+                                        eclipseFactor <- luneArea/(pi*alphaSun^2)
+                                        eclipseType <- "MoonPartial-1"
+                                    } else {
+                                        # Angular diameter of Moon < of Sun, so we need
+                                        # to subtract lune area from Moon apparent area
+                                        # and then subtract that from Sun apparent area
+                                        moonOccultingArea <- pi*alphaMoon^2 - luneArea
+                                        eclipseFactor <- (pi*alphaSun^2 - moonOccultingArea)/(pi*alphaSun^2)
+                                        eclipseType <- "MoonPartial-2"
+                                    }
+                                } else if(betaMoonEarth < (alphaEarth - alphaMoon)) {
+                                    # Earth completely eclipses Moon, so we only need
+                                    # to calculate occultation by Earth
+                                    a <- min(alphaEarth, alphaSun)
+                                    b <- max(alphaEarth, alphaSun) # in principle b will be Moon apparent size
+                                    c <- betaEarthSun
+                                    luneArea <- calculateLuneArea(a, b, c)
+                                    if(alphaEarth >= alphaSun) {
+                                        # Angular diameter of Earth > of Sun, so the fraction of
+                                        # visible Sun is the lune area
+                                        eclipseFactor <- luneArea/(pi*alphaSun^2)
+                                        eclipseType <- "EarthPartial-1"
+                                    } else {
+                                        # Angular diameter of Earth < of Sun, so we need
+                                        # to subtract lune area from Earth apparent area
+                                        # and then subtract that from Sun apparent area
+                                        earthOccultingArea <- pi*alphaEarth^2 - luneArea
+                                        eclipseFactor <- (pi*alphaSun^2 - earthOccultingArea)/(pi*alphaSun^2)
+                                        eclipseType <- "EarthPartial-2"
+                                    }
+                                } else {
+                                    # This is the worst-case scenario. Both Earth and Moon
+                                    # are partially eclipsing Sun, and they are partially eclipsing
+                                    # each other as well. If we just subtracted their occultation
+                                    # of the Sun independently, we would be double-subtracting
+                                    # some occulted area. Need to work on getting this correctly
+                                    # but temporarily, treat them as independently
+                                    # TODO: fix this
+                                    a1 <- min(alphaEarth, alphaSun)
+                                    b1 <- max(alphaEarth, alphaSun) 
+                                    c1 <- betaEarthSun
+                                    luneArea_Earth <- calculateLuneArea(a1, b1, c1)
+                                    sunDiskArea <- pi*alphaSun^2
+                                    if(alphaEarth >= alphaSun) {
+                                        # Angular diameter of Earth > of Sun, so the area of
+                                        # visible Sun is the lune area (considering only Earth eclipse)
+                                        sunVisibleArea <- luneArea_Earth
+                                    } else {
+                                        # Angular diameter of Earth < of Sun, so we need
+                                        # to subtract lune area from Earth apparent area
+                                        # and then subtract that from Sun apparent area
+                                        # to get the area of visible Sun considering
+                                        # only Earth eclipse
+                                        earthOccultingArea <- pi*alphaEarth^2 - luneArea_Earth
+                                        sunVisibleArea <- sunDiskArea - earthOccultingArea
+                                    }
+                                    # And now apply Moon contribution
+                                    a2 <- min(alphaMoon, alphaSun)
+                                    b2 <- max(alphaMoon, alphaSun) 
+                                    c2 <- betaMoonSun
+                                    luneArea_Moon <- calculateLuneArea(a2, b2, c2)
+                                    if(alphaMoon >= alphaSun) {
+                                        # Angular diameter of Moon > of Sun, so the area of
+                                        # visible Sun is the lune area (considering only Moon eclipse)
+                                        # What we will do is, subtract such lune area from 
+                                        # area of total Sun disk, to obtain the area eclipsed by
+                                        # Moon, and then subtract this from the previously calculated
+                                        # Sun visible area considering Earth eclipse
+                                        sunVisibleArea <- sunVisibleArea - (sunDiskArea - luneArea_Moon)
+                                    } else {
+                                        # Angular diameter of Moon < of Sun, so we need
+                                        # to subtract lune area from Moon apparent area
+                                        # and then subtract that from Sun cisible area
+                                        # to get the area of visible Sun considering
+                                        # both Earth and Moon eclipses
+                                        moonOccultingArea <- pi*alphaMoon^2 - luneArea_Earth
+                                        sunVisibleArea <- sunVisibleArea - moonOccultingArea
+                                    }
+                                    eclipseFactor <- sunVisibleArea/sunDiskArea
+                                    eclipseType <- "EarthMoonMixed-2"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        eclipseFactor <- 1
+        eclipseType <- "None"
+    }
+    eclipseFactor <- as.numeric(eclipseFactor)
+    a <- eclipseFactor*Cr*(area/mass)*solarPressureConstant*(AU*AU)*rSatellite_Sun/(sqrt(sum(rSatellite_Sun^2))^3)
+    return(a)
 }
+
 
 dragAcceleration <- function(dens, r, v, T, area, mass, CD, Omega) {
     omega = c(0, 0, Omega)
@@ -401,8 +660,18 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                                                 JPL_ephemerides$positionMoon - JPL_ephemerides$positionEarth,
                                                 Y[1:3] - JPL_ephemerides$positionEarth, E,
                                                 UT1_UTC, TT_UTC, x_pole, y_pole, earthSPHDegree,
-                                                SETcorrections, OTcorrections) - GM_Earth_TT * JPL_ephemerides$positionEarth/(sqrt(sum(JPL_ephemerides$positionEarth^2)))^3
+                                                #SETcorrections, OTcorrections) - GM_Earth_TT * JPL_ephemerides$positionEarth/(sqrt(sum(JPL_ephemerides$positionEarth^2)))^3
+                                                SETcorrections, OTcorrections) - #JPL_ephemerides$accelerationEarth
+                anelasticEarthAcceleration(MJD_UTC, JPL_ephemerides$positionSun - JPL_ephemerides$positionEarth,
+                                           JPL_ephemerides$positionMoon - JPL_ephemerides$positionEarth,
+                                           0 - JPL_ephemerides$positionEarth, E,
+                                           UT1_UTC, TT_UTC, x_pole, y_pole, earthSPHDegree,
+                                           #SETcorrections, OTcorrections) - GM_Earth_TT * JPL_ephemerides$positionEarth/(sqrt(sum(JPL_ephemerides$positionEarth^2)))^3
+                                           SETcorrections, OTcorrections)
+            
         }
+        a <- a + solarRadiationAcceleration2(Y[1:3], JPL_ephemerides, "Moon", solarArea,
+                                             satelliteMass, Cr, solarPressureConst, AU)
     } else {
         # Acceleration due to Earth and Moon as point masses
         a <- pointMassAcceleration(Y[1:3], JPL_ephemerides$positionEarth, GM_Earth_DE440)

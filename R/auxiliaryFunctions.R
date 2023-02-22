@@ -76,3 +76,5 @@ getLatestSpaceData <- function(targets="all") { # TODO: MOVE TO THIS PACKAGE?
     hasData()
     asteRiskData::getLatestSpaceData_(targets = targets)
 }
+
+

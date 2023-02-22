@@ -1,4 +1,4 @@
-CXX_STD = CXX11
+CXX_STD = CXX14
 CXX_FLAGS = -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 
 PKG_LIBS += $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
