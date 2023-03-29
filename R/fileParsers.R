@@ -309,8 +309,8 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
         tocYear <- 2000 + tocYearShort
     }
     tocDateTimeString <- paste(tocYear, "-", tocMonth, "-", tocDay, " ", 
-                            tocHour, ":", tocMinute, ":", tocSecond, 
-                            sep="")
+                               tocHour, ":", tocMinute, ":", tocSecond, 
+                               sep="")
     tocGPSTseconds <- as.double(difftime(tocDateTimeString, "1980-01-06 00:00:00", tz="UTC", units="secs")) 
     tocGPSWeek <- tocGPSTseconds%/%604800
     tocSecondsOfGPSWeek <- tocGPSTseconds%%604800
@@ -572,10 +572,10 @@ parseOEMDataBlock <- function(lines) {
     }
     commentLinesIndexes <- grep("COMMENT", lines)
     metadataCommentLinesIndexes <- commentLinesIndexes[(commentLinesIndexes >= metadataStartLineIndex) &
-                                                       (commentLinesIndexes <= metadataEndLineIndex)]
+                                                           (commentLinesIndexes <= metadataEndLineIndex)]
     if(hasCovarianceMatrix) {
         ephemeridesCommentLinesIndexes <- commentLinesIndexes[(commentLinesIndexes > metadataEndLineIndex) &
-                                                            (commentLinesIndexes < covarianceMatrixStartLineIndex)]
+                                                                  (commentLinesIndexes < covarianceMatrixStartLineIndex)]
         covarianceMatrixCommentLinesIndexes <- commentLinesIndexes[commentLinesIndexes >= covarianceMatrixStartLineIndex]
     } else {
         ephemeridesCommentLinesIndexes <- commentLinesIndexes[commentLinesIndexes > metadataEndLineIndex]
@@ -891,4 +891,667 @@ parseOMMDataBlock <- function(lines) {
 readPlanetLabsStateVectors <- function(filename) {
     
 }
+
+.readBinDAF <- function(filename) {
+    recordLengthBytes <- 1024
+    fileSize <- file.info(filename)$size
+    rawData <- readBin(filename, "raw", n=fileSize*2)
+    fileRecord <- parseBinDAFFileRecord(rawData[1:recordLengthBytes])
+    if((fileRecord$endianString == "LTL-IEEE" && .Platform$endian == "big") || 
+       (fileRecord$endianString == "BIG-IEEE" && .Platform$endian == "little")) {
+        rawData <- readBin(filename, "raw", n=fileSize*2, endian = "swap")
+        fileRecord <- parseBinDAFFileRecord(rawData[1:recordLengthBytes])
+    }
+    firstSummaryRecord <- fileRecord$firstSummaryRecNum
+    if(firstSummaryRecord > 2) {
+        lastCommentsAddress <- recordLengthBytes*(firstSummaryRecord-1)
+        comments <- parseBinDAFCommentsRecords(rawData[(recordLengthBytes+1):lastCommentsAddress])
+    } else {
+        comments <- NULL
+    }
+    numIntsSummary <- fileRecord$numIntsSummary
+    numDoublesSummary <- fileRecord$numDoublesSummary
+    summaryRecordSizeDoubles <- fileRecord$summaryRecordSizeDoubles
+    numCharsName <- fileRecord$numCharsName
+    currentSummaryRecord <- parseBinDAFSummaryRecord(rawData[(lastCommentsAddress+1):(lastCommentsAddress+1024)],
+                                                     numDoublesSummary, numIntsSummary, summaryRecordSizeDoubles)
+    currentNameRecord <- parseBinDAFNameRecord(rawData[(lastCommentsAddress+1025):(lastCommentsAddress+2048)],
+                                               currentSummaryRecord$numberOfSummaries, numCharsName)
+    initialArrayAddressesDoubles <- sapply(currentSummaryRecord$summaries, `[[`, "initialArrayAddress")
+    finalArrayAddressesDoubles <- sapply(currentSummaryRecord$summaries, `[[`, "finalArrayAddress")
+    arraysBytesIndexes <- Map(`:`, 8*(initialArrayAddressesDoubles - 1) + 1, 8*finalArrayAddressesDoubles) 
+    currentArrays <- lapply(arraysBytesIndexes, function(i) readBin(rawData[i], what="double", n=length(i)/8))
+    allSummaries <- currentSummaryRecord$summaries
+    allNames <- currentNameRecord
+    allArrays <- currentArrays
+    while(currentSummaryRecord$nextSummaryRecord != 0) {
+        newSummaryRecordInitialAddress <- recordLengthBytes*(currentSummaryRecord$nextSummaryRecord-1) + 1
+        currentSummaryRecord <- parseBinDAFSummaryRecord(rawData[newSummaryRecordInitialAddress:(newSummaryRecordInitialAddress+1023)],
+                                                         numDoublesSummary, numIntsSummary, summaryRecordSizeDoubles)
+        currentNameRecord <- parseBinDAFNameRecord(rawData[(newSummaryRecordInitialAddress+1024):(newSummaryRecordInitialAddress+2047)],
+                                                   currentSummaryRecord$numberOfSummaries, numCharsName)
+        initialArrayAddressesDoubles <- sapply(currentSummaryRecord$summaries, `[[`, "initialArrayAddress")
+        finalArrayAddressesDoubles <- sapply(currentSummaryRecord$summaries, `[[`, "finalArrayAddress")
+        arraysBytesIndexes <- Map(`:`, 8*(initialArrayAddressesDoubles - 1) + 1, 8*finalArrayAddressesDoubles) 
+        currentArrays <- lapply(arraysBytesIndexes, function(i) readBin(rawData[i], what="double", n=length(i)/8))
+        allSummaries <- c(allSummaries, currentSummaryRecord$summaries)
+        allNames <- c(allNames, currentNameRecord)
+        allArrays <- c(allArrays, currentArrays)
+    }
+    return(list(
+        fileRecord=fileRecord,
+        comments=comments,
+        summaries=allSummaries,
+        names=allNames,
+        arrays=allArrays
+    ))
+}
+
+readBinDAF <- function(filename) {
+    DAF <- .readBinDAF(filename)
+    allNames <- DAF$names
+    allSummaries <- DAF$summaries
+    allArrays <- DAF$arrays
+    arraysList <- vector(mode="list", length=length(allArrays))
+    for(i in 1:length(arraysList)) {
+        arraysList[[i]] <- list(
+            arrayName=allNames[i],
+            arraySummary=allSummaries[[i]],
+            arrayElements=allArrays[[i]]
+        )
+    }
+    return(list(
+        metadata=DAF$fileRecord,
+        comments=DAF$comments,
+        arrays=arraysList
+    ))
+}
+
+parseBinDAFFileRecord <- function(rawData) {
+    fileType <- trimws(rawToChar(rawData[1:8]), "right")
+    numDoublesSummary <- rawToInt(rawData[9:12])
+    numIntsSummary <- rawToInt(rawData[13:16])
+    # This size is in doubles, i.e., multiply by 8 to get bytes
+    summaryRecordSizeDoubles <- numDoublesSummary + (numIntsSummary+1)%/%2 
+    numCharsName <- 8*summaryRecordSizeDoubles
+    description <- trimws(rawToChar(rawData[17:76]), "right")
+    firstSummaryRecNum <- rawToInt(rawData[77:80])
+    lastSummaryRecNum <- rawToInt(rawData[81:84])
+    firstFreeAddress <- rawToInt(rawData[85:88])
+    endianString <- rawToChar(rawData[89:96])
+    ftpStrBytes <- rawData[700:728]
+    ftpString <- rawToChar(ftpStrBytes[ftpStrBytes!="00"])
+    if(ftpString != "FTPSTR:\r:\n:\r\n:\r:\x81:\020\xce:ENDFTP") {
+        warning("Corrupt FTP string. Please verify integrity of the file.")
+        #TODO add ways to check FTP string better? Only match initial FTPSTR: ?
+    }
+    return(list(
+        fileType=fileType,
+        numDoublesSummary=numDoublesSummary,
+        numIntsSummary=numIntsSummary,
+        summaryRecordSizeDoubles=summaryRecordSizeDoubles,
+        numCharsName=numCharsName,
+        description=description,
+        firstSummaryRecNum=firstSummaryRecNum,
+        lastSummaryRecNum=lastSummaryRecNum,
+        firstFreeAddress=firstFreeAddress,
+        endianString=endianString,
+        ftpString=ftpString
+    ))
+}
+
+parseBinDAFCommentsRecords <- function(rawData) {
+    commentsBytes <- rawData[1:(which(rawData=="04")-1)]
+    commentsBytes[commentsBytes=="00"] <- charToRaw("\n")
+    commentsLines <- strsplit(rawToChar(commentsBytes), "\n")[[1]]
+}
+
+parseBinDAFSummaryRecord <- function(rawData, numberDoubles, numberInts, summarySizeDoubles) {
+    if(numberInts < 2) {
+        stop("At least 2 integers should be present in each summary")
+    }
+    nextSummaryRecord <- rawToDouble(rawData[1:8])
+    previoustSummaryRecord <- rawToDouble(rawData[9:16])
+    numberOfSummaries <- rawToDouble(rawData[17:24])
+    splitBytes <- split(rawData[-(1:24)], ceiling(seq_along(rawData[-(1:24)])/(summarySizeDoubles*8)))
+    summaries <- lapply(splitBytes[1:numberOfSummaries], parseBinDAFSummary, 
+                        numberDoubles=numberDoubles, numberInts=numberInts)
+    return(list(
+        nextSummaryRecord = nextSummaryRecord,
+        previoustSummaryRecord = previoustSummaryRecord,
+        numberOfSummaries = numberOfSummaries,
+        summaries = summaries
+    ))
+}
+
+parseBinDAFSummary <- function(rawData, numberDoubles, numberInts) {
+    doubles <- readBin(rawData[1:(numberDoubles*8)], what="double", n=numberDoubles, size=8)
+    integers <- readBin(rawData[(numberDoubles*8+1):(numberDoubles*8 + 1 + numberInts*4)], what="integer", n=numberInts, size=4)
+    summary <- c(as.list(doubles), as.list(integers))
+    names(summary) <- c(
+        paste(rep("Double", times=numberDoubles), seq(1, by=1, length.out=numberDoubles), sep=""),
+        #paste(rep("Integer", times=min(0, numberInts-2)), seq(1, by=1, length.out=min(0, numberInts-2)), sep=""),
+        paste(rep("Integer", times=numberInts-2), seq(1, by=1, length.out=numberInts-2), sep=""),
+        "initialArrayAddress", "finalArrayAddress"
+    )
+    return(summary)
+}
+
+parseBinDAFNameRecord <- function(rawData, numberSummaries, numberChars) {
+    splitBytes <- split(rawData, ceiling(seq_along(rawData)/(numberChars)))
+    arrayNames <- trimws(lapply(splitBytes[1:numberSummaries], rawToChar))
+    return(arrayNames)
+}
+
+readBinSPK <- function(filename) {
+    DAF <- .readBinDAF(filename)
+    formattedArraySummaries <- lapply(DAF$summaries, formatSPKSummary)
+    formattedArrays <- mapply(formatSPKArray, DAF$arrays, formattedArraySummaries, 
+                              SIMPLIFY = FALSE, USE.NAMES = FALSE)
+    segments <- mapply(list, DAF$names, formattedArraySummaries, formattedArrays, 
+                       SIMPLIFY = FALSE, USE.NAMES = FALSE)
+    for(i in 1:length(segments)){
+        names(segments[[i]]) <- c("segmentName", "segmentSummary", "segmentData")
+    }
+    return(list(
+        comments=DAF$comments,
+        segments=segments
+    ))
+}
+
+formatSPKSummary <- function(SPKArraySummary) {
+    SPKType <- switch(SPKArraySummary[[6]],
+                      "Modified Difference Arrays", # 1 - Supported
+                      "Chebyshev position (equal time steps)", # 2 - Supported
+                      "Chebyshev position and velocity (equal time steps)", # 3 - Supported
+                      "Hubble special form", # 4 - NOT Supported
+                      "Discrete states (two body propagation)", # 5 - Supported
+                      "Phobos/Deimos special form", # 6 - NOT Supported
+                      "Precessing classical elements", # 7 - NOT Supported
+                      "Lagrange interpolation (equal time steps)", # 8 - Supported
+                      "Lagrange interpolation (unequal time steps)", # 9 - Supported
+                      "Two-Line Elements", # 10 - Supported
+                      "Unknown", # 11 - NOT Supported (not defined yet)
+                      "Hermite interpolation (equal time steps)", # 12 - Supported
+                      "Hermite interpolation (unequal time steps)", # 13 - Supported
+                      "Chebyshev position and velocity (unequal time steps)", # 14 - Supported
+                      "Precessing conic elements", # 15 - Supported
+                      "ESA Infrared Space Observatory special form", # 16 - NOT Supported
+                      "Equinoctial elements", # 17 - Supported
+                      "ESOC/DDID interpolation", # 18 - Supported
+                      "ESOC/DDID piecewise interpolation", # 19 - Supported
+                      "Chebyshev velocity (equal time steps)", # 20 - Supported
+                      "Extended Modified Difference Arrays" # 21 - Supported
+    )
+    formattedSPKArraySummary <- c(SPKType, SPKArraySummary)
+    names(formattedSPKArraySummary) <- c("SPKType", "initialEpoch", "finalEpoch", 
+                                         "targetNAIFCode", "centerNAIFCode", 
+                                         "frameNAIFCode", "SPKTypeCode",
+                                         "initialArrayAddress", "finalArrayAddress")
+    return(formattedSPKArraySummary)
+}
+
+formatSPKArray <- function(SPKArray, SPKArraySummary) {
+    SPKTypeCode <- SPKArraySummary$SPKTypeCode
+    if(SPKTypeCode %in% c(4, 6, 7, 11, 16)) {
+        stop("Unsupported SPK type")
+    } else if(SPKTypeCode == 1) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        formattedArray <- vector(mode="list", length=numberRecords)
+        for(i in 1:numberRecords) {
+            startingIndex <- 71*(numberRecords - 1) + 1
+            formattedArray[[i]] <- list(
+                finalEpoch = SPKArray[startingIndex],
+                stepsizeFunctionVector = SPKArray[(startingIndex+1):(startingIndex+15)],
+                referencePosition = SPKArray[startingIndex+c(16, 18, 20)],
+                referenceVelocity = SPKArray[startingIndex+c(17, 19, 21)],
+                MDA = matrix(SPKArray[(startingIndex+22):(startingIndex+66)], ncol=3),
+                maxIntegrationOrderP1 = SPKArray[startingIndex+67],
+                integrationOrderArray = SPKArray[(startingIndex+68):(startingIndex+70)]
+            )
+        }
+    } else if(SPKTypeCode == 2) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        elementsPerRecord <- SPKArray[length(SPKArray)-1]
+        intervalLength <- SPKArray[length(SPKArray)-2]
+        firstInitialEpoch <- SPKArray[length(SPKArray)-3]
+        numberCoefficients <- (elementsPerRecord - 2)/3
+        records <- SPKArray[1:(length(SPKArray)-4)]
+        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberRecords)
+        midPointIndexes <- 1 + recordStartIndexes
+        intervalRadiiIndexes <- 2 + recordStartIndexes
+        midPoint <- records[midPointIndexes]
+        intervalRadius <- records[intervalRadiiIndexes]
+        allCoefficients <- records[-c(midPointIndexes, intervalRadiiIndexes)]
+        chebyshevCoefficients <- matrix(allCoefficients, ncol=3*numberCoefficients, nrow=numberRecords,
+                                        byrow = TRUE)
+        colnames(chebyshevCoefficients) <- paste(rep(c("positionXCoeff", "positionYCoeff", "positionZCoeff"), 
+                                                     each=numberCoefficients), 1:numberCoefficients, sep="")
+        initialEpoch <- seq(from=firstInitialEpoch, by=intervalLength, length.out=numberRecords)
+        # formattedArray <- cbind(initialEpochs, midPoints, intervalRadii, chebyshevCoefficients)
+        formattedArray <- list(
+            polynomialDegree=numberCoefficients - 1,
+            chebyshevCoefficients=cbind(initialEpoch, midPoint, intervalRadius, chebyshevCoefficients)
+        )
+    } else if(SPKTypeCode == 3) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        elementsPerRecord <- SPKArray[length(SPKArray)-1]
+        intervalLength <- SPKArray[length(SPKArray)-2]
+        firstInitialEpoch <- SPKArray[length(SPKArray)-3]
+        numberCoefficients <- (elementsPerRecord - 2)/6
+        records <- SPKArray[1:(length(SPKArray)-4)]
+        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberRecords)
+        midPointIndexes <- 1 + recordStartIndexes
+        intervalRadiiIndexes <- 2 + recordStartIndexes
+        midPoint <- records[midPointIndexes]
+        intervalRadius <- records[intervalRadiiIndexes]
+        allCoefficients <- records[-c(midPointIndexes, intervalRadiiIndexes)]
+        chebyshevCoefficients <- matrix(allCoefficients, ncol=6*numberCoefficients, nrow=numberRecords,
+                                        byrow = TRUE)
+        colnames(chebyshevCoefficients) <- paste(rep(c("positionXCoeff", "positionYCoeff", "positionZCoeff",
+                                                       "velocityXCoeff", "velocityYCoeff", "velocityZCoeff"), 
+                                                     each=numberCoefficients), 1:numberCoefficients, sep="")
+        initialEpoch <- seq(from=firstInitialEpoch, by=intervalLength, length.out=numberRecords)
+        # formattedArray <- cbind(initialEpoch, midPoint, intervalRadius, chebyshevCoefficients)
+        formattedArray <- list(
+            polynomialDegree=numberCoefficients - 1,
+            chebyshevCoefficients=cbind(initialEpoch, midPoint, intervalRadius, chebyshevCoefficients)
+        )
+    } else if(SPKTypeCode == 5) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        centralBodyGM <- SPKArray[length(SPKArray)-1]
+        stateVectors <- SPKArray[1:(numberRecords*6)]
+        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7 + 1)]
+        stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
+        colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
+                                          "velocityX", "velocityY", "velocityZ")
+        formattedArray <- list(
+            centralBodyGM=centralBodyGM,
+            stateVectors=cbind(epoch, stateVectorsMatrix)
+        )
+    } else if(SPKTypeCode == 8) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        polynomialDegree <- SPKArray[length(SPKArray)-1]
+        stepSize <- SPKArray[length(SPKArray)-2]
+        epoch1 <- SPKArray[length(SPKArray)-3]
+        stateVectors <- SPKArray[1:(numberRecords*6)]
+        epoch <- seq(from=epoch1, by=stepSize, length.out=numberRecords)
+        stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
+        colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
+                                          "velocityX", "velocityY", "velocityZ")
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            stateVectors=cbind(epoch, stateVectorsMatrix)
+        )
+    } else if(SPKTypeCode == 9) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        polynomialDegree <- SPKArray[length(SPKArray)-1]
+        stateVectors <- SPKArray[1:(numberRecords*6)]
+        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7 + 1)]
+        stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
+        colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
+                                          "velocityX", "velocityY", "velocityZ")
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            stateVectors=cbind(epoch, stateVectorsMatrix)
+        )
+    } else if(SPKTypeCode == 10) {
+        numberMetaDataItems <- SPKArray[length(SPKArray)]
+        if(numberMetaDataItems < 15) {
+            stop("SPK kernel with missing metadata values")
+        }
+        if(numberMetaDataItems == 15) {
+            numberMetaDataItems <- 16
+            # This is done because according to sgmeta.c comments, some old SPK 
+            # kernels did not count the number of metadata items as one of the
+            # items themselves
+            # From reading SPKR01, it seems files with NMETA=15 actually have 16 
+            # items counting NMETA itself, so these actually have 16 metadata items
+            # I guess in these cases the missing metadata item is PKTOFF (latest added
+            # in sgparam.inc).
+        }
+        metaData <- SPKArray[(length(SPKArray) - numberMetaDataItems + 1):length(SPKArray)]
+        # The following should be 8 for type 10 SPKs
+        numberConstants <- metaData[2]
+        # I guess this should always evaluate to 1 since generic segments start
+        # with constants always, unless no constants are present. But they should
+        # always be for type 10 SPKs
+        firstConstantsDouble <- metaData[1] + 1 
+        numberDataPackets <- metaData[12]
+        firstDataPacketsDouble <- metaData[11]
+        dataPacketSize <- metaData[15]
+        # From my tests, the type 10 SPK written out by SPICE contain the epoch
+        # of each TLE before the 14 elements that each one has as described in 
+        # the required reading, so for now add 1 
+        #TODO VERIFY THIS
+        dataPacketSize <- dataPacketSize + 1
+        # These are generically called reference values in SGMETA, but in type 10
+        # SPK documentation these data blocks seem to be the epochs
+        numberRefValues <- metaData[7]
+        firstRefValuesDouble <- metaData[6]
+        constants <- as.list(SPKArray[firstConstantsDouble:(firstConstantsDouble + numberConstants - 1)])
+        names(constants) <- c("J2", "J3", "J4", "sqrtGM", "highAltBound", "lowAltBound", "earthRadius", "distUnitsPerRadius")
+        stateVectors <- SPKArray[(firstDataPacketsDouble + 1):(firstDataPacketsDouble + numberDataPackets * dataPacketSize)]
+        stateVectorsMatrix <- matrix(stateVectors, ncol=dataPacketSize, nrow=numberDataPackets, byrow=TRUE)
+        if(ncol(stateVectorsMatrix) < 15) {
+            # This is required because apparently some type 10 kernels dont contain
+            # obliquity and longitude nutation angles
+            stateVectorsMatrix <- cbind(stateVectorsMatrix, rep(NULL, times=numberDataPackets*(15-ncol(stateVectorsMatrix))))
+        }
+        # remove column 11 to avoid having epoch twice
+        stateVectorsMatrix <- stateVectorsMatrix[, -11, drop=FALSE]
+        # What comes in the SPK type 10 seems to be:
+        # epoch
+        # NDT20: 1 half of 1st derivative of mean motion in radians/minute^2
+        # NDD60: 1 sixth of 2nd derivative of mean motion in radians/minute^3
+        # Bstar
+        # Inclination in radians
+        # right ascension of the ascending node in radians
+        # eccentricity
+        # argument of perigee in radians
+        # mean anomaly in radians
+        # mean motion in radians/min
+        # epoch (again)
+        # NU.OBLIQUITY (radians I guess) nutation angle delta psi 
+        # NU.LONGITUDE (radians I guess) nutation angle delta epsilon
+        #  dOBLIQUITY/dt (radians/min I guess) rate of change of delta psi
+        #  dLONGITUDE/dt (radians/min I guess) rate of change of delta epsilon
+        # the latter 4 quantities are calculated from Wahr series. 
+        # I guess they are useful for converting TEME to GCRF
+        colnames(stateVectorsMatrix) <- c("epoch", "meanMotionDerivative", "meanMotionSecondDerivative",
+                                          "Bstar", "inclination", "ascension", "eccentricity",
+                                          "perigeeArgument", "meanAnomaly", "meanMotion", "deltaPsi",
+                                          "deltaEpsilon", "deltaPsiDerivative", "deltaEpsilonDerivative")
+        stateVectorsMatrix[, 2] <- stateVectorsMatrix[, 2] * 2
+        stateVectorsMatrix[, 3] <- stateVectorsMatrix[, 3] * 6
+        formattedArray <- list(
+            constants=constants,
+            TLEs=stateVectorsMatrix
+        )
+    } else if(SPKTypeCode == 12) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        windowSize <- SPKArray[length(SPKArray) - 1] + 1
+        polynomialDegree <- 2*windowSize - 1
+        stepSize <- SPKArray[length(SPKArray) - 2]
+        epoch1 <- SPKArray[length(SPKArray)-3]
+        stateVectors <- SPKArray[1:(numberRecords*6)]
+        epoch <- seq(from=epoch1, by=stepSize, length.out=numberRecords)
+        stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
+        colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
+                                          "velocityX", "velocityY", "velocityZ")
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            windowSize=windowSize,
+            stateVectors=cbind(epoch, stateVectorsMatrix)
+        )
+    } else if(SPKTypeCode == 13) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        windowSize <- SPKArray[length(SPKArray) - 1] + 1
+        polynomialDegree <- 2*windowSize - 1
+        stateVectors <- SPKArray[1:(numberRecords*6)]
+        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7)]
+        stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
+        colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
+                                          "velocityX", "velocityY", "velocityZ")
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            windowSize=windowSize,
+            stateVectors=cbind(epoch, stateVectorsMatrix)
+        )
+    } else if(SPKTypeCode == 14) {
+        numberMetaDataItems <- SPKArray[length(SPKArray)]
+        if(numberMetaDataItems < 15) {
+            stop("SPK kernel with missing metadata values")
+        }
+        if(numberMetaDataItems == 15) {
+            numberMetaDataItems <- 16
+        }
+        metaData <- SPKArray[(length(SPKArray) - numberMetaDataItems + 1):length(SPKArray)]
+        # The following should be 1 for type 14 SPKs
+        numberConstants <- metaData[2]
+        # Next should also be 1
+        firstConstantsDouble <- metaData[1] + 1 
+        numberDataPackets <- metaData[12]
+        firstDataPacketsDouble <- metaData[11]
+        dataPacketSize <- metaData[15]
+        dataPacketSize <- dataPacketSize + 1
+        numberRefValues <- metaData[7]
+        firstRefValuesDouble <- metaData[6]
+        polynomialDegree <- SPKArray[firstConstantsDouble]
+        numberCoefficients <- polynomialDegree + 1
+        # The following should be equal to dataPacketSize
+        elementsPerRecord <- numberCoefficients*6 + 2
+        if(elementsPerRecord != dataPacketSize) {
+            stop("Inconsistency in number of coefficients and elements per record.
+                 Please report the problem and provide an example file.")
+        }
+        lastDataPacketsDouble <- firstDataPacketsDouble + numberDataPackets * dataPacketSize
+        records <- SPKArray[(firstDataPacketsDouble + 1):lastDataPacketsDouble]
+        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberDataPackets)
+        midPointIndexes <- 1 + recordStartIndexes
+        intervalRadiiIndexes <- 2 + recordStartIndexes
+        midPoints <- records[midPointIndexes]
+        intervalRadii <- records[intervalRadiiIndexes]
+        allCoefficients <- records[-c(midPointIndexes, intervalRadiiIndexes)]
+        chebyshevCoefficients <- matrix(allCoefficients, ncol=6*numberCoefficients, nrow=numberRecords,
+                                        byrow = TRUE)
+        colnames(chebyshevCoefficients) <- paste(rep(c("positionXCoeff", "positionYCoeff", "positionZCoeff", 
+                                                       "velocityXCoeff", "velocityYCoeff", "velocityZCoeff"), 
+                                                     each=numberCoefficients), 1:numberCoefficients, sep="")
+        initialEpoch <- SPKArray[(firstRefValuesDouble + 1):(firstRefValuesDouble + numberRefValues)]
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            chebyshevCoefficients=cbind(initialEpoch, midPoint, intervalRadius, chebyshevCoefficients)
+        )
+    } else if(SPKTypeCode == 15) {
+        if(length(SPKArray != 16)) {
+            stop("Malformed type 15 segment (wrong length).")
+        }
+        formattedArray <- as.list(SPKArray)
+        names(formattedArray) <- c("epochPeriapsis", "unitVectorTrajectoryPoleX",
+                                   "unitVectorTrajectoryPoleY", "unitVectorTrajectoryPoleZ",
+                                   "unitVectorPeriapsisX", "unitVectorPeriapsisY", 
+                                   "unitVectorPeriapsisZ", "semiLatusRectum", 
+                                   "eccentricity", "J2ProcessingFlag", "unitVectorCentralBodyPoleX",
+                                   "unitVectorCentralBodyPoleY", "unitVectorCentralBodyPoleZ",
+                                   "centralBodyGM", "centralBodyJ2", "centralBodyRadius")
+        # Note: according to SPICE comments, all units in radians, km and seconds 
+        # except J2 (dimensionless)
+    } else if(SPKTypeCode == 17) {
+        if(length(SPKArray != 12)) {
+            stop("Malformed type 17 segment (wrong length).")
+        }
+        formattedArray <- as.list(SPKArray)
+        names(formattedArray) <- c("epochPeriapsis", "semiMajorAxis", "equinoctialH", 
+                                   "equinoctialK", "meanLongitude", "equinoctialP", 
+                                   "equinoctialQ", "longitudePeriapsisDerivative",
+                                   "meanLongitudeDerivative", "longitudeAscendingNodeDerivative",
+                                   "equatorialPoleRightAscension", "equatorialPoleDeclination")
+        # All units in km, radians and radians/second.
+    } else if(SPKTypeCode == 18) {
+        numberDataPackets <- SPKArray[length(SPKArray)]
+        windowSize <- SPKArray[length(SPKArray) - 1]
+        subTypeCode <- SPKArray[length(SPKArray) - 2]
+        if(subTypeCode != 0 && subTypeCode != 1) {
+            stop("Invalid SPK type 18 subtype code")
+        }
+        if(subTypeCode == 0){
+            dataPacketSize <- 12
+            polynomialDegree <- 2*windowSize - 1
+            elementNames <- c("positionX", "positionY", "positionZ",
+                              "firstVelocityX", "firstVelocityY", "firstVelocityZ",
+                              "secondVelocityX", "secondVelocityY", "secondVelocityZ",
+                              "accelerationX", "accelerationY", "accelerationZ")
+            interpolationType <- "Hermite"
+        } else if(subTypeCode == 1) {
+            dataPacketSize <- 6
+            polynomialDegree <- windowSize - 1
+            elementNames <- c("positionX", "positionY", "positionZ",
+                              "velocityX", "velocityY", "velocityZ")
+            interpolationType <- "Lagrange"
+        }
+        lastDataPacketsDouble <- numberDataPackets*dataPacketSize
+        allEphemerides <- SPKArray[1:lastDataPacketsDouble]
+        ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize*allEphemerides, 
+                                    nrow=numberDataPackets, byrow = TRUE)
+        colnames(ephemeridesMatrix) <- elementNames
+        epoch <- SPKArray[(lastDataPacketsDouble + 1):(lastDataPacketsDouble + numberDataPackets)]
+        formattedArray <- list(
+            subTypeCode=subTypeCode,
+            polynomialDegree=polynomialDegree,
+            interpolationType=interpolationType,
+            windowSize=windowSize,
+            stateVectors=cbind(epoch, ephemeridesMatrix)
+        )
+    } else if(SPKTypeCode == 19) {
+        numberIntervals <- SPKArray[length(SPKArray)]
+        boundaryChoiceFlag <- SPKArray[length(SPKArray) - 1]
+        lastMinisegmentEndIndex <- SPKArray[length(SPKArray) - 2]
+        minisegmentStartIndexes <- SPKArray[(length(SPKArray) - 2 - numberIntervals):(length(SPKArray) - 3)]
+        minisegmentEndIndexes <- c(minisegmentStartIndexes[2:numberIntervals] - 1, lastMinisegmentEndIndex)
+        minisegmentIndexes <- Map(`:`, minisegmentStartIndexes, minisegmentEndIndexes)
+        minisegmentArrays <- lapply(minisegmentIndexes, function(i) SPKArray[i])
+        intervalStarts <- SPKArray[(lastMinisegmentEndIndex + 1):(lastMinisegmentEndIndex + numberIntervals)]
+        lastIntervalEnd <- SPKArray[lastMinisegmentEndIndex + numberIntervals + 1]
+        intervalEnds <- c(intervalStarts[2:numberIntervals], lastIntervalEnd)
+        minisegments <- vector(mode="list", length=numberIntervals)
+        for(i in 1:numberIntervals) {
+            newMinisegment <- formatSPKType19Minisegment(minisegmentArrays[[i]])
+            append(newMinisegment, list(intervalStartEpoch=intervalStarts[i],
+                                        intervalEndEpoch=intervalEnds[i]))
+            minisegments[[i]] <- newMinisegment
+        }
+        formattedArray <- list(
+            boundaryChoiceFlag=boundaryChoiceFlag,
+            minisegments=minisegments
+        )
+    } else if(SPKTypeCode == 20) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        elementsPerRecord <- SPKArray[length(SPKArray)-1]
+        numberCoefficients <- (elementsPerRecord - 3)/3
+        polynomialDegree <- numberCoefficients+1
+        # we convert interval length to TDB Julian seconds
+        intervalLength <- SPKArray[length(SPKArray)-2] * 86400
+        # 2 records for first initial epoch in Julian TDB days, integer and fractional parts
+        # we add them and convert to TDB Julian seconds
+        firstInitialEpoch <- (SPKArray[length(SPKArray)-3] + SPKArray[length(SPKArray)-4]) * 86400
+        # tscale is time scale used for velocity, in TDB seconds. E.g., a value of 1 means
+        # we are using velocity directly in TDB seconds. A value of 86400 means the time units
+        # of velocity would be TDB Julian days, etc.
+        # A similar concept applies to dscale, but dscale is the scale of distance
+        # units, in km. Used for both position and velocity
+        tScale <- SPKArray[length(SPKArray)-5]
+        dScale <- SPKArray[length(SPKArray)-6]
+        records <- SPKArray[1:(length(SPKArray)-7)]
+        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberRecords)
+        midPointPositionXIndexes <- recordStartIndexes + 1 + numberCoefficients
+        midPointPositionYIndexes <- midPointPositionXIndexes + 1 + numberCoefficients
+        midPointPositionZIndexes <- midPointPositionYIndexes + 1 + numberCoefficients
+        midPointPositionX <- SPKArray[midPointPositionXIndexes]
+        midPointPositionY <- SPKArray[midPointPositionYIndexes]
+        midPointPositionZ <- SPKArray[midPointPositionZIndexes]
+        allCoefficients <- SPKArray[-c(midPointPositionXIndexes, midPointPositionYIndexes, 
+                                       midPointPositionZIndexes)]
+        coefficientsMatrix <- matrix(allCoefficients, ncol=3*numberCoefficients, 
+                                     nrow=numberRecords, byrow = TRUE)
+        colnames(coefficientsMatrix) <- paste(rep(c("velocityXCoeff", "velocityYCoeff", "velocityZCoeff"), 
+                                                     each=numberCoefficients), 1:numberCoefficients, sep="")
+        initialEpoch <- seq(from=firstInitialEpoch, by=intervalLength, length.out=numberRecords)
+        intervalRadius <- rep(intervalLength/2, numberRecords)
+        midPoint <- initialEpoch + intervalRadius
+        formattedArray <- list(
+            polynomialDegree=polynomialDegree,
+            dScale=dScale,
+            tScale=tScale,
+            chebyshevCoefficients=cbind(initialEpoch, midPoint, intervalRadius, 
+                                        coefficientsMatrix, midPointPositionX,
+                                        midPointPositionY, midPointPositionZ)
+        )
+    } else if(SPKTypeCode == 21) {
+        numberRecords <- SPKArray[length(SPKArray)]
+        # There is 2 parameters to take into account here, DLSIZE and MAXDIM
+        # DLSIZE is the total number of elements in each record (would be 71
+        # for a type 1 SPK), and MAXDIM is the number of coefficients for each
+        # cartesian component in the difference arrays. It would be 15 for a type
+        # 1 SPK, and the relationship between the two is:
+        # DLSIZE = 4*MAXDIM + 11
+        # According to SPK required reading, the second-to-last element in the
+        # segment (the entire array read as a generic DAF array) contains DLSIZE
+        # however, comments on the python module for type 21 SPKs indicate that
+        # in spite of this, it actually contains MAXDIM. So I'm going ahead with 
+        # MAXDIM, but this needs verification
+        maxDim <- SPKArray[length(SPKArray) - 1]
+        DLSize <- 4*maxDim + 11
+        formattedArray <- vector(mode="list", length=numberRecords)
+        for(i in 1:numberRecords) {
+            startingIndex <- DLSize*(numberRecords - 1) + 1
+            formattedArray[[i]] <- list(
+                finalEpoch = SPKArray[startingIndex],
+                stepsizeFunctionVector = SPKArray[(startingIndex+1):(startingIndex+maxDim)],
+                referencePosition = SPKArray[startingIndex+maxDim+c(1,3,5)],
+                referenceVelocity = SPKArray[startingIndex+maxDim+c(2,4,6)],
+                MDA = matrix(SPKArray[(startingIndex+maxDim+7):(startingIndex+6+maxDim*4)], ncol=3),
+                numberCoefficients=maxDim,
+                maxIntegrationOrderP1 = SPKArray[startingIndex+7+maxDim*4],
+                integrationOrderArray = SPKArray[(startingIndex+8+maxDim*4):(startingIndex+10+maxDim*4)]
+            )
+        }
+    } else {
+        stop("Unknown SPK type")
+    }
+    return(formattedArray)
+}
+
+formatSPKType19Minisegment <- function(minisegmentArray) {
+    numberDataPackets <- minisegmentArray[length(minisegmentArray)]
+    windowSize <- minisegmentArray[length(minisegmentArray) - 1]
+    subTypeCode <- minisegmentArray[length(minisegmentArray) - 2]
+    if(subTypeCode != 0 && subTypeCode != 1 && subTypeCode != 1) {
+        stop("Invalid SPK type 19 subtype code")
+    }
+    if(subTypeCode == 0){
+        dataPacketSize <- 12
+        polynomialDegree <- 2*windowSize - 1
+        if(polynomialDegree %% 4 != 3){
+            stop("Invalid interpolation degree for minisegment of subtype 0")
+        }
+        elementNames <- c("positionX", "positionY", "positionZ",
+                          "firstVelocityX", "firstVelocityY", "firstVelocityZ",
+                          "secondVelocityX", "secondVelocityY", "secondVelocityZ",
+                          "accelerationX", "accelerationY", "accelerationZ")
+        interpolationType <- "Hermite"
+    } else if(subTypeCode == 1) {
+        dataPacketSize <- 6
+        polynomialDegree <- windowSize - 1
+        if(polynomialDegree %% 2 != 1){
+            stop("Invalid interpolation degree for minisegment of subtype 1")
+        }
+        elementNames <- c("positionX", "positionY", "positionZ",
+                          "velocityX", "velocityY", "velocityZ")
+        interpolationType <- "Lagrange"
+    } else if(subTypeCode == 2) {
+        dataPacketSize <- 6
+        polynomialDegree <- 2*windowSize - 1
+        if(polynomialDegree %% 4 != 3){
+            stop("Invalid interpolation degree for minisegment of subtype 2")
+        }
+        elementNames <- c("positionX", "positionY", "positionZ",
+                          "velocityX", "velocityY", "velocityZ")
+        interpolationType <- "Hermite-joint"
+    }
+    lastDataPacketsDouble <- numberDataPackets*dataPacketSize
+    allEphemerides <- minisegmentArray[1:lastDataPacketsDouble]
+    ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize*allEphemerides, 
+                                nrow=numberDataPackets, byrow = TRUE)
+    colnames(ephemeridesMatrix) <- elementNames
+    epoch <- minisegmentArray[(lastDataPacketsDouble + 1):(lastDataPacketsDouble + numberDataPackets)]
+    formattedArray <- list(
+        subTypeCode=subTypeCode,
+        polynomialDegree=polynomialDegree,
+        interpolationType=interpolationType,
+        windowSize=windowSize,
+        stateVectors=cbind(epoch, ephemeridesMatrix)
+    )
+}
+
 

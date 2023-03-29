@@ -77,4 +77,11 @@ getLatestSpaceData <- function(targets="all") { # TODO: MOVE TO THIS PACKAGE?
     asteRiskData::getLatestSpaceData_(targets = targets)
 }
 
+rawToInt <- function(x) {
+    readBin(x, integer())
+}
+
+rawToDouble <- function(x) { 
+    readBin(x, numeric())
+}
 

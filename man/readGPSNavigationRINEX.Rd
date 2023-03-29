@@ -71,14 +71,6 @@ of the GPS satellite:
   \item{tocHour }{Toc hour}
   \item{tocMinute }{Toc minute}
   \item{tocSecond }{Toc second}
-  \item{UTCepochDateTime }{Date-time string indicating the time corresponding
-  to the reported position in the present message. The time is in UTC, obtained
-  by subtracting the leap seconds (if available in the header) from the time
-  of the satellite system (which is in GPS time). If leap seconds are not
-  provided in the header, the time will be in GPS. For an even more 
-  accurate conversion to actual UTC time, the clock bias, clock drift and 
-  possibly even clock drift rate (described in the next three elements) must be 
-  considered}
   \item{clockBias }{Clock bias (i.e., constant offset) at Toc that should be 
   applied to the satellite time in order to calculate accurate GPST. In seconds.
   Often referred to as af0.}

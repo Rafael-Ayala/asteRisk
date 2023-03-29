@@ -149,3 +149,9 @@ if (requireNamespace("asteRiskData", quietly = TRUE)) {
                      molniyaCr, molniyaCd)
     checkEqualsNumeric(testHpop[2, "X"], -14572000, tolerance=1e-6)
 } 
+
+## Test readBinDAF
+
+testDAF <- readBinDAF(paste0(path.package("asteRisk"), "/vgr2_jup230.bsp"))
+checkEquals(testSPK$arrays[[1]]$arrayElements[1], -649364399)
+
