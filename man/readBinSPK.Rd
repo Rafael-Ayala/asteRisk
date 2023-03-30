@@ -108,7 +108,15 @@ the following elements:
   element will have a value of 9 (\code{(max(c(6,8,7))+1)}).}
   \item{integrationOrderArray }{A vector of 3 integers indicating the order of
   the interpolation polynomials that should be applied for the X, Y and Z components
-  respectively.}
+  of acceleration respectively.}
+A brief description is provided here for the meaning of the coefficients, based
+on the 'SPICE spke01 math' monograph by Robert Werner.
+MDAs are a modified version of the more standard coefficients obtained through the
+divided differences method, which represent an interpolation polynomial in Newton
+form. In order to calculate a position and velocity, first the basis functions
+must be computed for both position and velocity. Then each of the components of 
+the basis functions (each of an increasing degree) must be multiplied by the 
+corresponding MDA coefficient, and all the resulting terms are summed.
   
 For type 2, which provide Chebyshev coefficients for position only and at equally 
 spaced time steps, a list with the following elements:
@@ -377,6 +385,7 @@ https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html
 Shampine, L. F. and Gordon, M. K., Computer Solution of Ordinary Differential Equations: The Initial Value Problem, 1975
+Robert Werner, SPICE spke01 math, 2022.
 }
 \examples{
 # The file vgr2_jup230.bsp provided with the package includes information for the
