@@ -2,17 +2,18 @@ dateTimeToMJD <- function(dateTime, timeSystem="UTC") {
     if(!(timeSystem %in% c("UTC", "UT1", "TT", "TDB"))) {
         stop(strwrap("Please choose a time system from UTC, UT1, TT and TDB"))
     }
-    date <- strptime(dateTime, format="%Y-%m-%d %H:%M:%S", tz = "UTC")
-    if(is.na(date)) {
+    nanotimeDateTime <- nanotime(dateTime, format="%Y-%m-%d %H:%M:%E9S", tz = "UTC")
+    if(is.na(nanotimeDateTime)) {
         stop("Please provide a complete date-time string in 
              year-month-day hour:minute:second format.")
     }
-    year <- date$year + 1900
-    month <- date$mon + 1
-    day <- date$mday
-    hour <- date$hour
-    minute <- date$min
-    second <- date$sec
+    dateTimeComponents <- unclass(as.POSIXlt(nanotimeDateTime, tz="UTC"))
+    year <- dateTimeComponents$year + 1900
+    month <- dateTimeComponents$mon + 1
+    day <- dateTimeComponents$mday
+    hour <- dateTimeComponents$hour
+    minute <- dateTimeComponents$min
+    second <- dateTimeComponents$sec
     MJD <- iauCal2jd(year, month, day, hour, minute, second)$DATE
     if(timeSystem == "TT") {
         hasData()
@@ -142,3 +143,16 @@ JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", derivatives
 #     gmst <- rem(2*pi*(gmst0 + r * rem(MJD_TT,1)), 2*pi)
 #     return(gmst)
 # }
+
+legendreNormFactor <- function(n, m) {
+    if(m==0) {
+        delta <- 1
+    } else {
+        delta <- 0
+    }
+    sqrt((factorial(n-m)*(2*n+1)*(2-delta))/factorial(n+m))
+}
+
+acot <- function(x) {
+    return(atan(1/x))
+}

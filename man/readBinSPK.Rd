@@ -46,36 +46,40 @@ The second element is named \code{segments}, and is a nested list where each top
 element represents one of the segments stored in the SPK file and its associated 
 metadata. Each of the top-level elements is itself a list with the following 3 
 elements:
-  \item{segmentName }{String with the name of the segment}
-  \item{segmentSummary }{A list with the multiple doubles and integers that are stored
+\itemize{
+  \item{segmentName }{ : String with the name of the segment}
+  \item{segmentSummary }{ : A list with the multiple doubles and integers that are stored
   in each array summary of summary records and which provide metadata describing
   each array. In the case of SPK files, these are always the following 9 elements:
-  \item{SPKType }{A description of the type of SPK segment}
-  \item{initialEpoch }{The initial epoch for the interval for which ephemeris data
+  \itemize{
+  \item{SPKType }{ : A description of the type of SPK segment}
+  \item{initialEpoch }{ : The initial epoch for the interval for which ephemeris data
   are provided in the segment, in ephemeris seconds (equivalent to TDB seconds) 
   past Julian year 2000}
-  \item{finalEpoch }{The initial epoch for the interval for which ephemeris data
+  \item{finalEpoch }{ : The initial epoch for the interval for which ephemeris data
   are provided in the segment, in ephemeris seconds (equivalent to TDB seconds) 
   past Julian year 2000}
-  \item{targetNAIFCode }{The NAIF integer code for the object for which the segment
+  \item{targetNAIFCode }{ : The NAIF integer code for the object for which the segment
   provides ephemerides. For details, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html
   }
-  \item{targetNAIFCode }{The NAIF integer code for the central body of the reference
+  \item{targetNAIFCode }{ : The NAIF integer code for the central body of the reference
   frame in which the segment provides ephemerides. For details, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html
   }
-  \item{frameNAIFCode }{The NAIF frame code for the reference frame in which the 
+  \item{frameNAIFCode }{ : The NAIF frame code for the reference frame in which the 
   segment provides ephemerides. For details, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html
   }
-  \item{SPKType }{The SPK type code for the segment}
-  \item{initialArrayAddress }{The initial address of the array elements corresponding 
+  \item{SPKType }{ : The SPK type code for the segment}
+  \item{initialArrayAddress }{ : The initial address of the array elements corresponding 
   to this segment within the SPK file, in double precision numbers (in order to obtain
   byte address, multiply by 8 and subtract 7)}
-  \item{finalArrayAddress }{The final address of the array elements corresponding 
+  \item{finalArrayAddress }{ : The final address of the array elements corresponding 
   to this segment within the SPK file, in double precision numbers (in order to obtain
   byte address, multiply by 8 and subtract 7)}
   }
-  \item{segmentData }{A list with the actual ephemeris data contained in the segment,
+  }
+  \item{segmentData }{ : A list with the actual ephemeris data contained in the segment,
   as well as some type-specific additional metadata}
+}
 
 The contents of the last element, \code{segmentData}, are different for each SPK
 type. Here a summary is provided for each one, but for more detailed descriptions
@@ -120,21 +124,25 @@ corresponding MDA coefficient, and all the resulting terms are summed.
   
 For type 2, which provide Chebyshev coefficients for position only and at equally 
 spaced time steps, a list with the following elements:
-  \item{polynomialDegree }{An integer indicating the order of the interpolation 
+\itemize{
+  \item{polynomialDegree }{ : An integer indicating the order of the interpolation 
   polynomial that should be applied for all the components.}
-  \item{chebyshevCoefficients }{A matrix where each row corresponds to an interpolation
+  \item{chebyshevCoefficients }{ : A matrix where each row corresponds to an interpolation
   interval, and with the following columns: 
-  \item{initialEpoch}{Initial epoch of the interpolation intervals, in ephemeris 
+  \itemize{
+  \item{initialEpoch}{ : Initial epoch of the interpolation intervals, in ephemeris 
   (TDB) seconds since J2000}
-  \item{midPoint}{Epoch for the midpoint of the interpolation intervals, in ephemeris 
+  \item{midPoint}{ : Epoch for the midpoint of the interpolation intervals, in ephemeris 
   (TDB) seconds since J2000}
-  \item{intervalRadius}{Radius of the interpolation intervals, in seconds)}
-  \item{positionXCoeffi}{A set of N columns, with i ranging from 1 to N, providing
+  \item{intervalRadius}{ : Radius of the interpolation intervals, in seconds)}
+  \item{positionXCoeffi}{ : A set of N columns, with i ranging from 1 to N, providing
   the Chebyshev coefficients for the X component of the position. N is the number 
   of coefficients for each component, which is equal to \code{polynomialDegree + 1}}
-  \item{positionYCoeffi}{As \code{positionXCoeffi}, but for the Y component of position.}
-  \item{positionZCoeffi}{As \code{positionXCoeffi}, but for the Z component of position.}
+  \item{positionYCoeffi}{ : As \code{positionXCoeffi}, but for the Y component of position.}
+  \item{positionZCoeffi}{ : As \code{positionXCoeffi}, but for the Z component of position.}
   }
+}
+}
 
 For type 3, which provide Chebyshev coefficients for position and velocity and at 
 equally spaced time steps, the same as for type 2, but \code{chebyshevCoefficients}
@@ -147,34 +155,42 @@ contains the following additional elements:
 
 For type 5, which provide discrete state vectors to be propagated following the
 laws of two-body motion, a list with the following elements:
+\itemize{
   \item{centralBodyGM }{The GM parameter (gravitational constant) for the central body, in
   cube kilometers per square seconds}
   \item{stateVectors }{A matrix where each row corresponds to a state vector, and
-  with the following columns: 
-  \item{epoch}{Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
-  \item{positionX}{X component of the position, in km}
-  \item{positionY}{Y component of the position, in km}
-  \item{positionZ}{Z component of the position, in km}
-  \item{velocityX}{X component of the velocity, in km/s}
-  \item{velocityY}{Y component of the velocity, in km/s}
-  \item{velocityZ}{Z component of the velocity, in km/s}
+  with the following columns:
+  \itemize{
+  \item{epoch}{ : Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
+  \item{positionX}{ : X component of the position, in km}
+  \item{positionY}{ : Y component of the position, in km}
+  \item{positionZ}{ : Z component of the position, in km}
+  \item{velocityX}{ : X component of the velocity, in km/s}
+  \item{velocityY}{ : Y component of the velocity, in km/s}
+  \item{velocityZ}{ : Z component of the velocity, in km/s}
   }
+  }
+}
 
 For type 8, which provide discrete state vectors at equally spaced time steps to 
 which Lagrange interpolation should be applied to obtain state vectors at arbitrary 
 target times, a list with the following elements:
-  \item{polynomialDegree }{The degree of the interpolation polynomial that should
+\itemize{
+  \item{polynomialDegree }{ : The degree of the interpolation polynomial that should
   be applied}
-  \item{stateVectors }{A matrix where each row corresponds to a state vector, and
-  with the following columns: 
-  \item{epoch}{Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
-  \item{positionX}{X component of the position, in km}
-  \item{positionY}{Y component of the position, in km}
-  \item{positionZ}{Z component of the position, in km}
-  \item{velocityX}{X component of the velocity, in km/s}
-  \item{velocityY}{Y component of the velocity, in km/s}
-  \item{velocityZ}{Z component of the velocity, in km/s}
+  \item{stateVectors }{ : A matrix where each row corresponds to a state vector, and
+  with the following columns:
+  \itemize{
+  \item{epoch}{ : Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
+  \item{positionX}{ : X component of the position, in km}
+  \item{positionY}{ : Y component of the position, in km}
+  \item{positionZ}{ : Z component of the position, in km}
+  \item{velocityX}{ : X component of the velocity, in km/s}
+  \item{velocityY}{ : Y component of the velocity, in km/s}
+  \item{velocityZ}{ : Z component of the velocity, in km/s}
   }
+  }
+}
 
 For type 9, which provide discrete state vectors at unequally spaced time steps to 
 which Lagrange interpolation should be applied to obtain state vectors at arbitrary 
@@ -182,41 +198,47 @@ target times, the same as for type 8.
 
 For type 10, which provide TLE that should be propagated with SGP4/SDP4, a list
 with the following elements:
-  \item{constants }{A list with the following constants used by SGP4/SDP4:
-  \item{J2}{J2 parameter (dimensionless)}
-  \item{J3}{J3 parameter (dimensionless)}
-  \item{J4}{J4 parameter (dimensionless)}
-  \item{sqrtGM}{Square root of the GM parameter, where GM is in cube Earth radii
+\itemize{
+  \item{constants }{ : A list with the following constants used by SGP4/SDP4:
+  \itemize{
+  \item{J2}{ : J2 parameter (dimensionless)}
+  \item{J3}{ : J3 parameter (dimensionless)}
+  \item{J4}{ : J4 parameter (dimensionless)}
+  \item{sqrtGM}{ : Square root of the GM parameter, where GM is in cube Earth radii
   per square minutes}
-  \item{highAltBound}{High altitude boundary for atmospheric model (in km)}
-  \item{lowAltBound}{Low altitude boundary for atmospheric model (in km)}
-  \item{earthRadius}{Equatorial radius of Earth (in km)}
-  \item{distUnitsPerRadius}{Distance units per Earth radius. This is usually 1.
+  \item{highAltBound}{ : High altitude boundary for atmospheric model (in km)}
+  \item{lowAltBound}{ : Low altitude boundary for atmospheric model (in km)}
+  \item{earthRadius}{ : Equatorial radius of Earth (in km)}
+  \item{distUnitsPerRadius}{ : Distance units per Earth radius. This is usually 1.
   If different than 1, interprete results with caution}
   }
-  \item{TLEs }{A matrix where each row corresponds to a TLE, and with the following 
+  }
+  \item{TLEs }{ : A matrix where each row corresponds to a TLE, and with the following 
   columns (nutation angles and their rates are not present in some old SPK files, 
-  in which case they will have NULL values): 
-  \item{epoch}{Epoch of the TLE, in ephemeris (TDB) seconds since J2000}
-  \item{meanMotionDerivative}{First derivative of the mean motion in radians/min^2}
-  \item{meanMotionSecondDerivative}{Second derivative of the mean motion in radians/min^3}
-  \item{Bstar}{Drag coefficient of the satellite in units of (earth radii)^-1. 
+  in which case they will have NULL values):
+  \itemize{
+  \item{epoch}{ : Epoch of the TLE, in ephemeris (TDB) seconds since J2000}
+  \item{meanMotionDerivative}{ : First derivative of the mean motion in radians/min^2}
+  \item{meanMotionSecondDerivative}{ : Second derivative of the mean motion in radians/min^3}
+  \item{Bstar}{ : Drag coefficient of the satellite in units of (earth radii)^-1. 
   Bstar is an adjusted value of the ballistic coefficient of the satellite, and 
   it indicates how susceptible it is to atmospheric drag.}
-  \item{inclination}{Mean orbital inclination of the satellite in radians}
-  \item{ascension}{Mean longitude of the ascending node of the satellite at epoch, 
+  \item{inclination}{ : Mean orbital inclination of the satellite in radians}
+  \item{ascension}{ : Mean longitude of the ascending node of the satellite at epoch, 
   also known as right ascension of the ascending node, in radians}
-  \item{eccentricity}{Mean eccentricity of the orbit of the object}
-  \item{perigeeArgument}{Mean argument of the perigee of the object in radians} 
-  \item{meanAnomaly}{Mean anomaly of the orbit of the object in radians}
-  \item{meanMotion}{Mean motion of the satellite at epoch in radians/min}
-  \item{deltaPsi}{Obliquity (psi angle) of the nutation at epoch, in radians}
-  \item{deltaEpsilon}{Longitude (epsilon angle) of the nutation at epoch, in radians}
-  \item{deltaPsiDerivative}{Derivative of the obliquity (psi angle) of the nutation 
+  \item{eccentricity}{ : Mean eccentricity of the orbit of the object}
+  \item{perigeeArgument}{ : Mean argument of the perigee of the object in radians} 
+  \item{meanAnomaly}{ : Mean anomaly of the orbit of the object in radians}
+  \item{meanMotion}{ : Mean motion of the satellite at epoch in radians/min}
+  \item{deltaPsi}{ : Obliquity (psi angle) of the nutation at epoch, in radians}
+  \item{deltaEpsilon}{ : Longitude (epsilon angle) of the nutation at epoch, in radians}
+  \item{deltaPsiDerivative}{ : Derivative of the obliquity (psi angle) of the nutation 
   at epoch, in radians/second}
-  \item{deltaEpsilonDerivative}{Derivative of the longitude (epsilon angle) of the 
+  \item{deltaEpsilonDerivative}{ : Derivative of the longitude (epsilon angle) of the 
   nutation at epoch, in radians/second}
   }
+  }
+}
 
 For type 12, which provide discrete state vectors at equally spaced time steps to 
 which Hermite interpolation should be applied to obtain state vectors at arbitrary 
@@ -282,55 +304,65 @@ to perform sliding-window Hermite interpolation of position and velocity indepen
 Subtype 1 should be used to perform sliding-window Lagrange interpolation of
 position and velocity independently. In both cases, \code{segmentData} is a list 
 with the following elements:
-  \item{subTypeCode}{Subtype code for the type 18 SPK segment}
-  \item{polynomialDegree }{An integer indicating the order of the interpolation 
+\itemize{
+  \item{subTypeCode}{ : Subtype code for the type 18 SPK segment}
+  \item{polynomialDegree }{ : An integer indicating the order of the interpolation 
   polynomial that should be applied for all the components.}
-  \item{interpolationType }{Type of the interpolation that should be applied.
+  \item{interpolationType }{ : Type of the interpolation that should be applied.
   Hermite for subtype 0, and Lagrange for subtype 1} 
-  \item{windowSize}{The window size that should be applied during interpolation}
-  \item{meanLongitude}{Mean longitude of the orbit at epoch, in radians} 
-  \item{stateVectors}{A matrix where each row corresponds to a state vector. The
+  \item{windowSize}{ : The window size that should be applied during interpolation}
+  \item{meanLongitude}{ : Mean longitude of the orbit at epoch, in radians} 
+  \item{stateVectors}{ : A matrix where each row corresponds to a state vector. The
   columns differ depending on the subtype. The following will always be present:
-  \item{epoch}{Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
-  \item{positionX}{X component of the position, in km}
-  \item{positionY}{Y component of the position, in km}
-  \item{positionZ}{Z component of the position, in km}
+  \itemize{
+  \item{epoch}{ : Epoch of the state vectors intervals, in ephemeris (TDB) seconds since J2000}
+  \item{positionX}{ : X component of the position, in km}
+  \item{positionY}{ : Y component of the position, in km}
+  \item{positionZ}{ : Z component of the position, in km}
+  }
   The following are present for subtype 0:
-  \item{firstVelocityX}{X component of the first velocity value, in km/s. The first
+  \itemize{
+  \item{firstVelocityX}{ : X component of the first velocity value, in km/s. The first
   velocity value should be used together with the reference position to interpolate
   position values}
-  \item{firstVelocityY}{Y component of the first velocity value, in km/s}
-  \item{firstVelocityZ}{Z component of the first velocity value, in km/s}
-  \item{secondVelocityX}{X component of the second velocity value, in km/s. The second
+  \item{firstVelocityY}{ : Y component of the first velocity value, in km/s}
+  \item{firstVelocityZ}{ : Z component of the first velocity value, in km/s}
+  \item{secondVelocityX}{ : X component of the second velocity value, in km/s. The second
   velocity value should be used together with the reference acceleration to interpolate
   velocity values}
-  \item{secondVelocityY}{Y component of the second velocity value, in km/s}
-  \item{secondVelocityZ}{Z component of the second velocity value, in km/s}
-  \item{accelerationX}{X component of the acceleration, in km/s^2}
-  \item{accelerationY}{Y component of the acceleration, in km/s^2}
-  \item{accelerationZ}{Z component of the acceleration, in km/s^2}
-  The following are present for subtype 1:
-  \item{velocityX}{X component of the velocity, in km/s}
-  \item{velocityY}{Y component of the velocity, in km/s}
-  \item{velocityZ}{Z component of the velocity, in km/s}
+  \item{secondVelocityY}{ : Y component of the second velocity value, in km/s}
+  \item{secondVelocityZ}{ : Z component of the second velocity value, in km/s}
+  \item{accelerationX}{ : X component of the acceleration, in km/s^2}
+  \item{accelerationY}{ : Y component of the acceleration, in km/s^2}
+  \item{accelerationZ}{ : Z component of the acceleration, in km/s^2}
   }
+  The following are present for subtype 1:
+  \itemize{
+  \item{velocityX}{ : X component of the velocity, in km/s}
+  \item{velocityY}{ : Y component of the velocity, in km/s}
+  \item{velocityZ}{ : Z component of the velocity, in km/s}
+  }
+  }
+}
 
 For type 19, which provides the same data as type 18 but condensing multiple
 type 18 segments into a single 19 segments (only possible if all the segments
 have the same target object, central body and reference frame; additionally,
 the coverage of the segments must overlap only at endpoints and leave no gaps),
 a list with the following 2 elements:
-  \item{boundaryChoiceFlag}{A flag indicating which minisegment should be used
+\itemize{
+  \item{boundaryChoiceFlag}{ : A flag indicating which minisegment should be used
   for the epochs at which 2 minisegments overlap. If 0, the earlier minisegment 
   that ends at that epoch is used. If 1, the later minisegment that begins at
   that epoch is used}
-  \item{minisegments}{A nested list where each top-level element represents a type 19 
+  \item{minisegments}{ : A nested list where each top-level element represents a type 19 
   subsegment (called minisegments in NAIF's documentation), each of which is a list 
   with the same elements as a \code{segmentData} for a type 18 SPK segment, plus 
   the following 2 additional elements:
-  \item{intervalStartEpoch}{Beginning of the interpolation interval covered by 
+  \itemize{
+  \item{intervalStartEpoch}{ : Beginning of the interpolation interval covered by 
   this minisegment, in ephemeris (TDB) seconds since J2000}
-  \item{intervalEndEpoch}{End of the interpolation interval covered by this minisegment, 
+  \item{intervalEndEpoch}{ : End of the interpolation interval covered by this minisegment, 
   in ephemeris (TDB) seconds since J2000}
   Furthermore, a third subtype can be found in type 19 minisegments which is not
   found for type 18 segments (at least according to NAIF's documentation). This
@@ -341,37 +373,43 @@ a list with the following 2 elements:
   describing the minisegment contains the same elements as a type 18 SPK segment of
   subtype 1 (and not of subtype 0).
   }
+  }
+}
 
 For type 20, which provide which provide Chebyshev coefficients for velocity only 
 and at equally spaced time steps together with a reference position (so that
 position can be interpolated by integration of velocity), a list with the following
 elements:
-  \item{polynomialDegree }{An integer indicating the order of the interpolation 
+\itemize{
+  \item{polynomialDegree }{ : An integer indicating the order of the interpolation 
   polynomial that should be applied for all the components.}
-  \item{dScale }{Distance scale used for both position and velocity, in km. For 
+  \item{dScale }{ : Distance scale used for both position and velocity, in km. For 
   example, if dScale has a value of 149597870.7 (the length of an astronomical
   unit, AU, in km), it means the distance units are AU.}
-  \item{tScale }{Time scale used for velocity, in TDB seconds. For example, a value 
+  \item{tScale }{ : Time scale used for velocity, in TDB seconds. For example, a value 
   of 1 means we are using velocity directly in TDB seconds. A value of 86400 means 
   the time units of velocity would be TDB Julian days, etc.}
-  \item{chebyshevCoefficients }{A matrix where each row corresponds to an interpolation
-  interval, and with the following columns: 
-  \item{initialEpoch}{Initial epoch of the interpolation intervals, in ephemeris 
+  \item{chebyshevCoefficients }{ : A matrix where each row corresponds to an interpolation
+  interval, and with the following columns:
+  \itemize{
+  \item{initialEpoch}{ : Initial epoch of the interpolation intervals, in ephemeris 
   (TDB) seconds since J2000}
-  \item{midPoint}{Epoch for the midpoint of the interpolation intervals, in ephemeris 
+  \item{midPoint}{ : Epoch for the midpoint of the interpolation intervals, in ephemeris 
   (TDB) seconds since J2000}
-  \item{intervalRadius}{Radius of the interpolation intervals, in seconds)}
-  \item{velocityXCoeffi}{A set of N columns, with i ranging from 1 to N, providing
+  \item{intervalRadius}{ : Radius of the interpolation intervals, in seconds)}
+  \item{velocityXCoeffi}{ : A set of N columns, with i ranging from 1 to N, providing
   the Chebyshev coefficients for the X component of the velocity. N is the number 
   of coefficients for each component, which is equal to \code{polynomialDegree + 1}}
   \item{velocityYCoeffi}{As \code{velocityXCoeffi}, but for the Y component of velocity.}
   \item{velocityZCoeffi}{As \code{velocityXCoeffi}, but for the Z component of velocity.}
-  \item{midPointPositionX}{X component of the reference position, valid at the midpoint
+  \item{midPointPositionX}{ : X component of the reference position, valid at the midpoint
   of the interpolation interval. Should be used to interpolate position through 
   integration.}
   \item{midPointPositionY}{As \code{midPointPositionX}, but for the Y component of velocity.}
   \item{midPointPositionZ}{As \code{midPointPositionX}, but for the Z component of velocity.}
   }
+  }
+}
 
 For type 21, which, like type 1, also provide MDAs, the same nested list as for 
 type 1, with 2 differences. Firstly, unlike for type 1, MDAs of type 21 segments 

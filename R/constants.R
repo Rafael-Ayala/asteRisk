@@ -102,6 +102,10 @@ AU <- 149597870699.999988 # meters in one AU
 c_light <- 299792457.999999984 # speed of light in m/s
 solarPressureConst <- 1367/c_light # solar radiation pressure at 1 AU in N/m^2 = 1367 W/m^2)
 omegaEarth <- 15.04106717866910/3600*(pi/180) # Earth rotation (derivative of GSMT at J2000) in rad/s
+GMratioMoonEarth <- GM_Moon_DE440/GM_Earth_TT
+GMratioSunEarth <- GM_Sun_DE440/GM_Earth_TT
+GMratioEarthMoon <- GM_Earth_TT/GM_Moon_GRGM1200B
+GMratioSunMoon <- GM_Sun_DE440/GM_Moon_GRGM1200B
 # Elastic Earth solid tide Love numbers (n=2,3, m from 0 to n. n in rows, m in cols)
 # note 0 in first row to make matrix square
 knm0 <- matrix(c(0.29525, 0.29470, 0.29801, 0,
@@ -131,3 +135,55 @@ SOIMoon <- 0.0661e9 # in relation to the Earth
 centralBodiesNum <- 1:11
 names(centralBodiesNum) <- c("SunSSBarycentric", "Mercury", "Venus", "Earth", "Moon",
                              "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto")
+
+# Constants for time conversions
+
+# Strange: NAIF document says amplitude (K) is 1.658e-3, but their kernels use 
+# 1.657e-3. ESA's documentation uses 1.658e-3.
+# But there is additional small differences in the values of M0 and M1
+# after converting ESA's values to radians. Additionally, ESA differentiates
+# TDB and TCB
+TDB_to_TT_K <- 1.657e-3
+
+# ESA's docs use 0.0167 for next one
+TDB_to_TT_EB <- 1.671e-2
+
+TDB_to_TT_M0 <- 6.239996
+TDB_to_TT_M1 <- 1.99096871e-7
+
+# For reverse transformation: I take values from ESA's navipedia
+# since that expression is dependent on TDT MJD, so I guess it works
+# in that direction. Maybe that explains small difference between values?
+
+TT_to_TDB_K <- 1.658e-3
+TT_to_TDB_EB <- 1.67e-2
+TT_to_TDB_M0 <- 6.2400407681
+TT_to_TDB_M1 <- 1.9909687368e-07
+
+# Reference to convert to UTC seconds since J2000
+J2000_POSIXct <- as.POSIXct("2000-01-01 12:00:00", tz="UTC")
+
+# Constants for anelastic solid Moon tide corrections according to 2015 paper,
+# using Debye model for k2 and k2/Q
+
+tau2 <- 15.7 # in days
+Pref <- 27.212
+vref <- (2*pi)/Pref
+k2ByQref <- 6.4e-4
+k2ref <- 0.02416
+
+# constants for elastic solid Moon tide corrections
+k20moon <- 0.02408
+k21moon <- 0.02414
+k22moon <- 0.02394
+solidMoonTidesSimple <- matrix(c(1, 0, 0, 0, 0, 27.555, -1.89e-10, 0, 0, 3.28e-10, -4.41e-10,
+                                 0, 0, 1, 0, 0, 27.212, 0, 4.72e-10, -0.02e-10, 0, 0,
+                                 -1, 0, 0, 2, 0, 31.812, -0.36e-10, 0, 0, 0.58e-10, -0.88e-10,
+                                 0, 0, 0, 2, 0, 14.765, -0.32e-10, 0, 0, 0.75e-10, -0.48e-10,
+                                 2, 0, 0, 0, 0, 13.777, -0.16e-10, 0, 0, 0.51e-10, -0.51e-10,
+                                 1, 0, 1, 0, 0, 13.691, 0, 0.64e-10, 0.26e-10, 0, 0), 
+                               byrow=TRUE, nrow=6)
+rownames(solidMoonTidesSimple) <- c("l", "F", "2D-l", "2D", "2l", "F+l")
+colnames(solidMoonTidesSimple) <- c("l", "lprime", "F", "D", "Omega", "Period(days)", 
+                                    "C20qNorm", "C21qNorm", "S21qnorm", "C22qNorm",
+                                    "S22qNorm")

@@ -1099,7 +1099,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         numberRecords <- SPKArray[length(SPKArray)]
         formattedArray <- vector(mode="list", length=numberRecords)
         for(i in 1:numberRecords) {
-            startingIndex <- 71*(numberRecords - 1) + 1
+            startingIndex <- 71*(i - 1) + 1
             formattedArray[[i]] <- list(
                 finalEpoch = SPKArray[startingIndex],
                 stepsizeFunctionVector = SPKArray[(startingIndex+1):(startingIndex+15)],
@@ -1455,7 +1455,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         coefficientsMatrix <- matrix(allCoefficients, ncol=3*numberCoefficients, 
                                      nrow=numberRecords, byrow = TRUE)
         colnames(coefficientsMatrix) <- paste(rep(c("velocityXCoeff", "velocityYCoeff", "velocityZCoeff"), 
-                                                     each=numberCoefficients), 1:numberCoefficients, sep="")
+                                                  each=numberCoefficients), 1:numberCoefficients, sep="")
         initialEpoch <- seq(from=firstInitialEpoch, by=intervalLength, length.out=numberRecords)
         intervalRadius <- rep(intervalLength/2, numberRecords)
         midPoint <- initialEpoch + intervalRadius
@@ -1554,4 +1554,217 @@ formatSPKType19Minisegment <- function(minisegmentArray) {
     )
 }
 
+readTextKernel <- function(filename) {
+    lines <- readLines(filename)
+    kernelType <- trimws(lines[1])
+    if(!grepl("/", kernelType) | nchar(kernelType) > 8) {
+        stop("Invalid kernel type line")
+    }
+    labelStartLine <- grep("beginlabel", lines)
+    if(length(labelStartLine) > 0) {
+        labelEndLine <- grep("endlabel", lines)
+        if(length(labelEndLine) == 0) {
+            stop("File contains a \\beginlabel line but no \\endlabel line")
+        }
+        parsedLabel <- parseTextKernelLabelBlock(lines[(labelStartLine+1):(labelEndLine-1)])
+        firstCommentStartLine <- labelEndLine+1
+    } else {
+        parsedLabel <- NULL
+        firstCommentStartLine <- 2
+    }
+    dataBlockStartLines <- grep("begindata", lines)
+    commentStartLines <- grep("begintext", lines)
+    dataBlockEndLines <- commentStartLines
+    commentEndLines <- c(dataBlockStartLines[-1])
+    if(length(dataBlockEndLines) == length(dataBlockStartLines) - 1) {
+        dataBlockEndLines <- c(dataBlockEndLines, length(lines))
+        lastCommentPresent <- FALSE
+    } else if(commentStartLines[length(commentStartLines)]) {
+        lastCommentPresent <- TRUE
+    }
+    if(dataBlockStartLines[1] > firstCommentStartLine) {
+        firstComment <- lines[firstCommentStartLine:(dataBlockStartLines[1]-1)]
+    } else {
+        firstComment <- NULL
+    }
+    for(i in 1:length(dataBlockStartLines)) {
+        dataBlockLines <- lines[(dataBlockStartLines[i]+1):(dataBlockEndLines[1]-1)]
+        dataBlockLines <- dataBlockLines[dataBlockLines!=""]
+        parsedDataBlock <- parseTextKernelDataBlock(dataBlockLines)
+    }
+    dataLines <- lines[(dataBlockStartLines[1]+1):(dataBlockEndLines[1]-1)]
+    dataLines <- dataLines[dataLines!=""]
+    return(parseTextKernelDataBlock(dataLines))
+}
 
+parseTextKernelLabelBlock <- function(labelLines) {
+    labelComments <- labelLines[grepl("^;", labelLines)]
+    variableAssignmentStartLines <- grep("=", labelLines)
+    variableAssignmentLineLengths <- diff(c(variableAssignmentStartLines, length(labelLines)))
+    labelVariables <- vector(mode="list", length=length(variableAssignmentStartLines))
+    labelVariableNames <- vector(mode="character", length=length(variableAssignmentStartLines))
+    splitAssignments <- strsplit(labelLines, "=")
+    for(i in 1:length(variableAssignmentStartLines)) {
+        if(variableAssignmentLineLengths[i] == 1){
+            currentAssignment <- trimws(splitAssignments[[variableAssignmentStartLines[i]]])
+            variableName <- currentAssignment[1]
+            variableValue <- currentAssignment[2]
+        } else {
+            currentAssignment <- trimws(unlist(splitAssignments[variableAssignmentStartLines[i]:(variableAssignmentStartLines[i] 
+                                                                                                 + variableAssignmentLineLengths[i] -1)]))
+            variableName <- currentAssignment[1]
+            variableValue <- paste(currentAssignment[-1], collapse=" ")
+        }
+        variableValue <- gsub("\"", "", variableValue)
+        labelVariables[[i]] <- variableValue
+        labelVariableNames[i] <- variableName
+    }
+    names(labelVariables) <- labelVariableNames
+    return(list(
+        labelComments=labelComments,
+        labelVariables=labelVariables
+    ))
+}
+
+parseTextKernelDataBlock <- function(dataLines, stringContinuationMarker=NULL) {
+    variableAllAssignmentStartLines <- grep("=", dataLines)
+    variableAllAssignmentLineLengths <- diff(c(variableAllAssignmentStartLines, length(dataLines)+1))
+    dataBlockVariables <- list()
+    for(i in 1:length(variableAllAssignmentStartLines)) {
+        firstAssignmentLine <- dataLines[variableAllAssignmentStartLines[i]]
+        if(grepl("\\+=", firstAssignmentLine)) {
+            extensionAssignment <- TRUE
+            assignmentSeparator <- "\\+="
+        } else {
+            extensionAssignment <- FALSE
+            assignmentSeparator <- "="
+        }
+        firstAssignmentLineSplit <- strsplit(firstAssignmentLine, assignmentSeparator)[[1]]
+        variableName <- trimws(firstAssignmentLineSplit[1])
+        if(variableAllAssignmentLineLengths[i] == 1){
+            variableString <- trimws(firstAssignmentLineSplit[2])
+        } else {
+            restOfAssignment <- trimws(dataLines[(1:(variableAllAssignmentLineLengths[i]-1))+variableAllAssignmentStartLines[i]])
+            #variableString <- c(trimws(firstAssignmentLineSplit[2]), restOfAssignment)
+            #variableString <- paste(trimws(firstAssignmentLineSplit[2]), restOfAssignment, sep=" ")
+            variableString <- paste(c(trimws(firstAssignmentLineSplit[2]), restOfAssignment), collapse =" ")
+        }
+        if(grepl("^\\(", variableString)) {
+            # Vector of values
+            # first remove brackets
+            variableString <- gsub("^\\(\\s*|\\s*\\)$", "", variableString)
+            # vectorCharacterValues <- strsplit(variableString, ",|\\s+")[[1]]
+            # vectorCharacterValues <- vectorCharacterValues[vectorCharacterValues != ""]
+            if(grepl("^'", variableString)) {
+                # Variable is of type string. Even though assignment is of length 1 line
+                # need to check for continued string just in case
+                vectorCharacterMatches <- gregexpr("(^|(,|\\s+))\\K'(([^']*)|([^']*'{2}[^']*)*)'(?=($|(,|\\s+)))", variableString, perl = TRUE)
+                vectorCharacterValues <- regmatches(variableString, vectorCharacterMatches)
+                vectorCharacterValues <- gsub("^'|'$", "", vectorCharacterValues)
+                vectorCharacterValues <- gsub("''", "'", vectorCharacterValues)
+                if(!is.null(stringContinuationMarker)) {
+                    stringContinuationMarker <- paste(stringContinuationMarker, "\\s*", sep="")
+                    numberValues <- length(vectorCharacterValues - (sum(
+                        grepl(stringContinuationMarker, vectorCharacterValues)
+                    )))
+                    variableValue <- character(numberValues)
+                    variableValue[1] <- vectorCharacterValues[1]
+                    continuedString <- grepl(stringContinuationMarker, vectorCharacterValues[1])
+                    currentElement <- 1
+                    for(i in 2:length(vectorCharacterValues)) {
+                        if(continuedString) {
+                            newPartOfElement <- gsub(stringContinuationMarker, "", vectorCharacterValues[i])
+                            variableValue[currentElement] <- paste(variableValue[currentElement], newPartOfElement, sep="")
+                        } else {
+                            currentElement <- currentElement + 1
+                            variableValue[currentElement] <- vectorCharacterValues[i]
+                        }
+                        continuedString <- grepl(stringContinuationMarker, vectorCharacterValues[i])
+                    }
+                }
+            } else if(grepl("^@", variableString)) {
+                # Variable is of type special string specifying a date-time
+                # currently will be stored just a string... 
+                # TODO: implement str2et equivalent ("the monster")
+                vectorCharacterValues <- strsplit(variableString, ",|\\s+")[[1]]
+                vectorCharacterValues <- vectorCharacterValues[vectorCharacterValues != ""]
+                vectorCharacterValues <- gsub("^@", "", vectorCharacterValues)
+                variableValue <- vectorCharacterValues
+            } else {
+                # numeric values
+                vectorCharacterValues <- strsplit(variableString, ",|\\s+")[[1]]
+                vectorCharacterValues <- vectorCharacterValues[vectorCharacterValues != ""]
+                variableValue <- as.numeric(vectorCharacterValues)
+            }
+        } else {
+            # not vector assignment
+            if(grepl("^'", variableString)) {
+                if(!is.null(stringContinuationMarker)) {
+                    stringContinuationMarker <- paste(stringContinuationMarker, "\\s*", sep="")
+                    variableString <- gsub(stringContinuationMarker, "", variableString)
+                    variableString <- paste(variableString, collapse="")
+                }
+                variableValue <- gsub("^'|'$", "", variableString)
+                variableValue <- gsub("''", "'", vectorCharacterValues)
+            } else if(grepl("^@", variableString)) {
+                # Variable is of type special string specifying a date-time
+                variableValue <- gsub("^@", "", variableString)
+            } else {
+                #numeric value
+                variableValue <- as.numeric(variableString)
+            }
+        }
+        if(extensionAssignment) {
+            dataBlockVariables[[variableName]] <- c(dataBlockVariables[[variableName]], variableValue)
+        } else {
+            dataBlockVariables[[variableName]] <- variableValue
+        }
+    }
+    return(dataBlockVariables)
+}
+
+parseTextDEHeader <- function(headerLines) {
+    headerLines <- trimws(headerLines)
+    headerLines <- headerLines[headerLines != ""]
+    firstLine <- headerLines[1]
+    if(!(grepl("KSIZE", firstLine) & grepl("NCOEFF", firstLine))) {
+        stop("First line of header lacks definitions of KSIZE or NCOEFF")
+    }
+    ksizeNcoeff <- as.numeric(unlist(regmatches(firstLine, gregexpr('\\(?[0-9,.]+', firstLine))))
+    if(length(ksizeNcoeff) != 2) {
+        stop("First line of header contains wrong number of assignments (should be 2)")
+    }
+    ksize <- ksizeNcoeff[1]
+    ncoeff <- ksizeNcoeff[2]
+    groupLineIndexes <- grep("GROUP", headerLines)
+    groupLines <- headerLinesgroupLineIndexes
+    groupNumbers <- as.numeric(unlist(regmatches(groupLines, gregexpr('\\(?[0-9,.]+', groupLines))))
+    if(identical(groupNumbers[1:5], c(1010, 1030, 1040, 1041, 1050))) {
+        stop("Header file does not contain groups 1010, 1030, 1040, 1041 and 1050 in this order")
+    }
+    group1010Index <- groupLines[1]
+    group1030Index <- groupLines[2]
+    group1040Index <- groupLines[3]
+    group1041Index <- groupLines[4]
+    group1050Index <- groupLines[5]
+    if(length(groupNumbers == 6)) {
+        group1070Index <- groupLines[6]
+    } else {
+        group1070Index <- length(headerLines)
+    }
+    group1010Lines <- headerLines[(group1010Index+1):(group1030Index-1)]
+    group1030Lines <- headerLines[(group1030Index+1):(group1040Index-1)]
+    group1040Lines <- headerLines[(group1040Index+1):(group1041Index-1)]
+    group1041Lines <- headerLines[(group1041Index+1):(group1050Index-1)]
+    group1050Lines <- headerLines[(group1050Index+1):(group1070Index-1)]
+    group1030Values <- as.numeric(unlist(strsplit(group1030Lines, "\\s+")))
+    startJD <- group1030Values[1]
+    endJD <- group1030Values[2]
+    stepSize <- group1030Values[3]
+    numberConstants <- as.numeric(group1040Lines[1])
+    namesConstants <- unlist(strsplit(group1040Lines[-1], "\\s+"))
+    valuesConstants <- as.numeric(gsub("D", "E", unlist(strsplit(h2[28:78], "\\s+")), ignore.case = TRUE))
+    
+    
+    
+}

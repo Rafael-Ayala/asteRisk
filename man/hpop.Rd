@@ -132,12 +132,14 @@ hpop(position, velocity, dateTime, times, satelliteMass, dragArea,
 \value{
 A data frame with the results of the numerical integration at the requested times.
 Each row contains the results for one of the requested times. The data frame 
-contains eight columns: time (indicating the time for the corresponding row
-in seconds since the initial time), X, Y, Z (indicating the X, Y and Z
-components of the position for that time in meters), dX, dY and dZ (indicating
-the X, Y and Z components of the velocity for that time in meters/second) and 
-centralBody, indicating the central body of the frame of reference for the
-results for the corresponding time.
+contains 11 columns: time (indicating the time for the corresponding row
+in seconds since the initial time), positionX, positionY, positionZ (indicating 
+the X, Y and Z components of the position for that time in meters), velocityX, 
+velocitydY and velocitydZ (indicating the X, Y and Z components of the velocity 
+for that time in meters/second), accelerationX, accelerationY, accelerationZ 
+(indicating the X, Y and Z components of the acceleration for that time in 
+meters/second^2) and centralBody, indicating the central body of the frame of 
+reference for the results for the corresponding time.
 Positions and velocities are returned in the ICRF frame of reference, centered
 in the celestial body specified in column centralBody. If \code{autoCentralBodyChange=TRUE},
 the celestial body whose sphere of influence includes the object of interest
