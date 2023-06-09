@@ -156,3 +156,7 @@ legendreNormFactor <- function(n, m) {
 acot <- function(x) {
     return(atan(1/x))
 }
+
+acoth <- function(x) {
+    return(atanh(1/x))
+}
