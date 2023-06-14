@@ -9,10 +9,6 @@ parallelOceanTidesCorrections <- function(rowTideNames, tideCnmSnmCoefficients, 
     .Call('_asteRisk_parallelOceanTidesCorrections', PACKAGE = 'asteRisk', rowTideNames, tideCnmSnmCoefficients, doodsonVars, Cnm, Snm, m1, m2)
 }
 
-testProj <- function(argc, argv) {
-    .Call('_asteRisk_testProj', PACKAGE = 'asteRisk', argc, argv)
-}
-
 legendre <- function(n, m, angle) {
     .Call('_asteRisk_legendre', PACKAGE = 'asteRisk', n, m, angle)
 }

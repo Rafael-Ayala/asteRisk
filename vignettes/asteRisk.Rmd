@@ -406,7 +406,7 @@ targetTimes <- seq(0, 10800, by=120)
 
 hpop_results <- hpop(initialPosition, initialVelocity, molniya$dateTime,
                      targetTimes, molniyaMass, molniyaCrossSection,
-                     molniyaCrossSection, molniyaCr, molniyaCd)
+                     molniyaCrossSection, molniyaCd, molniyaCr)
 
 # Now we can calculate and plot the corresponding geodetic coordinates
 

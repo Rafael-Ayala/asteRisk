@@ -824,13 +824,8 @@ accel <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, Cr, Cd
                 GM_Moon_GRGM1200B * JPL_ephemerides$positionMoon/(sqrt(sum(JPL_ephemerides$positionMoon^2)))^3
         }
         # Acceleration due to solar radiation pressure
-        a <- a + solarRadiationAcceleration(Y[1:3], JPL_ephemerides$positionEarth, 
-                                            JPL_ephemerides$positionMoon, 
-                                            JPL_ephemerides$positionSun,
-                                            JPL_ephemerides$positionSunSSBarycentric, 
-                                            solarArea,
-                                            satelliteMass,
-                                            Cr, solarPressureConst, AU, "geometrical")
+        a <- a + solarRadiationAcceleration(Y[1:3], JPL_ephemerides, "Earth", solarArea,
+                                            satelliteMass, Cr, solarPressureConst, AU)
         # Acceleration due to atmospheric drag
         # Omega according to section III from https://hpiers.obspm.fr/iers/bul/bulb/explanatory.html
         Omega <- omegaEarth - 8.43994809e-10*LOD
