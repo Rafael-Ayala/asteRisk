@@ -562,125 +562,74 @@ hybridLambert <- function(initialPosition, finalPosition, initialTime, finalTime
     } else if(diffTauParabolic < 0) {
         orbitType <- "hyperbolic"
     }
-    if(orbitType =="elliptic") {
+    if(orbitType == "elliptic") {
         Nmax <- floor(tau/pi)
-        solutionsList <- vector(mode="list", length=1 + Nmax*2)
-        tauME <- acos(sigma) + sigma*sqrt(1 - sigma^2)
-        if(abs(tauME - tau) <= .Machine$double.eps) {
-            path <- "Minimum Energy"
+    } else {
+        Nmax <- 0
+    }
+    solutionsList <- vector(mode="list", length=1 + Nmax*2)
+    tauME <- acos(sigma) + sigma*sqrt(1 - sigma^2)
+    if(abs(tauME - tau) <= .Machine$double.eps) {
+        path <- "Minimum Energy"
+        lowPath <- FALSE
+    } else if(tau < tauME) {
+        path <- "Low"
+        lowPath <- TRUE
+    } else {
+        path <- "High"
+        lowPath <- FALSE
+    }
+    # First for N=0/ or non-elliptical cases
+    x0 <- initialGuessX(tau, sigma, 0, lowPath)
+    y0 <- hybridY(x0, sigma)
+    x <- householderSolver(x0, tau, sigma, 0, maxIterations = maxIterations,
+                           atol = atol, rtol=rtol)
+    y <- hybridY(x, sigma)
+    gamma <- sqrt(GM*s/2)
+    rho <- (initialDistance - finalDistance)/diffDistance
+    # Zeta originally named sigma in Izzy's
+    zeta <- sqrt(1-rho^2)
+    auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
+                              sigma, gamma, rho, zeta)
+    v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
+    v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
+    solutionsList[[1]] <- list(numberRevs = 0, path=path, 
+                               orbitType=orbitType, v1=v1, v2=v2)
+    if(Nmax >= 1) {
+        for(nrev in 1:Nmax) {
+            # tauME <- nrev*pi + acos(sigma) + sigma*sqrt(1-sigma^2)
+            # first get tauMT
+            minimumT <- hybridMT(sigma, nrev)
+            xMT <- minimumT$xMT
+            yMT <- hybridY(xMT, sigma)
+            tauMT <- minimumT$tauMT
+            # First the high path
             lowPath <- FALSE
-        } else if(tau < tauME) {
-            path <- "Low"
+            x0 <- initialGuessX(tau, sigma, nrev, lowPath)
+            y0 <- hybridY(x0, sigma)
+            x <- householderSolver(x0, tau, sigma, nrev, maxIterations = maxIterations,
+                                   atol = atol, rtol=rtol)
+            y <- hybridY(x, sigma)
+            auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
+                                      sigma, gamma, rho, zeta)
+            v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
+            v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
+            solutionsList[[2*nrev]] <- list(numberRevs = nrev, path="high", 
+                                            orbitType=orbitType, v1=v1, v2=v2)
+            # then for the low path
             lowPath <- TRUE
-        } else {
-            path <- "High"
-            lowPath <- FALSE
+            x0 <- initialGuessX(tau, sigma, nrev, lowPath)
+            y0 <- hybridY(x0, sigma)
+            x <- householderSolver(x0, tau, sigma, nrev, maxIterations = maxIterations,
+                                   atol = atol, rtol=rtol)
+            y <- hybridY(x, sigma)
+            auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
+                                      sigma, gamma, rho, zeta)
+            v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
+            v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
+            solutionsList[[2*nrev + 1]] <- list(numberRevs = nrev, path="low",
+                                                orbitType=orbitType, v1=v1, v2=v2)
         }
-        # First for N=0
-        x0 <- initialGuessX(tau, sigma, 0, lowPath)
-        y0 <- hybridY(x0, sigma)
-        x <- householderSolver(x0, tau, sigma, 0, maxIterations = maxIterations,
-                               atol = atol, rtol=rtol)
-        y <- hybridY(x, sigma)
-        gamma <- sqrt(GM*s/2)
-        rho <- (initialDistance - finalDistance)/diffDistance
-        # Zeta originally named sigma in Izzy's
-        zeta <- sqrt(1-rho^2)
-        auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
-                                  sigma, gamma, rho, zeta)
-        v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
-        v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
-        solutionsList[[1]] <- list(numberRevs = 0, path=path, 
-                                   orbitType=orbitType, v1=v1, v2=v2)
-        if(Nmax >= 1) {
-            for(nrev in 1:Nmax) {
-                # tauME <- nrev*pi + acos(sigma) + sigma*sqrt(1-sigma^2)
-                # first get tauMT
-                minimumT <- hybridMT(sigma, nrev)
-                xMT <- minimumT$xMT
-                yMT <- hybridY(xMT, sigma)
-                tauMT <- minimumT$tauMT
-                # First the high path
-                lowPath <- FALSE
-                x0 <- initialGuessX(tau, sigma, nrev, lowPath)
-                y0 <- hybridY(x0, sigma)
-                x <- householderSolver(x0, tau, sigma, nrev, maxIterations = maxIterations,
-                                       atol = atol, rtol=rtol)
-                y <- hybridY(x, sigma)
-                auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
-                                          sigma, gamma, rho, zeta)
-                v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
-                v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
-                solutionsList[[2*nrev]] <- list(numberRevs = nrev, path="high", 
-                                           orbitType=orbitType, v1=v1, v2=v2)
-                # then for the low path
-                lowPath <- TRUE
-                x0 <- initialGuessX(tau, sigma, nrev, lowPath)
-                y0 <- hybridY(x0, sigma)
-                x <- householderSolver(x0, tau, sigma, nrev, maxIterations = maxIterations,
-                                       atol = atol, rtol=rtol)
-                y <- hybridY(x, sigma)
-                auxV <- hybridReconstruct(x, y, initialDistance, finalDistance,
-                                          sigma, gamma, rho, zeta)
-                v1 <- auxV$Vr1*(initialPosition/initialDistance) + auxV$Vt1*it1
-                v2 <- auxV$Vr2*(finalPosition/finalDistance) + auxV$Vt2*it2
-                solutionsList[[2*nrev + 1]] <- list(numberRevs = nrev, path="low",
-                                                    orbitType=orbitType, v1=v1, v2=v2)
-            }
-        }
-    } else if(orbitType == "parabolic") {
-        x <- 1
-        y <- sign(sigma)
-        vc <- sqrt(GM) * (y/sqrt(n) + x/sqrt(m))
-        vr <- sqrt(GM) * (y/sqrt(n) - x/sqrt(m))
-        ec <- (finalPosition - initialPosition)/diffDistance
-        er1 <- initialPosition/sqrt(sum(initialPosition^2))
-        er2 <- finalPosition/sqrt(sum(finalPosition^2))
-        v1 <- vc*ec + vr*er1
-        v2 <- vc*ec - vr*er2
-        solutionsList <- vector(mode="list", length=1)
-        solutionsList[[1]] <- list(numberRevs = 0, path="low", 
-                                   orbitType=orbitType, v1=v1, v2=v2)
-    } else if (orbitType == "hyperbolic") {
-        x <- 1.0001
-        y <- sqrt(1-sigma2*(1-x^2))
-        if(sigma < 0) {
-            y <- -y
-        }
-        F0 <- lambert2F0hyperbolic(x, y, tau)
-        F1 <- lambert2F1hyperbolic(x, y, tau, sigma)
-        F2 <- lambert2F2hyperbolic(x, y, tau, sigma)
-        signF1 <- sign(F1)
-        degree <- 5
-        convergence <- FALSE
-        numberIterations <- 0
-        while(!convergence) {
-            xNew <- x - degree*F0/(F1 + F1/abs(F1)*sqrt((degree - 1)^2*F1^2 - degree*(degree-1)*F0*F2))
-            difference <- xNew - x
-            if(abs(difference) < .Machine$double.eps/2) {
-                convergence <- TRUE
-            }
-            x <- xNew
-            y <- sqrt(1-sigma2*(1-x^2)) * sign(sigma)
-            F0 <- lambert2F0hyperbolic(x, y, tau)
-            F1 <- lambert2F1hyperbolic(x, y, tau, sigma)
-            F2 <- lambert2F2hyperbolic(x, y, tau, sigma)
-            numberIterations <- numberIterations + 1
-            if(numberIterations > maxIterations) {
-                degree <- degree + 1
-                numberIterations <- 0
-            }
-        }
-        degree <- 5
-        vc <- sqrt(GM) * (y/sqrt(n) + x/sqrt(m))
-        vr <- sqrt(GM) * (y/sqrt(n) - x/sqrt(m))
-        ec <- (finalPosition - initialPosition)/diffDistance
-        er1 <- initialPosition/sqrt(sum(initialPosition^2))
-        er2 <- finalPosition/sqrt(sum(finalPosition^2))
-        v1 <- vc*ec + vr*er1
-        v2 <- vc*ec - vr*er2
-        solutionsList[[1]] <- list(numberRevs = 0, path=NA, 
-                                   orbitType=orbitType, v1=v1, v2=v2)
     }
     return(solutionsList)
 }
