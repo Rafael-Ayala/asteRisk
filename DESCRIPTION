@@ -29,7 +29,7 @@ Acknowledgements: The development of this work is supported by the following gra
 License: GPL-3
 LinkingTo: Rcpp, RcppParallel, BH, RcppCGAL
 SystemRequirements: C++11, GNU make
-Imports: deSolve, nanotime, stats, onion, Rcpp, RcppParallel, utils, RcppCGAL
+Imports: deSolve, nanotime, stats, onion, Rcpp, RcppParallel, utils, RcppCGAL, gsl
 Suggests: asteRiskData, knitr, formatR, webshot, BiocStyle, RUnit, BiocGenerics, plotly, lazyeval, dplyr, ggmap, rmarkdown, markdown
 BugReports: https://github.com/Rafael-Ayala/asteRisk/issues
 Additional_repositories: https://rafael-ayala.github.io/drat/
