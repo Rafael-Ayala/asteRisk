@@ -150,9 +150,9 @@ GLONASS satellites (functions <b>readGPSNavigationRINEX()</b> and
 # Read the provided test RINEX navigation files for both GPS and GLONASS:
 
 testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
-"/testGPSRINEX.txt"))
+"/testGPSRINEXv2.txt"))
 testGLONASSnav <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
-"/testGLONASSRINEX.txt"))
+"/testGLONASSRINEXv2.txt"))
 
 # Count the number of positional messages in each file:
 
@@ -299,7 +299,7 @@ Earth orientation parameters, which are provided through the <b>asteRiskData</b>
 accessory package, which can be installed by running 
 "install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')".
 
-```{r tidy = TRUE, eval = evaluateExtraChunks}
+```{r tidy = TRUE, eval = FALSE}
 # Let us convert the last propagation previously calculated for the MOLNIYA 1-83
 # satellite into the ITRF frame. In order to do so, it is required to provide
 # a date-time string indicating the time for the newly calculated position and
@@ -332,7 +332,11 @@ colnames(geodetic_matrix) <- c("latitude", "longitude", "altitude")
 
 library(ggmap)
 
-ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80), source = "stamen")) +
+# Important: note that Stadia Maps requires an API key, which must be obtained 
+# and registered before running the following. Free options for non-commercial
+# use are available
+
+ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80), source = "stadia", maptype = "stamen_terrain")) +
   geom_segment(data=as.data.frame(geodetic_matrix), 
                aes(x=longitude, y=latitude, 
                    xend=c(tail(longitude, n=-1), NA), 
@@ -366,7 +370,7 @@ After having installed the accessory package, it is possible to update the data
 and coefficients to the latest available versions with the <b>getLatestSpaceData()</b>
 function.
 
-```{r tidy = TRUE, eval = evaluateExtraChunks}
+```{r tidy = TRUE, eval = FALSE, message = FALSE}
 # The HPOP requires as input the satellite mass, the effective areas subjected
 # to solar radiation pressure and atmospheric drag, and the drag and
 # reflectivity coefficients. 
@@ -422,7 +426,11 @@ colnames(geodetic_matrix_hpop) <- c("latitude", "longitude", "altitude")
 
 library(ggmap)
 
-ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80), source = "stamen")) +
+# Important: note that Stadia Maps requires an API key, which must be obtained 
+# and registered before running the following. Free options for non-commercial
+# use are available
+
+ggmap(get_map(c(left=-180, right=180, bottom=-80, top=80), source = "stadia", maptype = "stamen_terrain")) +
   geom_segment(data=as.data.frame(geodetic_matrix_hpop), 
                aes(x=longitude, y=latitude, 
                    xend=c(tail(longitude, n=-1), NA), 

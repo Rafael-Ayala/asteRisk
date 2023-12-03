@@ -20,7 +20,8 @@ readGPSNavigationRINEX(filename)
 }
 \value{
 A list with two elements. The first element, named \code{header}, is a list with
-the following elements:
+the information contained in the header of the RINEX file. For files using RINEX
+major version 2, it contains the following elements:
   \item{rinexVersion }{Version of the RINEX format used in the file}
   \item{rinexFileType }{Type of RINEX file}
   \item{generatorProgram }{Program used to generate the RINEX file}
@@ -49,6 +50,91 @@ the following elements:
   Useful to convert to UTC time (UTC time = GPS time - leap seconds)}
   \item{comments }{Miscellaneous comments found in the header of the RINEX file}
 
+For files using RINEX major version 3, it contains the following elements:
+  \item{rinexVersion }{Version of the RINEX format used in the file}
+  \item{rinexFileType }{Type of RINEX file}
+  \item{satelliteSystem }{Character indicating the satellite system. For GLONASS,
+  it should be "R"}
+  \item{generatorProgram }{Program used to generate the RINEX file}
+  \item{generatorEntity }{Individual or organization that generated the file}
+  \item{fileCreationDateString }{Date-time string indicating when the file was
+  created}
+  \item{systemTimeCorrectionType }{String indicating the type of system time
+  correction, which defines the exact meaning of the system time correction
+  parameters A0 and A1 and between what time systems these allow conversion. 
+  Possible values are (the definition of A0/A1 are given between brackets): 
+  GAUT, for GAL to UTC (a0/a1); GPUT, for GPS to UTC (a0/a1); SBUT, for SBAS to UTC 
+  (a0/a1); GLUT, for GLO to UTC (TauC/0); GAGP or GPGA, for GPS to GAL (A0G/A1G);
+  GLGP, for GLO to GPS (TauGPS/0); QZGP, for QZS to GPS (a0/a1); QZUT, for QZS to
+  UTC (a0/a1); BDUT, for BDS to UTC (A0UTC/A1UTC); IRUT, for IRN to UTC (A0UTC/A1UTC);
+  IRGP, for IRN to GPS (A0/A1). Note that GPS RINEX navigation files will
+  typically contain system time corrections of type GPUT}
+  \item{timeCorrectionA0 }{A0 parameter (bias) for system time correction in seconds}
+  \item{timeCorrectionA1 }{A1 parameter (drift) for system time correction in seconds/seconds}
+  \item{timeCorrectionReferenceTime }{Reference time for system time corrections,
+  in seconds into GPS/GAL/BDS/QZS/IRN/SBAS week. The correction to be applied to 
+  the system time should be calculated as:
+  Correction=A0 + A1*(ephemerisTime - timeCorrectionReferenceTime) }
+  \item{timeCorrectionReferenceWeekNumber }{Reference week number for the system 
+  time correction reference time. For GPS/GAL/QZS/IRN/SBAS, it is a continuous
+  week scale since 6th of January 1980. For BDS, it is a continuous week scale 
+  since 1st of January 2006. For GLONASS, it is set to 0}
+  \item{timeCorrectionSatelliteNumber }{String indicating the GNSS satellite that
+  is broadcasting the time system difference for system time correction }
+  \item{UTCType }{String indicating the exact UTC type (specific UTC realization) 
+  to which system time correction parameters refers to }
+  \item{leapSeconds }{Current number of leap seconds }
+  \item{deltaTimeLeapSeconds }{Number of leap seconds at a reference date for leap
+  seconds specified by the following week number and week day. Note that the date 
+  specified by said week number and day can be either in the past or future }
+  \item{deltaTimeLeapSecondsWeekNumber }{Week number for the reference date to
+  which deltaTimeLeapSeconds refers. Given as continuous week number from either
+  6th of January 1980 (GPS week number) or from 1st of January 2006 (BDS week
+  number). Field leapSecondsTimeSystemIdentifier specifies which of the 2 systems
+  is used.}
+  \item{deltaTimeLeapSecondsDayNumber }{Day of week number for the reference date 
+  to which deltaTimeLeapSeconds refers. Ranges from 1-7 for reference dates in GPS,
+  or 0-6 for reference dates in BDS. The first day of each week (1 for GPS, 0 for
+  BDS) is considered to be Sunday }
+  \item{leapSecondsTimeSystemIdentifier }{String indicating the time system used
+  for the week number and day number for the future/past leap seconds reference 
+  date. Can be either "GPS" or "BDS" (BeiDou)}
+  \item{leapSecondsTimeSystemIdentifier }{String indicating the time system used
+  for the week number and day number for the future/past leap seconds reference 
+  date. Can be either "GPS" or "BDS" (BeiDou)}
+  \item{ionosphericCorrections }{List where each element contains the fields required
+  to perform a given type of ionospheric corrections. The contents of each element
+  of this list are detailed below }
+  \item{comments }{Miscellaneous comments found in the header of the RINEX file}
+  
+As mentioned above, for RINEX files of version 3.00 and above, the header element
+contains a list named \code{ionosphericCorrections}. Each element of this list
+is in turn a list itself, with the following elements:
+  \item{ionosphericCorrectionType }{A string indicating the type of ionospheric
+  correction for which this element provides coefficients. Can be GAL, GPSA, GPSB,
+  QZSA, QZSB, BDSA, BDSB, IRNA or IRNB. The specific coefficients given in the
+  following elements vary depending on the type of ionospheric correction. For GAL,
+  3 coefficients are given (a0-a2). For GPSA, QZSA, BDSA and IRNA, 4 coefficients
+  are given (alpha0-alpha3). For GPSB, QZSB, BDSB and IRNB, 4 coefficients are
+  given (beta0-beta1)}
+  \item{coefficients }{3 (for GAL correction) or 4 (for all other corrections)
+  elements providing the ionospheric correction coefficients. The names of the
+  elements vary depending on the type of correction, as stated above}
+  \item{ionosphericCorrectionTimeMark }{Character indicating the transmission time.
+  The field is only mandatory for corrections of type BDSA and BDSB. It can be a letter
+  from "A" to "X", with each letter indicating a 1-hour interval: A=00h-01h, B=01h-02hB,
+  ..., X=23h-24h }
+  \item{ionosphericCorrectionTimeMark }{Character indicating the transmission time.
+  The field is only mandatory for corrections of type BDSA and BDSB. It can be a letter
+  from "A" to "X", with each letter indicating a 1-hour interval: A=00h-01h, B=01h-02hB,
+  ..., X=23h-24h }
+  \item{ionosphericCorrectionSV }{String indicating the satellite that provided
+  the ionospheric correction parameters. The field is only mandatory for BDSA and
+  BDSB corrections. If multiple sources are available for the same type of BDSA/BDSB
+  correction, these should be given priority according to the satellite that provided
+  them as follows: BDS GEO satellites first, followed by BDS IGSO satellites,
+  and finally BDS MEO satellites}
+
 The second element is named \code{messages}, and it contains one element for
 each navigation message found in the RINEX file. Each of these elements is a 
 list with the following elements that provide information about the position
@@ -56,14 +142,12 @@ of the GPS satellite:
   \item{satellitePRNCode }{PRN code of the satellite. Unique PRN codes are
   assigned to all satellites in global navigation satellite systems, and 
   therefore provide an identifier for each of them}
-  \item{tocYearShort }{Toc year in 2-digit format. If lower than 80, the meaning 
-  should be taken as 20XX, while if larger than 80, it refers to 19XX. Toc is
-  the GPS time of the specific satellite that should be used as the time 
-  reference to apply clock bias, clock drift and possibly even clock drift rate,
-  as well as a relativistic correction, as described in the GPS system 
-  specification (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf) to obtain 
-  the corrected GPST system time. The GPST system time can be converted to UTC 
-  time by subtracting leap seconds since the 6th of January 1980 and performing
+  \item{tocYear }{Toc year in 4-digit format. Toc is the GPS time of the specific 
+  satellite that should be used as the time reference to apply clock bias, clock 
+  drift and possibly even clock drift rate, as well as a relativistic correction, 
+  as described in the GPS system specification (https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf) 
+  to obtain the corrected GPST system time. The GPST system time can be converted 
+  to UTC time by subtracting leap seconds since the 6th of January 1980 and performing
   another polynomial correction to account for bias and drift between GPST and
   UTC times.}
   \item{tocMonth }{Toc month}
@@ -192,11 +276,11 @@ https://www.icao.int/Meetings/AMC/MA/2004/GNSS/icd.pdf
 https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf
 }
 \examples{
-# The file testGPSRINEX.txt provided with the package includes 3 navigation
+# The file testGPSRINEXv2.txt provided with the package includes 3 navigation
 # messages from 3 GPS satellites
 
 testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
-"/testGPSRINEX.txt"))
+"/testGPSRINEXv2.txt"))
 testGPSnav$header
 testGPSnav$messages
 }

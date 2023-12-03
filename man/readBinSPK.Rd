@@ -88,15 +88,17 @@ see NAIF's documentation.
 For type 1, which provide Modified Difference Arrays (MDAs), a list where each
 element is one of the records of the segment. Each of these elements contains
 the following elements:
-  \item{finalEpoch }{The final epoch (and also reference point) for which this 
-  MDA should be used to compute a state vector}
-  \item{stepsizeFunctionVector }{A vector of differences between the final epoch/reference
+  \item{referenceEpoch }{The reference epoch that should be used when using this 
+  MDA to compute a state vector}
+  \item{referenceEpoch }{The final epoch for which this MDA should be used to compute 
+  a state vector}
+  \item{stepsizeFunctionVector }{A vector of differences between the reference
   point and the epochs of all the other data points used to fit the interpolation
   polynomials from which the MDA is derived. This is of length 15}
   \item{referencePosition }{A numeric vector of length 3 containing the X, Y and Z
-  components of the position at the final/reference epoch, in km}
+  components of the position at the reference epoch, in km}
   \item{referencePosition }{A numeric vector of length 3 containing the X, Y and Z
-  components of the velocity at the final/reference epoch, in km/s}
+  components of the velocity at the reference epoch, in km/s}
   \item{MDA }{A matrix with 15 rows and 3 columns providing the constant coefficients
   to interpolate position, velocity and acceleration at a target epoch. The 1st, 
   2nd and 3rd columns give the coefficients for the X, Y and Z components respectively. 
@@ -426,10 +428,13 @@ Shampine, L. F. and Gordon, M. K., Computer Solution of Ordinary Differential Eq
 Robert Werner, SPICE spke01 math, 2022.
 }
 \examples{
-# The file vgr2_jup230.bsp provided with the package includes information for the
+# The file vgr2_jup230.bsp distributed by NAIF includes information for the 
 # Jupiter flyby of Voyager 2
 
-testSPK <- readBinSPK(paste0(path.package("asteRisk"), "/vgr2_jup230.bsp"))
+testSPKFilePath <- tempfile()
+download.file("https://naif.jpl.nasa.gov/pub/naif/VOYAGER/kernels/spk/vgr2_jup230.bsp", testSPKFilePath)
+
+testSPK <- readBinSPK(testSPKFilePath)
 length(testSPK$segments)
 # It contains a single segment
 testSPK$segments[[1]]$segmentSummary$SPKType

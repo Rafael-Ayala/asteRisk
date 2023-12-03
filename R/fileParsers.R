@@ -1,4 +1,3 @@
-
 parseTLElines <- function(lines) {
     if(length(lines) == 2) {
         line1 <- lines[1]
@@ -113,48 +112,141 @@ readTLE <- function(filename, maxTLEs=NULL) {
     return(parsedTLEs)
 }
 
-parseGLONASSNavigationRINEXlines <- function(lines, tauC=0) {
-    if(length(lines) != 4) {
+parseGLONASSNavigationRINEXlines <- function(lines, tauC=0, rinexVersion, flagV305) {
+    if(!(length(lines) == 4 || length(lines) == 5)) {
         stop("Invalid GLONASS navigation RINEX file")
     }
     line1 <- gsub("D", "E", lines[1], ignore.case=TRUE)
     line2 <- gsub("D", "E", lines[2], ignore.case=TRUE)
     line3 <- gsub("D", "E", lines[3], ignore.case=TRUE)
     line4 <- gsub("D", "E", lines[4], ignore.case=TRUE)
-    satelliteNumber <- as.numeric(substr(line1, 1, 2))
-    epochYearShort <- as.numeric(substr(line1, 4, 5))
-    epochMonth <- as.numeric(substr(line1, 7, 8))
-    epochDay <- as.numeric(substr(line1, 10, 11))
-    epochHour <- as.numeric(substr(line1, 13, 14))
-    epochMinute <- as.numeric(substr(line1, 16, 17))
-    epochSecond <- as.numeric(substr(line1, 18, 22))
-    clockBias <- -as.numeric(substr(line1, 23, 41))
-    relativeFreqBias <- as.numeric(substr(line1, 42, 60))
-    messageFrameTime <- as.numeric(substr(line1, 61, 79))
-    positionX <- as.numeric(substr(line2, 4, 22))
-    velocityX <- as.numeric(substr(line2, 23, 41))
-    accelX <- as.numeric(substr(line2, 42, 60))
-    satelliteHealthCode <- as.numeric(substr(line2, 61, 79))
-    positionY <- as.numeric(substr(line3, 4, 22))
-    velocityY <- as.numeric(substr(line3, 23, 41))
-    accelY <- as.numeric(substr(line3, 42, 60))
-    freqNumber <- as.numeric(substr(line3, 61, 79))
-    positionZ <- as.numeric(substr(line4, 4, 22))
-    velocityZ <- as.numeric(substr(line4, 23, 41))
-    accelZ <- as.numeric(substr(line4, 42, 60))
-    informationAge <- as.numeric(substr(line4, 61, 79))
-    if (is.numeric(epochYearShort)) if(epochYearShort >= 80) {
-        epochYear <- 1900 + epochYearShort
-    } else {
-        epochYear <- 2000 + epochYearShort
+    if(rinexVersion == 2) {
+        satelliteSlotNumber <- as.numeric(substr(line1, 1, 2))
+        satelliteNumber <- paste("R", formatC(satelliteSlotNumber, width=2, flag="0"), sep="")
+        epochYearShort <- as.numeric(substr(line1, 4, 5))
+        epochMonth <- as.numeric(substr(line1, 7, 8))
+        epochDay <- as.numeric(substr(line1, 10, 11))
+        epochHour <- as.numeric(substr(line1, 13, 14))
+        epochMinute <- as.numeric(substr(line1, 16, 17))
+        epochSecond <- as.numeric(substr(line1, 18, 22))
+        clockBias <- -as.numeric(substr(line1, 23, 41))
+        relativeFreqBias <- as.numeric(substr(line1, 42, 60))
+        messageFrameTime <- as.numeric(substr(line1, 61, 79))
+        positionX <- as.numeric(substr(line2, 4, 22))
+        velocityX <- as.numeric(substr(line2, 23, 41))
+        accelX <- as.numeric(substr(line2, 42, 60))
+        satelliteHealthCode <- as.numeric(substr(line2, 61, 79))
+        if(satelliteHealthCode == 0) {
+            satelliteHealthStatus <- "Healthy"
+        } else if(satelliteHealthCode == 1) {
+            satelliteHealthStatus <- "Malfunction"
+        }
+        positionY <- as.numeric(substr(line3, 4, 22))
+        velocityY <- as.numeric(substr(line3, 23, 41))
+        accelY <- as.numeric(substr(line3, 42, 60))
+        freqNumber <- as.numeric(substr(line3, 61, 79))
+        positionZ <- as.numeric(substr(line4, 4, 22))
+        velocityZ <- as.numeric(substr(line4, 23, 41))
+        accelZ <- as.numeric(substr(line4, 42, 60))
+        informationAge <- as.numeric(substr(line4, 61, 79))
+        if (is.numeric(epochYearShort)) if(epochYearShort >= 80) {
+            epochYear <- 1900 + epochYearShort
+        } else {
+            epochYear <- 2000 + epochYearShort
+        }
+    } else if(rinexVersion == 3) {
+        satelliteNumber <- substr(line1, 1, 3)
+        epochYear <- as.numeric(substr(line1, 5, 8))
+        epochMonth <- as.numeric(substr(line1, 10, 11))
+        epochDay <- as.numeric(substr(line1, 13, 14))
+        epochHour <- as.numeric(substr(line1, 16, 17))
+        epochMinute <- as.numeric(substr(line1, 19, 20))
+        epochSecond <- as.numeric(substr(line1, 21, 23))
+        clockBias <- -as.numeric(substr(line1, 24, 42))
+        relativeFreqBias <- as.numeric(substr(line1, 43, 61))
+        messageFrameTime <- as.numeric(substr(line1, 62, 80))
+        positionX <- as.numeric(substr(line2, 5, 23))
+        velocityX <- as.numeric(substr(line2, 24, 42))
+        accelX <- as.numeric(substr(line2, 43, 61))
+        satelliteHealthCode <- as.numeric(substr(line2, 62, 80))
+        if(satelliteHealthCode == 0) {
+            satelliteHealthStatus <- "Healthy"
+        } else if(satelliteHealthCode == 1) {
+            satelliteHealthStatus <- "Malfunction"
+        }
+        positionY <- as.numeric(substr(line3, 5, 23))
+        velocityY <- as.numeric(substr(line3, 24, 42))
+        accelY <- as.numeric(substr(line3, 43, 61))
+        freqNumber <- as.numeric(substr(line3, 62, 80))
+        positionZ <- as.numeric(substr(line4, 5, 23))
+        velocityZ <- as.numeric(substr(line4, 24, 42))
+        accelZ <- as.numeric(substr(line4, 43, 61))
+        informationAge <- as.numeric(substr(line4, 62, 80))
+        if(flagV305) {
+            line5 <- gsub("D", "E", lines[5], ignore.case=TRUE)
+            statusFlagsInt <- as.numeric(substr(line5, 5, 23))
+            if(is.na(statusFlagsInt) || statusFlagsInt >= 512 || statusFlagsInt < 0) {
+                GLONASSType <- NA
+                dataUpdatedFlag <- NA
+                numberSatellitesAlmanac <- NA
+                ephemerisValidityTimeInterval <- NA
+                parityEphemerisValidityTimeInterval <- NA
+                tauCSource <- NA
+                tauGPSSource <- NA
+            } else {
+                statusFlagsBits <- intToBits(statusFlagsInt)[1:9]
+                GLONASSType <- if(statusFlagsBits[9]) "GLO-M/K" else "GLO"
+                updatedDataFlag <- if(statusFlagsBits[7]) TRUE else FALSE
+                numberSatellitesAlmanac <- if(statusFlagsBits[6]) 5 else 4
+                if(statusFlagsBits[3]) {
+                    if(statusFlagsBits[4]) {
+                        ephemerisValidityTimeInterval <- 60
+                    } else {
+                        ephemerisValidityTimeInterval <- 45
+                    }
+                } else {
+                    if(statusFlagsBits[4]) {
+                        ephemerisValidityTimeInterval <- 30
+                    } else {
+                        ephemerisValidityTimeInterval <- 0
+                    }
+                }
+                parityEphemerisValidityTimeInterval <- if(statusFlagsBits[5]) "Odd" else "Even"
+                tauCSource <- if(statusFlagsBits[1]) "On-board" else "Ground"
+                tauGPSSource <- if(statusFlagsBits[2]) "On-board" else "Ground"
+            }
+            totalGroupDelay <- substr(line5, 24, 42)
+            if(trimws(totalGroupDelay) == ".999999999999E+09") {
+                totalGroupDelay <- NA
+            } else {
+                totalGroupDelay <- as.numeric(totalGroupDelay)
+            }
+            URAI <- as.numeric(substr(line5, 43, 61))
+            healthFlagsInt <- as.numeric(substr(line5, 62, 80))
+            if(is.na(healthFlagsInt) || healthFlagsInt >= 8 || healthFlagsInt < 0) {
+                satelliteHealthStatus2 <- NA
+                almanacHealthStatus <- NA
+            } else {
+                healthFlagsBits <- intToBits(healthFlagsInt)[1:3]
+                satelliteHealthStatus2 <- if(healthFlagsBits[3]) "Malfunction" else "Healthy"
+                if(satelliteHealthStatus2 != satelliteHealthStatus) {
+                    warning("Conflicting satellite health status codes")
+                }
+                if(healthFlagsBits[2]) {
+                    almanacHealthStatus <- if(healthFlagsBits[1]) "Healthy" else "Malfunction"
+                } else {
+                    almanacHealthStatus <- NA
+                }
+            }
+        }
     }
     dateTimeString <- paste(epochYear, "-", epochMonth, "-", epochDay, " ", 
                             epochHour, ":", epochMinute, ":", epochSecond, 
                             sep="")
     correctedEphemerisUTC <- as.nanotime(as.POSIXct(dateTimeString, tz="UTC")) + clockBias*1e9 + tauC*1e9 # AQUIAQUIAQUI
-    return(list(
+    resultsList <- list(
         satelliteNumber=satelliteNumber,
-        epochYearShort=epochYearShort,
+        epochYear=epochYear,
         epochMonth=epochMonth,
         epochDay=epochDay,
         epochHour=epochHour,
@@ -173,13 +265,40 @@ parseGLONASSNavigationRINEXlines <- function(lines, tauC=0) {
         accelX=accelX,
         accelY=accelY,
         accelZ=accelZ,
-        satelliteHealthCode=satelliteHealthCode,
+        satelliteHealthStatus=satelliteHealthStatus,
         freqNumber=freqNumber,
         informationAge=informationAge
-    ))
+    )
+    if(flagV305) {
+        resultsList <- c(resultsList, list(
+            GLONASSType=GLONASSType,
+            updatedDataFlag=updatedDataFlag,
+            numberSatellitesAlmanac=numberSatellitesAlmanac,
+            ephemerisValidityTimeInterval=ephemerisValidityTimeInterval,
+            parityEphemerisValidityTimeInterval=parityEphemerisValidityTimeInterval,
+            tauCSource=tauCSource,
+            tauGPSSource=tauGPSSource,
+            totalGroupDelay,
+            URAI=URAI,
+            almanacHealthStatus=almanacHealthStatus
+        ))
+    }
+    return(resultsList)
 }
 
 parseGLONASSNavigationRINEXheaderLines <- function(lines) {
+    line1 <- lines[1]
+    rinexVersion <- trimws(substr(line1, 1, 9))
+    rinexMajorVersion <- strsplit(rinexVersion, "\\.")[[1]][1]
+    if(rinexMajorVersion == "2") {
+        parsedHeader <- parseGLONASSNavigationRINEXheaderV2Lines(lines)
+    } else if(rinexMajorVersion == "3") {
+        parsedHeader <- parseNavigationRINEXheaderV3Lines(lines)
+    }
+    return(parsedHeader)
+}
+
+parseGLONASSNavigationRINEXheaderV2Lines <- function(lines) {
     line1 <- lines[1]
     line2 <- lines[2]
     rinexVersion <- trimws(substr(line1, 1, 9))
@@ -199,7 +318,9 @@ parseGLONASSNavigationRINEXheaderLines <- function(lines) {
         refYear <- as.numeric(substr(systemTimeCorrectionLine, 1, 6))
         refMonth <- as.numeric(substr(systemTimeCorrectionLine, 7, 12))
         refDay <- as.numeric(substr(systemTimeCorrectionLine, 13, 18))
-        sysTimeCorrection <- -as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 22, 40)))
+        # sysTimeCorrection <- -as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 22, 40)))
+        sysTimeCorrection <- as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 22, 40)))
+        #TODO CHECK IF THIS SHOULD HAVE - OR NOT
     } else {
         systemTimeCorrectionLine <- NULL
         refYear <- NULL
@@ -230,20 +351,163 @@ parseGLONASSNavigationRINEXheaderLines <- function(lines) {
     ))
 }
 
+parseNavigationRINEXheaderV3Lines <- function(lines) {
+    line1 <- lines[1]
+    line2 <- lines[2]
+    rinexVersion <- trimws(substr(line1, 1, 9))
+    rinexFileType <- substr(line1, 21, 21)
+    if(rinexFileType != "N") {
+        stop("Wrong RINEX file type field")
+    }
+    satelliteSystem <- substr(line1, 41, 41)
+    generatorProgram <- trimws(substr(line2, 1, 20))
+    generatorEntity <- trimws(substr(line2, 21, 40))
+    fileCreationDateString <- trimws(substr(line2, 41, 60))
+    commentLinesIndexes <- grep("COMMENT", lines)
+    if(length(commentLinesIndexes) > 0) {
+        comments <- trimws(substr(lines[commentLinesIndexes], 1, 60))
+    } else {
+        comments <- NULL
+    }
+    ionosphericCorrectionIndexes <- grep("IONOSPHERIC CORR", lines)
+    if(length(ionosphericCorrectionIndexes) > 0) {
+        ionosphericCorrections <- vector(mode="list", length = length(ionosphericCorrectionIndexes))
+        for(index in ionosphericCorrectionIndexes) {
+            ionosphericCorrectionLine <- lines[index]
+            ionosphericCorrectionType <- trimws(substr(ionosphericCorrectionLine, 1, 4))
+            coefficient1 <- as.numeric(gsub("D", "E", substr(ionosphericCorrectionLine, 6, 17)))
+            coefficient2 <- as.numeric(gsub("D", "E", substr(ionosphericCorrectionLine, 18, 29)))
+            coefficient3 <- as.numeric(gsub("D", "E", substr(ionosphericCorrectionLine, 30, 41)))
+            coefficient4 <- as.numeric(gsub("D", "E", substr(ionosphericCorrectionLine, 42, 53)))
+            timeMark <- trimws(substr(ionosphericCorrectionLine, 54, 55))
+            SVID <- trimws(substr(ionosphericCorrectionLine, 56, 58))
+            namesCoefficients <- switch(ionosphericCorrectionType,
+                                        GAL=c("ai0", "ai1", "ai2"),
+                                        GPSA=c("alpha0", "alpha1", "alpha2", "alpha3"),
+                                        GPSB=c("beta0", "beta1", "beta2", "beta3"),
+                                        QZSA=c("alpha0", "alpha1", "alpha2", "alpha3"),
+                                        QZSB=c("beta0", "beta1", "beta2", "beta3"),
+                                        BDSA=c("alpha0", "alpha1", "alpha2", "alpha3"),
+                                        BDSB=c("beta0", "beta1", "beta2", "beta3"),
+                                        IRNA=c("alpha0", "alpha1", "alpha2", "alpha3"),
+                                        IRNB=c("beta0", "beta1", "beta2", "beta3"))
+            if(ionosphericCorrectionType == "GAL") {
+                ionosphericCorrectionList <- list(
+                    ionosphericCorrectionType, coefficient1, coefficient2, coefficient3, 
+                    timeMark, SVID
+                )
+            } else {
+                ionosphericCorrectionList <- list(
+                    ionosphericCorrectionType, coefficient1, coefficient2, coefficient3, 
+                    coefficient4, timeMark, SVID
+                )
+            }
+            names(ionosphericCorrectionList) <- c("ionosphericCorrectionType", namesCoefficients,
+                                                  "ionosphericCorrectionTimeMark", "ionosphericCorrectionSV")
+            ionosphericCorrections[[index]] <- ionosphericCorrectionList
+        }
+        comments <- trimws(substr(lines[commentLinesIndexes], 1, 60))
+    } else {
+        ionosphericCorrections <- NULL
+    }
+    systemTimeCorrectionLineIndex <- grep("TIME SYSTEM CORR", lines)
+    if(length(systemTimeCorrectionLineIndex) > 0) {
+        systemTimeCorrectionLine <- lines[systemTimeCorrectionLineIndex]
+        systemTimeCorrectionType <- trimws(substr(systemTimeCorrectionLine, 1, 4))
+        timeCorrectionA0 <- as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 6, 22)))
+        timeCorrectionA1 <- as.numeric(gsub("D", "E", substr(systemTimeCorrectionLine, 23, 38)))
+        timeCorrectionReferenceTime <- as.numeric(substr(systemTimeCorrectionLine, 39, 45))
+        timeCorrectionReferenceWeekNumber <- as.numeric(substr(systemTimeCorrectionLine, 46, 50))
+        timeCorrectionSatelliteNumber <- trimws(substr(systemTimeCorrectionLine, 51, 57))
+        UTCTypeIdentifier <- as.numeric(substr(systemTimeCorrectionLine, 58, 60))
+        UTCType <- switch(UTCTypeIdentifier+1,
+                          "Uknown",
+                          "UTC(NIST)",
+                          "UTC(USNO)",
+                          "UTC(SU)",
+                          "UTC(BIPM)",
+                          "UTC(Europe Lab)",
+                          "UTC(CRL)",
+                          "UTC(NTSC) (BDS)",
+                          "Unassigned")
+    } else {
+        systemTimeCorrectionType <- NA
+        timeCorrectionA0 <- NA
+        timeCorrectionA1 <- NA
+        timeCorrectionReferenceTime <- NA
+        timeCorrectionReferenceWeekNumber <- NA
+        timeCorrectionSatelliteNumber <- NA
+        UTCTypeIdentifier <- NA
+        UTCType <- NA
+    }
+    leapSecondsLineIndex <- grep("LEAP SECONDS", lines)
+    if(length(leapSecondsLineIndex) > 0) {
+        leapSecondsLine <- lines[leapSecondsLineIndex]
+        leapSeconds <- as.numeric(substr(leapSecondsLine, 1, 6))
+        deltaTimeLeapSeconds <- as.numeric(substr(leapSecondsLine, 7, 12))
+        deltaTimeLeapSecondsWeekNumber <- as.numeric(substr(leapSecondsLine, 13, 18))
+        deltaTimeLeapSecondsDayNumber <- as.numeric(substr(leapSecondsLine, 19, 24))
+        leapSecondsTimeSystemIdentifier <- substr(leapSecondsLine, 25, 27)
+        if(leapSecondsTimeSystemIdentifier != "BDS") leapSecondsTimeSystemIdentifier <- "GPS"
+    } else {
+        leapSeconds <- NA
+        deltaTimeLeapSeconds <- NA
+        deltaTimeLeapSecondsWeekNumber <- NA
+        deltaTimeLeapSecondsDayNumber <- NA
+        leapSecondsTimeSystemIdentifier <- NA
+    }
+    return(list(
+        rinexVersion=rinexVersion,
+        rinexFileType=rinexFileType,
+        satelliteSystem=satelliteSystem,
+        generatorProgram=generatorProgram,
+        generatorEntity=generatorEntity,
+        fileCreationDateString=fileCreationDateString,
+        systemTimeCorrectionType=systemTimeCorrectionType,
+        timeCorrectionA0=timeCorrectionA0,
+        timeCorrectionA1=timeCorrectionA1,
+        timeCorrectionReferenceTime=timeCorrectionReferenceTime,
+        timeCorrectionReferenceWeekNumber=timeCorrectionReferenceWeekNumber,
+        timeCorrectionSatelliteNumber=timeCorrectionSatelliteNumber,
+        UTCType=UTCType,
+        leapSeconds=leapSeconds,
+        deltaTimeLeapSeconds=deltaTimeLeapSeconds,
+        deltaTimeLeapSecondsWeekNumber=deltaTimeLeapSecondsWeekNumber,
+        deltaTimeLeapSecondsDayNumber=deltaTimeLeapSecondsDayNumber,
+        leapSecondsTimeSystemIdentifier=leapSecondsTimeSystemIdentifier,
+        ionosphericCorrections=ionosphericCorrections,
+        comments=comments
+    ))
+}
+
 readGLONASSNavigationRINEX <- function(filename) {
     lines <- readLines(filename)
     lines <- lines[lines != ""]
     endOfHeader <- grep("END OF HEADER", lines)
+    if(length(endOfHeader) == 0) {
+        stop("Header missing END OF HEADER label")
+    }
     headerLines <- lines[1:endOfHeader]
     bodyLines <- lines[(endOfHeader+1):length(lines)]
     headerFields <- parseGLONASSNavigationRINEXheaderLines(headerLines)
-    messageNumberLines <- 4
+    rinexVersion <- headerFields$rinexVersion
+    rinexMajorVersion <- substr(rinexVersion, 1, 1)
+    rinexVersionCompare <- compareVersion(rinexVersion, "3.05")
+    if(rinexVersionCompare >= 0) {
+        flagV305 <- TRUE
+    } else {
+        flagV305 <- FALSE
+    }
+    messageNumberLines <- if(flagV305) 5 else 4
     numberMessages <- length(bodyLines)/messageNumberLines
     parsedMessages <- vector(mode = "list", length = numberMessages)
     startingLines <- seq(1, by=messageNumberLines, length.out = numberMessages)
     for(i in 1:length(startingLines)) {
         singleMessageLines <- bodyLines[startingLines[i]:(startingLines[i]+messageNumberLines-1)]
-        parsedMessages[[i]] <- parseGLONASSNavigationRINEXlines(singleMessageLines, tauC=headerFields$sysTimeCorrection)
+        parsedMessages[[i]] <- parseGLONASSNavigationRINEXlines(singleMessageLines, 
+                                                                tauC=headerFields$sysTimeCorrection,
+                                                                rinexVersion = rinexMajorVersion,
+                                                                flagV305 = flagV305)
     }
     return(list(
         header=headerFields, 
@@ -252,7 +516,7 @@ readGLONASSNavigationRINEX <- function(filename) {
 
 parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
                                          deltaUTCA1=0, referenceTimeUTC,
-                                         referenceWeekUTC) {
+                                         referenceWeekUTC, rinexVersion) {
     if(length(lines) != 8) {
         stop("Invalid GPS navigation RINEX file")
     }
@@ -265,48 +529,90 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
     line6 <- gsub("D", "E", lines[6], ignore.case=TRUE)
     line7 <- gsub("D", "E", lines[7], ignore.case=TRUE)
     line8 <- gsub("D", "E", lines[8], ignore.case=TRUE)
-    satellitePRNCode <- as.numeric(substr(line1, 1, 2))
-    tocYearShort <- as.numeric(substr(line1, 4, 5))
-    tocMonth <- as.numeric(substr(line1, 7, 8))
-    tocDay <- as.numeric(substr(line1, 10, 11))
-    tocHour <- as.numeric(substr(line1, 13, 14))
-    tocMinute <- as.numeric(substr(line1, 16, 17))
-    tocSecond <- as.numeric(substr(line1, 18, 22))
-    clockBias <- as.numeric(substr(line1, 23, 41))
-    clockDrift <- as.numeric(substr(line1, 42, 60))
-    clockDriftRate <- as.numeric(substr(line1, 61, 79))
-    IODE <- as.numeric(substr(line2, 4, 22))
-    radiusCorrectionSine <- as.numeric(substr(line2, 23, 41))
-    deltaN <- as.numeric(substr(line2, 42, 60))
-    meanAnomaly <- as.numeric(substr(line2, 61, 79)) # radians, M0 angle
-    latitudeCorrectionCosine <- as.numeric(substr(line3, 4, 22)) 
-    eccentricity <- as.numeric(substr(line3, 23, 41))
-    latitudeCorrectionSine <- as.numeric(substr(line3, 42, 60))
-    semiMajorAxis <- as.numeric(substr(line3, 61, 79))^2 # RINEX file contains sqrt
-    calculatedMeanMotion <- semiMajorAxisToMeanMotion(semiMajorAxis, outputRevsPerDay = FALSE)
-    correctedMeanMotion <- calculatedMeanMotion + deltaN
-    toeSecondsOfGPSWeek <- as.numeric(substr(line4, 4, 22))
-    inclinationCorrectionCosine <- as.numeric(substr(line4, 23, 41))
-    ascension <- as.numeric(substr(line4, 42, 60)) # radians, OMEGA angle
-    inclinationCorrectionSine <- as.numeric(substr(line4, 61, 79))
-    inclination <- as.numeric(substr(line5, 4, 22)) # radians, initial inclination
-    radiusCorrectionCosine <- as.numeric(substr(line5, 23, 41))
-    perigeeArgument <- as.numeric(substr(line5, 42, 60)) # radians, omega angle
-    OMEGADot <- as.numeric(substr(line5, 61, 79)) # radians/s, derivative of OMEGA
-    inclinationRate <- as.numeric(substr(line6, 4, 22)) 
-    codesL2Channel <- as.numeric(substr(line6, 23, 41))
-    toeGPSWeek <- as.numeric(substr(line6, 42, 60))
-    dataFlagL2P <- as.numeric(substr(line6, 61, 79))
-    satelliteAccuracy <- as.numeric(substr(line7, 4, 22)) 
-    satelliteHealthCode <- as.numeric(substr(line7, 23, 41))
-    totalGroupDelay <- as.numeric(substr(line7, 42, 60)) 
-    IODC <- as.numeric(substr(line7, 61, 79))
-    transmissionTime <- as.numeric(substr(line8, 4, 22)) # seconds of GPS week
-    fitInterval <- as.numeric(substr(line8, 23, 41))
-    if (is.numeric(tocYearShort)) if(tocYearShort >= 80) {
-        tocYear <- 1900 + tocYearShort
-    } else {
-        tocYear <- 2000 + tocYearShort
+    if(rinexVersion == 2) {
+        satellitePRNCode <- as.numeric(substr(line1, 1, 2))
+        satelliteNumber <- paste("G", formatC(satellitePRNCode, width=2, flag="0"), sep="")
+        tocYearShort <- as.numeric(substr(line1, 4, 5))
+        tocMonth <- as.numeric(substr(line1, 7, 8))
+        tocDay <- as.numeric(substr(line1, 10, 11))
+        tocHour <- as.numeric(substr(line1, 13, 14))
+        tocMinute <- as.numeric(substr(line1, 16, 17))
+        tocSecond <- as.numeric(substr(line1, 18, 22))
+        clockBias <- as.numeric(substr(line1, 23, 41))
+        clockDrift <- as.numeric(substr(line1, 42, 60))
+        clockDriftRate <- as.numeric(substr(line1, 61, 79))
+        IODE <- as.numeric(substr(line2, 4, 22))
+        radiusCorrectionSine <- as.numeric(substr(line2, 23, 41))
+        deltaN <- as.numeric(substr(line2, 42, 60))
+        meanAnomaly <- as.numeric(substr(line2, 61, 79)) # radians, M0 angle
+        latitudeCorrectionCosine <- as.numeric(substr(line3, 4, 22)) 
+        eccentricity <- as.numeric(substr(line3, 23, 41))
+        latitudeCorrectionSine <- as.numeric(substr(line3, 42, 60))
+        semiMajorAxis <- as.numeric(substr(line3, 61, 79))^2 # RINEX file contains sqrt
+        calculatedMeanMotion <- semiMajorAxisToMeanMotion(semiMajorAxis, outputRevsPerDay = FALSE)
+        correctedMeanMotion <- calculatedMeanMotion + deltaN
+        toeSecondsOfGPSWeek <- as.numeric(substr(line4, 4, 22))
+        inclinationCorrectionCosine <- as.numeric(substr(line4, 23, 41))
+        ascension <- as.numeric(substr(line4, 42, 60)) # radians, OMEGA angle
+        inclinationCorrectionSine <- as.numeric(substr(line4, 61, 79))
+        inclination <- as.numeric(substr(line5, 4, 22)) # radians, initial inclination
+        radiusCorrectionCosine <- as.numeric(substr(line5, 23, 41))
+        perigeeArgument <- as.numeric(substr(line5, 42, 60)) # radians, omega angle
+        OMEGADot <- as.numeric(substr(line5, 61, 79)) # radians/s, derivative of OMEGA
+        inclinationRate <- as.numeric(substr(line6, 4, 22)) 
+        codesL2Channel <- as.numeric(substr(line6, 23, 41))
+        toeGPSWeek <- as.numeric(substr(line6, 42, 60))
+        dataFlagL2P <- as.numeric(substr(line6, 61, 79))
+        satelliteAccuracy <- as.numeric(substr(line7, 4, 22)) 
+        satelliteHealthCode <- as.numeric(substr(line7, 23, 41))
+        totalGroupDelay <- as.numeric(substr(line7, 42, 60)) 
+        IODC <- as.numeric(substr(line7, 61, 79))
+        transmissionTime <- as.numeric(substr(line8, 4, 22)) # seconds of GPS week
+        fitInterval <- as.numeric(substr(line8, 23, 41))
+        if (is.numeric(tocYearShort)) if(tocYearShort >= 80) {
+            tocYear <- 1900 + tocYearShort
+        } else {
+            tocYear <- 2000 + tocYearShort
+        }
+    } else if(rinexVersion == 3) {
+        satelliteNumber <- substr(line1, 1, 3)
+        tocYear <- as.numeric(substr(line1, 5, 8))
+        tocMonth <- as.numeric(substr(line1, 10, 11))
+        tocDay <- as.numeric(substr(line1, 13, 14))
+        tocHour <- as.numeric(substr(line1, 16, 17))
+        tocMinute <- as.numeric(substr(line1, 19, 20))
+        tocSecond <- as.numeric(substr(line1, 22, 23))
+        clockBias <- as.numeric(substr(line1, 24, 42))
+        clockDrift <- as.numeric(substr(line1, 43, 61))
+        clockDriftRate <- as.numeric(substr(line1, 62, 80))
+        IODE <- as.numeric(substr(line2, 5, 23))
+        radiusCorrectionSine <- as.numeric(substr(line2, 24, 42))
+        deltaN <- as.numeric(substr(line2, 43, 61))
+        meanAnomaly <- as.numeric(substr(line2, 62, 80)) # radians, M0 angle
+        latitudeCorrectionCosine <- as.numeric(substr(line3, 5, 23)) 
+        eccentricity <- as.numeric(substr(line3, 24, 42))
+        latitudeCorrectionSine <- as.numeric(substr(line3, 43, 61))
+        semiMajorAxis <- as.numeric(substr(line3, 62, 80))^2 # RINEX file contains sqrt
+        calculatedMeanMotion <- semiMajorAxisToMeanMotion(semiMajorAxis, outputRevsPerDay = FALSE)
+        correctedMeanMotion <- calculatedMeanMotion + deltaN
+        toeSecondsOfGPSWeek <- as.numeric(substr(line4, 5, 23))
+        inclinationCorrectionCosine <- as.numeric(substr(line4, 24, 42))
+        ascension <- as.numeric(substr(line4, 43, 61)) # radians, OMEGA angle
+        inclinationCorrectionSine <- as.numeric(substr(line4, 62, 80))
+        inclination <- as.numeric(substr(line5, 5, 23)) # radians, initial inclination
+        radiusCorrectionCosine <- as.numeric(substr(line5, 24, 42))
+        perigeeArgument <- as.numeric(substr(line5, 43, 61)) # radians, omega angle
+        OMEGADot <- as.numeric(substr(line5, 62, 80)) # radians/s, derivative of OMEGA
+        inclinationRate <- as.numeric(substr(line6, 5, 23)) 
+        codesL2Channel <- as.numeric(substr(line6, 24, 42))
+        toeGPSWeek <- as.numeric(substr(line6, 43, 61))
+        dataFlagL2P <- as.numeric(substr(line6, 62, 80))
+        satelliteAccuracy <- as.numeric(substr(line7, 5, 23)) 
+        satelliteHealthCode <- as.numeric(substr(line7, 24, 42))
+        totalGroupDelay <- as.numeric(substr(line7, 43, 61)) 
+        IODC <- as.numeric(substr(line7, 62, 80))
+        transmissionTime <- as.numeric(substr(line8, 5, 23)) # seconds of GPS week
+        fitInterval <- as.numeric(substr(line8, 24, 42))
     }
     tocDateTimeString <- paste(tocYear, "-", tocMonth, "-", tocDay, " ", 
                                tocHour, ":", tocMinute, ":", tocSecond, 
@@ -401,8 +707,8 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
             ((3-5*(position_ECEF[3]/correctedRadius)^2)*(position_ECEF[3]/correctedRadius))
     )
     return(list(
-        satellitePRNCode=satellitePRNCode,
-        tocYearShort=tocYearShort,
+        satelliteNumber=satelliteNumber,
+        tocYear=tocYear,
         tocMonth=tocMonth,
         tocDay=tocDay,
         tocHour=tocHour,
@@ -445,7 +751,7 @@ parseGPSNavigationRINEXlines <- function(lines, leapSeconds=0, deltaUTCA0=0,
     ))
 }
 
-parseGPSNavigationRINEXheaderLines <- function(lines) {
+parseGPSNavigationRINEXheaderV2Lines <- function(lines) {
     line1 <- lines[1]
     line2 <- lines[2]
     rinexVersion <- trimws(substr(line1, 1, 9))
@@ -522,13 +828,30 @@ parseGPSNavigationRINEXheaderLines <- function(lines) {
     ))
 }
 
+parseGPSNavigationRINEXheaderLines <- function(lines) {
+    line1 <- lines[1]
+    rinexVersion <- trimws(substr(line1, 1, 9))
+    rinexMajorVersion <- strsplit(rinexVersion, "\\.")[[1]][1]
+    if(rinexMajorVersion == "2") {
+        parsedHeader <- parseGPSNavigationRINEXheaderV2Lines(lines)
+    } else if(rinexMajorVersion == "3") {
+        parsedHeader <- parseNavigationRINEXheaderV3Lines(lines)
+    }
+    return(parsedHeader)
+}
+
 readGPSNavigationRINEX <- function(filename) {
     lines <- readLines(filename)
     lines <- lines[lines != ""]
     endOfHeader <- grep("END OF HEADER", lines)
+    if(length(endOfHeader) == 0) {
+        stop("Header missing END OF HEADER label")
+    }
     headerLines <- lines[1:endOfHeader]
     bodyLines <- lines[(endOfHeader+1):length(lines)]
     headerFields <- parseGPSNavigationRINEXheaderLines(headerLines)
+    rinexVersion <- headerFields$rinexVersion
+    rinexMajorVersion <- substr(rinexVersion, 1, 1)
     messageNumberLines <- 8
     numberMessages <- length(bodyLines)/messageNumberLines
     parsedMessages <- vector(mode = "list", length = numberMessages)
@@ -539,7 +862,8 @@ readGPSNavigationRINEX <- function(filename) {
                                                             headerFields$deltaUTCA0,
                                                             headerFields$deltaUTCA1, 
                                                             headerFields$referenceTimeUTC,
-                                                            headerFields$referenceWeekUTC)
+                                                            headerFields$referenceWeekUTC,
+                                                            rinexMajorVersion)
     }
     return(list(
         header=headerFields, 
@@ -1098,10 +1422,12 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
     } else if(SPKTypeCode == 1) {
         numberRecords <- SPKArray[length(SPKArray)]
         formattedArray <- vector(mode="list", length=numberRecords)
+        finalEpochs <- SPKArray[(71*numberRecords + 1):(72*numberRecords)]
         for(i in 1:numberRecords) {
             startingIndex <- 71*(i - 1) + 1
             formattedArray[[i]] <- list(
-                finalEpoch = SPKArray[startingIndex],
+                referenceEpoch = SPKArray[startingIndex],
+                finalEpoch =finalEpochs[i],
                 stepsizeFunctionVector = SPKArray[(startingIndex+1):(startingIndex+15)],
                 referencePosition = SPKArray[startingIndex+c(16, 18, 20)],
                 referenceVelocity = SPKArray[startingIndex+c(17, 19, 21)],
@@ -1485,8 +1811,10 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         formattedArray <- vector(mode="list", length=numberRecords)
         for(i in 1:numberRecords) {
             startingIndex <- DLSize*(numberRecords - 1) + 1
+            finalEpochs <- SPKArray[(DLSize*numberRecords + 1):((DLSize+1)*numberRecords)]
             formattedArray[[i]] <- list(
-                finalEpoch = SPKArray[startingIndex],
+                referenceEpoch = SPKArray[startingIndex],
+                finalEpoch = finalEpochs[i],
                 stepsizeFunctionVector = SPKArray[(startingIndex+1):(startingIndex+maxDim)],
                 referencePosition = SPKArray[startingIndex+maxDim+c(1,3,5)],
                 referenceVelocity = SPKArray[startingIndex+maxDim+c(2,4,6)],
@@ -1723,48 +2051,48 @@ parseTextKernelDataBlock <- function(dataLines, stringContinuationMarker=NULL) {
     return(dataBlockVariables)
 }
 
-parseTextDEHeader <- function(headerLines) {
-    headerLines <- trimws(headerLines)
-    headerLines <- headerLines[headerLines != ""]
-    firstLine <- headerLines[1]
-    if(!(grepl("KSIZE", firstLine) & grepl("NCOEFF", firstLine))) {
-        stop("First line of header lacks definitions of KSIZE or NCOEFF")
-    }
-    ksizeNcoeff <- as.numeric(unlist(regmatches(firstLine, gregexpr('\\(?[0-9,.]+', firstLine))))
-    if(length(ksizeNcoeff) != 2) {
-        stop("First line of header contains wrong number of assignments (should be 2)")
-    }
-    ksize <- ksizeNcoeff[1]
-    ncoeff <- ksizeNcoeff[2]
-    groupLineIndexes <- grep("GROUP", headerLines)
-    groupLines <- headerLinesgroupLineIndexes
-    groupNumbers <- as.numeric(unlist(regmatches(groupLines, gregexpr('\\(?[0-9,.]+', groupLines))))
-    if(identical(groupNumbers[1:5], c(1010, 1030, 1040, 1041, 1050))) {
-        stop("Header file does not contain groups 1010, 1030, 1040, 1041 and 1050 in this order")
-    }
-    group1010Index <- groupLines[1]
-    group1030Index <- groupLines[2]
-    group1040Index <- groupLines[3]
-    group1041Index <- groupLines[4]
-    group1050Index <- groupLines[5]
-    if(length(groupNumbers == 6)) {
-        group1070Index <- groupLines[6]
-    } else {
-        group1070Index <- length(headerLines)
-    }
-    group1010Lines <- headerLines[(group1010Index+1):(group1030Index-1)]
-    group1030Lines <- headerLines[(group1030Index+1):(group1040Index-1)]
-    group1040Lines <- headerLines[(group1040Index+1):(group1041Index-1)]
-    group1041Lines <- headerLines[(group1041Index+1):(group1050Index-1)]
-    group1050Lines <- headerLines[(group1050Index+1):(group1070Index-1)]
-    group1030Values <- as.numeric(unlist(strsplit(group1030Lines, "\\s+")))
-    startJD <- group1030Values[1]
-    endJD <- group1030Values[2]
-    stepSize <- group1030Values[3]
-    numberConstants <- as.numeric(group1040Lines[1])
-    namesConstants <- unlist(strsplit(group1040Lines[-1], "\\s+"))
-    valuesConstants <- as.numeric(gsub("D", "E", unlist(strsplit(h2[28:78], "\\s+")), ignore.case = TRUE))
-    
-    
-    
-}
+# parseTextDEHeader <- function(headerLines) {
+#     headerLines <- trimws(headerLines)
+#     headerLines <- headerLines[headerLines != ""]
+#     firstLine <- headerLines[1]
+#     if(!(grepl("KSIZE", firstLine) & grepl("NCOEFF", firstLine))) {
+#         stop("First line of header lacks definitions of KSIZE or NCOEFF")
+#     }
+#     ksizeNcoeff <- as.numeric(unlist(regmatches(firstLine, gregexpr('\\(?[0-9,.]+', firstLine))))
+#     if(length(ksizeNcoeff) != 2) {
+#         stop("First line of header contains wrong number of assignments (should be 2)")
+#     }
+#     ksize <- ksizeNcoeff[1]
+#     ncoeff <- ksizeNcoeff[2]
+#     groupLineIndexes <- grep("GROUP", headerLines)
+#     groupLines <- headerLinesgroupLineIndexes
+#     groupNumbers <- as.numeric(unlist(regmatches(groupLines, gregexpr('\\(?[0-9,.]+', groupLines))))
+#     if(identical(groupNumbers[1:5], c(1010, 1030, 1040, 1041, 1050))) {
+#         stop("Header file does not contain groups 1010, 1030, 1040, 1041 and 1050 in this order")
+#     }
+#     group1010Index <- groupLines[1]
+#     group1030Index <- groupLines[2]
+#     group1040Index <- groupLines[3]
+#     group1041Index <- groupLines[4]
+#     group1050Index <- groupLines[5]
+#     if(length(groupNumbers == 6)) {
+#         group1070Index <- groupLines[6]
+#     } else {
+#         group1070Index <- length(headerLines)
+#     }
+#     group1010Lines <- headerLines[(group1010Index+1):(group1030Index-1)]
+#     group1030Lines <- headerLines[(group1030Index+1):(group1040Index-1)]
+#     group1040Lines <- headerLines[(group1040Index+1):(group1041Index-1)]
+#     group1041Lines <- headerLines[(group1041Index+1):(group1050Index-1)]
+#     group1050Lines <- headerLines[(group1050Index+1):(group1070Index-1)]
+#     group1030Values <- as.numeric(unlist(strsplit(group1030Lines, "\\s+")))
+#     startJD <- group1030Values[1]
+#     endJD <- group1030Values[2]
+#     stepSize <- group1030Values[3]
+#     numberConstants <- as.numeric(group1040Lines[1])
+#     namesConstants <- unlist(strsplit(group1040Lines[-1], "\\s+"))
+#     valuesConstants <- as.numeric(gsub("D", "E", unlist(strsplit(h2[28:78], "\\s+")), ignore.case = TRUE))
+#     
+#     
+#     
+# }

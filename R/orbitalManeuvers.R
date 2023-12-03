@@ -508,23 +508,28 @@ hybridReconstruct <- function(x, y, r1, r2, sigma, gamma, rho, zeta) {
     ))
 }
 
-hybridLambert <- function(initialPosition, finalPosition, initialTime, finalTime,
-                          retrogradeTransfer=FALSE, centralBody="Earth", maxIterations=2000,
-                          atol=0.00001, rtol=0.000001) {
-    checkTimeInput(initialTime, finalTime, "sdp4")
+lambert <- function(initialPosition, finalPosition, initialTime, finalTime,
+                    retrogradeTransfer=FALSE, centralBody="Earth", maxIterations=2000,
+                    atol=0.00001, rtol=0.000001) {
+    checkTimeInput(initialTime, finalTime, "lambert")
     t0 <- 0
     if(is.character(initialTime) & is.character(finalTime)) {
         t <- as.numeric(difftime(finalTime, initialTime, units="secs"))
     } else {
         t <- finalTime
     }
-    centralBody <- tolower(centralBody)
-    if(!(centralBody %in% c("sun", "mercury", "venus", "earth", "moon", "mars", "jupiter",
-                            "saturn", "uranus", "neptune"))) {
-        stop("Only the following central bodies are currently supported:
+    if(is.numeric(centralBody)) {
+        GM <- centralBody
+    } else if(is.character(centralBody)){
+        centralBody <- tolower(centralBody)
+        if(!(centralBody %in% c("sun", "mercury", "venus", "earth", "moon", "mars", 
+                                "jupiter", "saturn", "uranus", "neptune"))) {
+            stop("Only the following central bodies are currently supported:
              Sun, Mercury, Venus, Earth, Moon, Mars, Jupiter, Saturn, Uranus, 
              Neptune and Pluto")
+        }
     }
+
     GM <- switch(centralBody, sun=GM_Sun_DE440, mercury=GM_Mercury_DE440,
                  venus=GM_Venus_DE440, earth=GM_Earth_DE440, moon=GM_Moon_DE440,
                  mars=GM_Mars_DE440, jupiter=GM_Jupiter_DE440, saturn=GM_Saturn_DE440,

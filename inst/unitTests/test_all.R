@@ -57,18 +57,27 @@ checkEqualsNumeric(testECEF3[1], -37325973.4, tolerance=3e-9)
 
 # Test readGLONASSNavigationRINEX
 
-testGLONASSnav <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
-                                                    "/testGLONASSRINEX.txt"))
+testGLONASSnavV2 <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                                    "/testGLONASSRINEXv2.txt"))
 
-checkTrue(length(testGLONASSnav$messages) == 5)
+checkTrue(length(testGLONASSnavV2$messages) == 5)
+
+testGLONASSnavV3 <- readGLONASSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                                      "/testGLONASSRINEXv3.txt"))
+
+checkEquals(testGLONASSnavV3$messages[[2]]$tauCSource, "Ground")
 
 # Test readGPSNavigationRINEX
 
-testGPSnav <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
-                                            "/testGPSRINEX.txt"))
+testGPSnavV2 <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                            "/testGPSRINEXv2.txt"))
 
-checkTrue(length(testGPSnav$messages) == 3)
+checkTrue(length(testGPSnavV2$messages) == 3)
 
+testGPSnavV3 <- readGPSNavigationRINEX(paste0(path.package("asteRisk"), 
+                                                      "/testGPSRINEXv3.txt"))
+
+checkEquals(testGPSnavV3$messages[[2]]$IODC, 389)
 
 if (requireNamespace("asteRiskData", quietly = TRUE)) {
     # Test TEMEtoLATLON
@@ -147,11 +156,14 @@ if (requireNamespace("asteRiskData", quietly = TRUE)) {
     testHpop <- hpop(initialPosition, initialVelocity, initialTime, targetTimes, 
                      molniyaMass, molniyaCrossSection, molniyaCrossSection,
                      molniyaCr, molniyaCd)
-    checkEqualsNumeric(testHpop[2, "X"], -14572000, tolerance=1e-6)
+    checkEqualsNumeric(testHpop[2, "positionX"], -14572000, tolerance=1e-6)
 } 
 
 ## Test readBinDAF
 
-testDAF <- readBinDAF(paste0(path.package("asteRisk"), "/vgr2_jup230.bsp"))
-checkEquals(testSPK$arrays[[1]]$arrayElements[1], -649364399)
+DAFFilePath <- tempfile()
+download.file("https://naif.jpl.nasa.gov/pub/naif/VOYAGER/kernels/spk/vgr2_jup230.bsp",
+              DAFFilePath)
+testDAF <- readBinDAF(DAFFilePath)
+checkEquals(testDAF$arrays[[1]]$arrayElements[1], -649364399)
 

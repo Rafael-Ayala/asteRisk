@@ -52,7 +52,6 @@ TTSecondsToTDBSeconds <- function(TTSeconds) {
     eccentricAnomaly <- kepler_sol_current
     TDB_minus_TT <- TT_to_TDB_K*sin(eccentricAnomaly)
     return(TTSeconds + TDB_minus_TT)
-    return(current_TDBSeconds)
 }
 
 TDBSecondsToTTSeconds <- function(TDBSeconds) {

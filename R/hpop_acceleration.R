@@ -295,6 +295,38 @@ elasticMoonAcceleration <- function(Mjd_UTC, r, r_sun, r_earth, moonLibrations, 
     return(as.vector(a))
 }
 
+cscalculator <- function(pos_MPA) {
+    d <- sqrt(sum(pos_MPA^2))
+    r2xy <- pos_MPA[1]^2+pos_MPA[2]^2
+    c1 <- 1/d
+    c2 <- pos_MPA[3]/(d^2*sqrt(r2xy))
+    c3 <- pos_MPA[1]
+    c4 <- (1/r2xy)
+    c5 <- pos_MPA[2]
+    c6 <- pos_MPA[2]
+    c7 <- pos_MPA[1]
+    c8 <- pos_MPA[3]
+    c9 <- sqrt(r2xy)/d^2
+    return(c(c1,c2,c3,c4,c5,c6,c7,c8,c9))
+}
+    
+
+aXYZtodUsphComponents <- function(ax, ay, az, c1, c2, c3, c4, c5, c6, c7, c8) {
+    dUdr <- az/(c1*c8) - (c9 * (ay*c3 - ax*c6)) / (c1*c8*c4 * (c5*c6 + c3*c7))
+    dUdlatgc <- az/(c2*c8) - (c9 * (ay*c3 - ax*c6)) / (c2*c8*c4 * (c5*c6 + c3*c7)) -
+        (ay*c3 - ax*c6) / (c5*c6 + c3*c7) * (c5 / (c2*c3)) - ax/(c2*c3)
+    dUdlon <- (ay*c3 - ax*c6) / (c4*(c5*c6 + c3*c7))
+    return(c(dUdr, dUdlatgc, dUdlon))
+}
+
+UsphComponentsToAxyz <- function(dUdr, dUdlatgc, dUdlon, pos_MPA) {
+    r2xy <- pos_MPA[1]^2+pos_MPA[2]^2
+    ax <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[1]-(1/r2xy*dUdlon)*pos_MPA[2]
+    ay <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[2]+(1/r2xy*dUdlon)*pos_MPA[1]
+    az <- 1/d*dUdr*pos_MPA[3]+sqrt(r2xy)/d^2*dUdlatgc
+    return(c(ax,ay,az))
+}
+
 anelasticMoonAcceleration <- function(Mjd_UTC, r, r_sun, r_earth, moonLibrations, UT1_UTC,
                                     TT_UTC, moonSPHDegree, SMTcorrections) {
     ## GRAIL gravity fields use the Moon Principal Axes reference frame
@@ -710,10 +742,11 @@ solarRadiationAcceleration <- function(rSatellite, JPLEphemerides, centralBody,
                 }
             }
         }
-    } else {
-        eclipseFactor <- 1
-        eclipseType <- "None"
-    }
+        else {
+            eclipseFactor <- 1
+            eclipseType <- "None"
+        }
+    } 
     eclipseFactor <- as.numeric(eclipseFactor)
     a <- eclipseFactor*Cr*(area/mass)*solarPressureConstant*(AU*AU)*rSatellite_Sun/(sqrt(sum(rSatellite_Sun^2))^3)
     return(a)
