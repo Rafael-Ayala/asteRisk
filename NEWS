@@ -1,6 +1,7 @@
-Changes in version 1.4.4 (2023-XX-XX)
+Changes in version 1.4.4 (2024-XX-XX)
 + Added support to read binary SPK and generic DAF files
 + Added support to read GPS and GLONASS RINEX navigation files of version 3
++ Added function evaluateSPKSegment() to evaluate an SPK segment at any epoch covered by it
 
 Changes in version 1.4.3 (2023-13-01)
 + Function hpop() now displays a progress bar

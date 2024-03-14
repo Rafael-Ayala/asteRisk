@@ -426,15 +426,13 @@ https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html
 Shampine, L. F. and Gordon, M. K., Computer Solution of Ordinary Differential Equations: The Initial Value Problem, 1975
 Robert Werner, SPICE spke01 math, 2022.
+https://doi.org/10.5270/esa-tyidsbu
 }
 \examples{
-# The file vgr2_jup230.bsp distributed by NAIF includes information for the 
+# The file vgr2_jup230.bsp provided with the package includes information for the
 # Jupiter flyby of Voyager 2
 
-testSPKFilePath <- tempfile()
-download.file("https://naif.jpl.nasa.gov/pub/naif/VOYAGER/kernels/spk/vgr2_jup230.bsp", testSPKFilePath)
-
-testSPK <- readBinSPK(testSPKFilePath)
+testSPK <- readBinSPK(paste0(path.package("asteRisk"), "/vgr2_jup230.bsp"))
 length(testSPK$segments)
 # It contains a single segment
 testSPK$segments[[1]]$segmentSummary$SPKType

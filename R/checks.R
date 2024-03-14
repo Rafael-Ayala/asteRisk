@@ -76,3 +76,13 @@ checkTLElist <- function(readTLE) {
         stop("Please provide a valid TLE read by either the readTLE or parseTLElines functions")
     }
 }
+
+supportedDEversions <- c("440", "441")
+
+checkDEversion <- function(DEversion) {
+    if(!(DEversion %in% supportedDEversions)) {
+        stop(strwrap(paste("Invalid DE version requested. Currently supported DE versions are", 
+                           paste(supportedDEversions, collapse=", "),
+                           ".", sep="")))
+    }
+}

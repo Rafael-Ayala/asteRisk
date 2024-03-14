@@ -17,11 +17,19 @@ axis at the time of the corresponding TLE. Due to the change of the direction
 of the vernal equinox and the rotation axis over time, coordinates in the two
 frames differ slightly.
 
+The function implement 2 algorithms. The default one applies first a transformation
+to ITRF using the algorithm implemented by David A. Vallado in the teme2ecef
+routine, followed by a transformation to GCRF using nutation-precesion-bias and
+polar motion matrices (transformation for velocity takes into account variations
+in Earth's rotation speed through length of day data provided by IERS).
+The second one follows the same procedure implemented by NAIF in the SPICE routine
+ZZTEME, and is provided for cases where users aim to reproduce SPICE's output.
+
 This function requires the \code{asteRiskData} package, which can be installed 
 by running \code{install.packages('asteRiskData', repos='https://rafael-ayala.github.io/drat/')}
 }
 \usage{
-TEMEtoGCRF(position_TEME, velocity_TEME, dateTime)
+TEMEtoGCRF(position_TEME, velocity_TEME, dateTime, SPICEAlgorithm, ephemerisTime)
 }
 \arguments{
   \item{position_TEME}{Vector with the X, Y and Z components of the position
@@ -34,7 +42,17 @@ TEMEtoGCRF(position_TEME, velocity_TEME, dateTime)
   to the provided position and velocity vectors. This specifies the time for 
   which the conversion from TEME to GCRF coordinates will be performed. It is
   required due to the change in the exact position of the rotation axis of 
-  Earth due to precesion, nutation and polar motion.
+  Earth due to precesion, nutation and polar motion. Either \code{dateTime} or 
+  \code{ephemerisTime} must be provided.
+  }
+  \item{SPICEAlgorithm}{Logical indicating if the algorithm implemented in
+  SPICE's ZZTEME routine should be used instead of the default algorithm. By
+  default, \code{SPICEAlgorithm=FALSE}, and SPICE's algorithm is not applied.
+  }
+  \item{ephemerisTime}{Time in TDB seconds since J2000 for which the conversion
+  from TEME to GCRF coordinates will be performed. This is also known as
+  "ephemeris time" in SPICE. Either \code{dateTime} or \code{ephemerisTime}
+  must be provided.
   }
 }
 \value{

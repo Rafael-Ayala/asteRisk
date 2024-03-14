@@ -1,11 +1,20 @@
 sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTime,
                  keplerAccuracy=10e-12, maxKeplerIterations=10) {
+    sgp4_(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetTime,
+          keplerAccuracy, maxKeplerIterations,
+          J2=J2_SGP4, k2=k2_SGP4, A30_SGP4, k4=k4_SGP4, ke=ke_SGP4, q0=q0_SGP4,
+          s0=s0_SGP4, earthRadius=earthRadius_SGP4, ae=ae_SGP4, qzms2t=qzms2t_SGP4)
+}
+
+sgp4_ <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTime,
+                 keplerAccuracy=10e-12, maxKeplerIterations=10,
+                 J2, k2, A30, k4, ke, q0, s0, earthRadius, ae, qzms2t) {
     checkTimeInput(initialDateTime, targetTime, "sgp4")
     if(2*pi/n0 >= 225) {
         deep_space <- TRUE
     }
     t0 <- 0
-    if(is.character(initialDateTime) & is.character(targetTime)) {
+    if(is.character(initialDateTime) && is.character(targetTime)) {
         t <- as.numeric(difftime(targetTime, initialDateTime, units="secs"))/60
     } else {
         t <- targetTime
@@ -18,17 +27,20 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     #a0dprime <- a0/(1-delta0)
     # use no_unkozai semi major axis
     a0dprime <- (ke/n0dprime)^(2/3) # called ao in Vallado's implementation
-    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4 # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
     high_perigee_flag <- TRUE
     qzms24 <- qzms2t
     if(perigee >= 98 & perigee <= 156) {
-        s <- a0dprime*(1-e0) - s + ae # equivalent to: (perigee - 78)/6378.135 + 1
+        # s <- a0dprime*(1-e0) - s + ae # equivalent to: (perigee - 78)/6378.135 + 1
+        s <- a0dprime*(1-e0) - s0 + ae # equivalent to: (perigee - 78)/6378.135 + 1
         sfour <- perigee - 78
-        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+        qzms24 <- ((120 - sfour) / earthRadius)^4
     } else if(perigee < 98) {
-        s <- 20/earthRadius_SGP4 + ae # equivalent to 20/6378.135 + 1
+        s <- 20/earthRadius + ae # equivalent to 20/6378.135 + 1
         sfour <- 20
-        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+        qzms24 <- ((120 - sfour) / earthRadius)^4
+    } else {
+        s <- s0
     }
     if(perigee < 220) {
         high_perigee_flag <- FALSE # Vallado's implementation uses isimp, which is a low perigee flag (therefore values are inverted)
@@ -131,9 +143,9 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
     rvector <- rk*Uvector
     # rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector # Changed to match Vallado's implementation
     rderivativevector <- rkderivative*Uvector + rfkderivative * Vvector
-    position_result <- rvector*earthRadius_SGP4
-    # velocity_result <- rderivativevector*earthRadius_SGP4*1440/86400 # Changed to match Vallado's implementation
-    velocity_result <- rderivativevector*earthRadius_SGP4*ke/60
+    position_result <- rvector*earthRadius
+    # velocity_result <- rderivativevector*earthRadius*1440/86400 # Changed to match Vallado's implementation
+    velocity_result <- rderivativevector*earthRadius*ke/60
     return(list(
         position=position_result,
         velocity=velocity_result,
@@ -142,7 +154,8 @@ sgp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, ta
 
 
 sgp4_multi <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL, targetTimes,
-                 keplerAccuracy=10e-12, maxKeplerIterations=10) {
+                 keplerAccuracy=10e-12, maxKeplerIterations=10,
+                 J2, k2, A30, k4, ke, q0, s0, earthRadius, ae, qzms2t) {
     for(targetTime in targetTimes) {
         checkTimeInput(initialDateTime, targetTime, "sgp4")
     }
@@ -157,17 +170,19 @@ sgp4_multi <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NU
     #a0dprime <- a0/(1-delta0)
     # use no_unkozai semi major axis
     a0dprime <- (ke/n0dprime)^(2/3) # called ao in Vallado's implementation
-    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4 # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius # equivalent to rp in Vallado's implementation, subtracting 1 and multiplying by Earth Radius
     high_perigee_flag <- TRUE
     qzms24 <- qzms2t
     if(perigee >= 98 & perigee <= 156) {
-        s <- a0dprime*(1-e0) - s + ae # equivalent to: (perigee - 78)/6378.135 + 1
+        s <- a0dprime*(1-e0) - s0 + ae # equivalent to: (perigee - 78)/6378.135 + 1
         sfour <- perigee - 78
-        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+        qzms24 <- ((120 - sfour) / earthRadius)^4
     } else if(perigee < 98) {
-        s <- 20/earthRadius_SGP4 + ae # equivalent to 20/6378.135 + 1
+        s <- 20/earthRadius + ae # equivalent to 20/6378.135 + 1
         sfour <- 20
-        qzms24 <- ((120 - sfour) / earthRadius_SGP4)^4
+        qzms24 <- ((120 - sfour) / earthRadius)^4
+    } else {
+        s <- s0
     }
     if(perigee < 220) {
         high_perigee_flag <- FALSE # Vallado's implementation uses isimp, which is a low perigee flag (therefore values are inverted)
@@ -281,9 +296,9 @@ sgp4_multi <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NU
     rvector <- rk*Uvector
     # rderivativevector <- rkderivative*Uvector -rfkderivative * Vvector # Changed to match Vallado's implementation
     rderivativevector <- rkderivative*Uvector + rfkderivative * Vvector
-    position_result <- rvector*earthRadius_SGP4
-    # velocity_result <- rderivativevector*earthRadius_SGP4*1440/86400 # Changed to match Vallado's implementation
-    velocity_result <- rderivativevector*earthRadius_SGP4*ke/60
+    position_result <- rvector*earthRadius
+    # velocity_result <- rderivativevector*earthRadius*1440/86400 # Changed to match Vallado's implementation
+    velocity_result <- rderivativevector*earthRadius*ke/60
     return(list(
         position=position_result,
         velocity=velocity_result,
@@ -292,9 +307,18 @@ sgp4_multi <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NU
 
 sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetTime,
                  keplerAccuracy=10e-12, maxKeplerIterations=10) {
+    sdp4_(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetTime,
+          keplerAccuracy, maxKeplerIterations,
+          J2=J2_SGP4, k2=k2_SGP4, A30_SGP4, k4=k4_SGP4, ke=ke_SGP4, q0=q0_SGP4,
+          s0=s0_SGP4, earthRadius=earthRadius_SGP4, ae=ae_SGP4, qzms2t=qzms2t_SGP4)
+}
+
+sdp4_ <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetTime,
+                 keplerAccuracy=10e-12, maxKeplerIterations=10,
+                 J2, k2, A30, k4, ke, q0, s0, earthRadius, ae, qzms2t) {
     checkTimeInput(initialDateTime, targetTime, "sdp4")
     t0 <- 0
-    if(is.character(initialDateTime) & is.character(targetTime)) {
+    if(is.character(initialDateTime) && is.character(targetTime)) {
         t <- as.numeric(difftime(targetTime, initialDateTime, units="secs"))/60
     } else {
         t <- targetTime
@@ -319,13 +343,15 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     #a0dprime <- a0/(1-delta0)
     # use no_unkozai semi major axis
     a0dprime <- (ke/n0dprime)^(2/3)
-    perigee <- (a0dprime*(1-e0)-ae)*earthRadius_SGP4
+    perigee <- (a0dprime*(1-e0)-ae)*earthRadius
     if (perigee < 156) {
         if (perigee < 98) {
-            s <- 20/earthRadius_SGP4 + ae
+            s <- 20/earthRadius + ae
         } else {
-            s <- a0dprime*(1-e0) - s + ae
+            s <- a0dprime*(1-e0) - s0 + ae
         }
+    } else {
+        s <- s0
     }
     theta <- cos(i0)
     xi <- 1/(a0dprime - s)
@@ -906,8 +932,8 @@ sdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime, targetT
     Nvector <- c(Nx, Ny, Nz)
     Uvector <- Mvector*sin(uk) + Nvector*cos(uk)
     Vvector <- Mvector*cos(uk) - Nvector*sin(uk)
-    position_result <- rk*Uvector*earthRadius_SGP4
-    velocity_result <- (rkdot*Uvector+rkdotf*Vvector)*earthRadius_SGP4*1440/86400
+    position_result <- rk*Uvector*earthRadius
+    velocity_result <- (rkdot*Uvector+rkdotf*Vvector)*earthRadius*1440/86400
     return(list(
         position=position_result,
         velocity=velocity_result,
@@ -928,4 +954,271 @@ sgdp4 <- function(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime=NULL,
         return(sgp4(n0, e0, i0, M0, omega0, OMEGA0, Bstar, initialDateTime,
                     targetTime, keplerAccuracy, maxKeplerIterations))
     }
+}
+
+twoBody <- function(centralBodyGM, initialPosition, initialVelocity, targetTimes) {
+    # function based on NAIF's 2-body propagator implementation PROP2B,
+    # which is a modified version of Danby's book
+    if(centralBodyGM < 0){
+        stop("GM value for central value cannot be negative")
+    }
+    distance <- sqrt(sum(initialPosition^2))
+    if(distance == 0) {
+        stop("Distance of target body relative to central body cannot be 0")
+    }
+    if(all(initialVelocity == 0)) {
+        stop("Velocity of target body relative to central body cannot be 0")
+    }
+    rv <- sum(initialPosition * initialVelocity) # position * velocity dot product
+    H <- vectorCrossProduct3D(initialPosition, initialVelocity) # specific angular momentum
+    H2 <- sum(H^2)
+    if(H2 == 0) {
+        stop("Rectilinear motion found")
+    }
+    results <- matrix(nrow=length(targetTimes), ncol=7)
+    eccentricity <- sqrt(
+        sum(
+            (vectorCrossProduct3D(initialVelocity, H)/centralBodyGM -
+                 initialPosition/distance)^2
+        )
+    )
+    Q <- H2/(centralBodyGM*(1+eccentricity))
+    f <- 1 - eccentricity
+    b <- sqrt(Q/centralBodyGM)
+    bDist <- b*distance
+    b2rv <- b^2 * rv
+    bq <- b*Q
+    qOverDist <- Q/distance
+    maxc <- max(1, abs(bDist), abs(b2rv), abs(bq), abs(qOverDist/bq))
+    if(f < 0) {
+        # hyperbolic orbit since e > 1
+        fixed <- log(log(.Machine$double.xmax) - maxc)
+        rootf <- sqrt(-f)
+        logf <- log(-f)
+        d1 <- fixed/rootf
+        d2 <- (fixed + logf * 1.5)/rootf
+        bound <- min(d1, d2)
+    } else {
+        bound <- exp(
+            (log(1.5) + log(.Machine$double.xmax) - log(maxc))/3
+        )
+    }
+    for(i in 1:length(targetTimes)) {
+        stopFlag <- FALSE
+        time <- targetTimes[i]
+        if(time == 0) {
+            results[i,] <- c(time, initialPosition, initialVelocity)
+            next
+        }
+        x <- time/bq
+        boundaries <- sort(c(-bound, bound))
+        if(x < boundaries[1]) {
+            x <- boundaries[1]
+        } else if(x > boundaries[2]) {
+            x <- boundaries[2]
+        }
+        fx2 <- f*x^2
+        ck <- stumpff(fx2, 3)
+        kfun <- x*(bDist*ck[2] + x*(b2rv*ck[3] + x*(bq*ck[4])))
+        if(time < 0) {
+            upper <- 0
+            lower <- x
+            while(kfun > time) {
+                upper <- lower
+                lower <- lower*2
+                oldx <- x
+                x <- lower
+                if(x < boundaries[1]) {
+                    x <- boundaries[1]
+                } else if(x > boundaries[2]) {
+                    x <- boundaries[2]
+                }
+                if(x == oldx) {
+                    warning(paste("Target time", time, "is beyond the range for
+                                  which states can be propagated accurately. NA
+                                  will be returned for position and velocity"))
+                    results[i,] <- c(time, rep(NA, 6))
+                    stopFlag <- TRUE
+                    break
+                }
+                fx2 <- f*x^2
+                ck <- stumpff(fx2, 3)
+                kfun <- x*(bDist*ck[2] + x*(b2rv*ck[3] + x*(bq*ck[4])))
+            }
+        } else if (time > 0) {
+            lower <- 0
+            upper <- x
+            while(kfun < time) {
+                lower <- upper
+                upper <- upper*2
+                oldx <- x
+                x <- upper
+                if(x < boundaries[1]) {
+                    x <- boundaries[1]
+                } else if(x > boundaries[2]) {
+                    x <- boundaries[2]
+                }
+                if(x == oldx) {
+                    warning(paste("Target time", time, "is beyond the range for
+                                  which states can be propagated accurately. NA
+                                  will be returned for position and velocity"))
+                    results[i,] <- c(time, rep(NA, 6))
+                    stopFlag <- TRUE
+                    break
+                }
+                fx2 <- f*x^2
+                ck <- stumpff(fx2, 3)
+                kfun <- x*(bDist*ck[2] + x*(b2rv*ck[3] + x*(bq*ck[4])))
+            }
+        }
+        if(!stopFlag) {
+            d3 <- lower
+            d4 <- (lower+upper)/2
+            d1 <- upper
+            d2 <- max(d3, d4)
+            x <- min(d1, d2)
+            fx2 <- f*x^2
+            ck <- stumpff(fx2, 3)
+            lcount <- 0
+            mostc <- 1000
+            while(x > lower && x < upper && lcount < mostc) {
+                kfun <- x*(bDist*ck[2] + x*(b2rv*ck[3] + x*(bq*ck[4])))
+                if(kfun > time) {
+                    upper <- x
+                } else if(kfun < time) {
+                    lower <- x
+                } else {
+                    upper <- x
+                    lower <- x
+                }
+                if(mostc > 64) {
+                    if(upper != 0 && lower != 0) {
+                        mostc <- 64
+                        lcount <- 0
+                    }
+                }
+                d3 <- lower
+                d4 <- (lower+upper)/2
+                d1 <- upper
+                d2 <- max(d3, d4)
+                x <- min(d1, d2)
+                fx2 <- f*x^2
+                ck <- stumpff(fx2, 3)
+                lcount <- lcount + 1
+            }
+            
+            ## extra iteration debug
+            kfun <- x*(bDist*ck[2] + x*(b2rv*ck[3] + x*(bq*ck[4])))
+            if(kfun > time) {
+                upper <- x
+            } else if(kfun < time) {
+                lower <- x
+            } else {
+                upper <- x
+                lower <- x
+            }
+            d3 <- lower
+            d4 <- (lower+upper)/2
+            d1 <- upper
+            d2 <- max(d3, d4)
+            x <- min(d1, d2)
+            fx2 <- f*x^2
+            ck <- stumpff(fx2, 3)
+            
+            ## extra iteration debug end
+            x2 <- x^2
+            x3 <- x^3
+            br <- bDist*ck[1] + x*(b2rv*ck[2] + x*(bq*ck[3]))
+            pc <- 1 - qOverDist*x2*ck[3]
+            vc <- time - bq*x^3*ck[4]
+            pcdot <- -(qOverDist/br)*x*ck[2]
+            vcdot <- 1 - bq/br * x^2 *ck[3]
+            resultPosition <- pc*initialPosition + vc*initialVelocity
+            resultVelocity <- pcdot*initialPosition + vcdot*initialVelocity
+            results[i,] <- c(time, resultPosition, resultVelocity)
+        }
+    }
+    colnames(results) <- c("targetTime", "positionX", "positionY", "positionZ",
+                           "velocityX", "velocityY", "velocityZ")
+    return(results)
+}
+
+evaluateEquinoctialElements <- function(semiMajorAxis, H0, K0, meanLongitude0, P0, 
+                                        Q0, longitudePeriapsisRate, meanLongitudeRate, 
+                                        longitudeAscendingNodeRate, poleRightAscension, 
+                                        poleDeclination, targetTimes) {
+    # Note: unlike SPICE's eqncpv, we provide targetTimes as difference to epoch 
+    # of periapsis already to be consistent with two-body propagator
+    if(semiMajorAxis <= 0) {
+        stop("Non-positive semi major axis")
+    }
+    e <- sqrt(H0*H0 + K0*K0)
+    if(e > 0.9) {
+        warning("Eccentricity higher than 0.9. Equinoctial elements
+                cannot be reliable evaluated")
+    }
+    sa <- sin(poleRightAscension)
+    ca <- cos(poleRightAscension)
+    sd <- sin(poleDeclination)
+    cd <- cos(poleDeclination)
+    rotationMatrix <- matrix(c(-sa, ca, 0,
+                               -ca*sd, -sa*sd, cd,
+                               ca*cd, sa*cd, sd), 
+                             nrow=3)
+    longitudePeriapsisDelta <- longitudePeriapsisRate * targetTimes
+    can <- cos(longitudePeriapsisDelta)
+    san <- sin(longitudePeriapsisDelta)
+    Ht <- H0 * can + K0 * san # h__ in CSPICE
+    Kt <- K0 * can - H0 * san # k in CSPICE
+    longitudeAscendingNode <- longitudeAscendingNodeRate * targetTimes # node in CSPICE
+    cn <- cos(longitudeAscendingNode)
+    sn <- sin(longitudeAscendingNode)
+    Pt <- P0 * cn + Q0 * sn
+    Qt <- Q0 * cn - P0 * sn
+    argumentPeriapseRate <- longitudePeriapsisRate - longitudeAscendingNodeRate # prate
+    beta <- sqrt(1 - Ht * Ht - Kt * Kt)
+    beta <- 1/(beta + 1)
+    di <- 1/(Pt * Pt + 1 + Qt * Qt)
+    vf <- cbind( # we must cbind here to keep things vectorized. 3 columns for X,Y,Z
+        (1 - Pt * Pt + Qt * Qt) * di,
+        2 * Pt * Qt * di,
+        -2 * Pt * di
+        )
+    vg <- cbind(
+        2 * Pt * Qt * di,
+        (1 + Pt * Pt - Qt * Qt) * di,
+        2 * Qt * di
+    )
+    meanLongitudet <- meanLongitude0 + (meanLongitudeRate * targetTimes) %% (2*pi)
+    evec1t <- -Ht * cos(meanLongitudet) + Kt * sin(meanLongitudet)
+    evec2t <- Ht * sin(meanLongitudet) + Kt * cos(meanLongitudet)
+    eecan <- mapply(keplerVectorSolver, evec1t, evec2t) + meanLongitudet
+    sf <- sin(eecan)
+    cf <- cos(eecan)
+    x1 <- semiMajorAxis * (
+        (1 - beta * Ht * Ht) * cf + (Ht * Kt * beta * sf - Kt)
+    )
+    y1 <- semiMajorAxis * (
+        (1 - beta * Kt * Kt) * sf + (Ht * Kt * beta * cf - Ht)
+    )
+    rb <- Ht * sf + Kt * cf
+    r <- semiMajorAxis * (1 - rb)
+    ra <- meanLongitudeRate * semiMajorAxis * semiMajorAxis / r
+    dx1 <- ra * (-sf + Ht * beta * rb)
+    dy1 <- ra * (cf - Kt * beta * rb)
+    nfac <- 1 - longitudePeriapsisRate / meanLongitudeRate
+    dx <- nfac * dx1 - argumentPeriapseRate * y1
+    dy <- nfac * dy1 + argumentPeriapseRate * x1
+    planetaryMeanEquatorPosition <- x1 * vf + y1 * vg # each column of vf/vg is multiplied by x1/y1
+    planetaryMeanEquatorVelocity <- cbind( # this is temp from SPICE
+        -longitudeAscendingNodeRate * planetaryMeanEquatorPosition[, 2],
+        longitudeAscendingNodeRate * planetaryMeanEquatorPosition[, 1],
+        0
+    ) + dx * vf + dy * vg
+    inertialPosition <- t(tcrossprod(rotationMatrix, planetaryMeanEquatorPosition))
+    inertialVelocity <- t(tcrossprod(rotationMatrix, planetaryMeanEquatorVelocity))
+    results <- cbind(targetTimes, inertialPosition, inertialVelocity)
+    colnames(results) <- c("targetTime", "positionX", "positionY", "positionZ",
+                           "velocityX", "velocityY", "velocityZ")
+    return(results)
 }

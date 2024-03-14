@@ -292,10 +292,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+10)]
     Cy <- coeffs[idxs[2]:(idxs[2]+10)]
     Cz <- coeffs[idxs[3]:(idxs[3]+10)]
+    XS1 <- subIntStartMJD + 8
+    XS2 <- 8
     clenshawSun <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawSun <- clenshaw(MJD_TDB, 11, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Mercury ##
@@ -305,10 +307,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+13)]
     Cy <- coeffs[idxs[2]:(idxs[2]+13)]
     Cz <- coeffs[idxs[3]:(idxs[3]+13)]
+    XS1 <- subIntStartMJD + 4
+    XS2 <- 4
     clenshawMercury <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 14, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 14, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 14, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawMercury <- clenshaw(MJD_TDB, 14, subIntStartMJD, subIntStartMJD+8, cbind(Cx, Cy, Cz), derivatives)
     ## Venus ##
@@ -318,10 +322,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+9)]
     Cy <- coeffs[idxs[2]:(idxs[2]+9)]
     Cz <- coeffs[idxs[3]:(idxs[3]+9)]
+    XS1 <- subIntStartMJD + 8
+    XS2 <- 8
     clenshawVenus <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawVenus <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Earth ## (actually Earth-Moon barycenter)
@@ -333,10 +339,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+12)]
     Cy <- coeffs[idxs[2]:(idxs[2]+12)]
     Cz <- coeffs[idxs[3]:(idxs[3]+12)]
+    XS1 <- subIntStartMJD + 8
+    XS2 <- 8
     clenshawEMB <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawEMB <- clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+16, cbind(Cx, Cy, Cz), derivatives)
     ## Moon ## (already geocentric)
@@ -346,10 +354,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+12)]
     Cy <- coeffs[idxs[2]:(idxs[2]+12)]
     Cz <- coeffs[idxs[3]:(idxs[3]+12)]
+    XS1 <- subIntStartMJD + 2
+    XS2 <- 2
     clenshawMoon <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 13, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawMoon <- clenshaw(MJD_TDB, 13, subIntStartMJD, subIntStartMJD+4, cbind(Cx, Cy, Cz), derivatives)
     ## Mars ## No subintervals for Mars, Jupiter, Saturn, Uranus, Neptune and Pluto
@@ -357,10 +367,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+10)]
     Cy <- coeffs[idxs[2]:(idxs[2]+10)]
     Cz <- coeffs[idxs[3]:(idxs[3]+10)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawMars <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 11, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawMars <- clenshaw(MJD_TDB, 11, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Jupiter ##
@@ -368,10 +380,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+7)]
     Cy <- coeffs[idxs[2]:(idxs[2]+7)]
     Cz <- coeffs[idxs[3]:(idxs[3]+7)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawJupiter <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 8, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 8, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 8, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawJupiter <- clenshaw(MJD_TDB, 8, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Saturn ##
@@ -379,10 +393,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+6)]
     Cy <- coeffs[idxs[2]:(idxs[2]+6)]
     Cz <- coeffs[idxs[3]:(idxs[3]+6)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawSaturn <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 7, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 7, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 7, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawSaturn <- clenshaw(MJD_TDB, 7, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Uranus ##
@@ -390,10 +406,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawUranus <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawUranus <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Neptune ##
@@ -401,10 +419,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawNeptune <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawNeptune <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## Pluto ##
@@ -412,10 +432,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cx <- coeffs[idxs[1]:(idxs[1]+5)]
     Cy <- coeffs[idxs[2]:(idxs[2]+5)]
     Cz <- coeffs[idxs[3]:(idxs[3]+5)]
+    XS1 <- subIntStartMJD + 16
+    XS2 <- 16
     clenshawPluto <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cx, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cy, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, Cz, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cx, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cy, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 6, XS1, XS2, Cz, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawPluto <- clenshaw(MJD_TDB, 6, rowStartMJD, rowStartMJD+32, cbind(Cx, Cy, Cz), derivatives)
     ## The following 2 sections are commented out because they are not currently used. Actually lunar librations are now used
@@ -435,10 +457,12 @@ JPLephemeridesDE440 <- function(MJD_TDB, centralBody = "Earth", derivativesOrder
     Cpsi <- coeffs[idxs[3]:(idxs[3]+9)]
     # units directly in radians. Order of angles is phi, theta and psi
     # Derivatives in radians/s and radians/s2
+    XS1 <- subIntStartMJD + 4
+    XS2 <- 4
     clenshawLunarLibration <- cbind(
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, Cphi, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, Ctheta, derivativesOrder),
-        clenshawAllDerivatives(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, Cpsi, derivativesOrder)
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Cphi, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Ctheta, derivativesOrder, 86400, integral = FALSE),
+        clenshawAllDerivatives(MJD_TDB, 10, XS1, XS2, Cpsi, derivativesOrder, 86400, integral = FALSE)
     )
     # clenshawLunarLibration <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi), derivatives)
     # lunarLibration <- clenshaw(MJD_TDB, 10, subIntStartMJD, subIntStartMJD+8, cbind(Cphi, Ctheta, Cpsi), derivatives)

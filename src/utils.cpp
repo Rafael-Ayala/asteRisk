@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <RcppParallel.h>
+#include <math.h>
 using namespace Rcpp;
 using namespace RcppParallel;
 // [[Rcpp::plugins("cpp11")]]
@@ -48,6 +49,81 @@ List legendre(int n, int m, double angle) {
 
 // [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::export]]
+IntegerVector SPICE_i_dnnt_vec(NumericVector x) {
+    // vectorized version of SPICE i_dnnt
+    int n = x.size();
+    IntegerVector result(n);
+    double x1;
+    for(int i = 0; i <= n; i++) {
+        x1 = x[i];
+        result[i] = x1 >= 0 ? floor(x1 + 0.5) : -floor(0.5 - x1);
+    }
+    return result;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
+int SPICE_i_dnnt(double x) {
+    // non-vectorized version of SPICE i_dnnt
+    int result;
+    result = x >= 0 ? floor(x + 0.5) : -floor(0.5 - x);
+    return result;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
+double keplerVectorSolver(double evec1, double evec2) {
+    // Based on CSPICE's kpsolv.c
+    // but making it more readable
+    // SPICE assigns h__=evec1, k=evec2
+    double x = 0;
+    double yx;
+    double ypx;
+    double yxm;
+    double ecc2 = evec1*evec1 + evec2*evec2;
+    if(ecc2 >= 1) {
+        stop("Eccentricity must be below 1");
+    }
+    double y0 = -evec1;
+    double xm;
+    double ecc = sqrt(ecc2);
+    double xu;
+    double xl;
+    if(y0 > 0) {
+        xu = 0;
+        xl = -ecc;
+    } else if(y0 < 0) {
+        xu = ecc;
+        xl = 0;
+    } else {
+        return x;
+    }
+    int maxit = std::min(32, SPICE_i_dnnt(1/(1-ecc)));
+    for(int i = 1; i <= maxit; i++) {
+        // SPICE version brackets between xu and xl
+        // in case some strange rounding happens when calculating
+        // mid point. We remove this check here
+        xm = (xu + xl) * 0.5;
+        yxm = xm - evec1 * cos(xm) - evec2 * sin(xm);
+        if(yxm > 0) {
+            xu = xm;
+        } else {
+            xl = xm;
+        }
+    }
+    x = xm;
+    double cosx = cos(x);
+    double sinx = sin(x);
+    for(int i = 1; i <= 5; i++) {
+        yx = x - evec1 * cosx - evec2 * sinx;
+        ypx = evec1 * sinx + 1 - evec2 * cosx;
+        x -= yx/ypx;
+    }
+    return x;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
 NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
                                              const NumericMatrix dPnm,
                                              const NumericMatrix Cnm,
@@ -89,7 +165,47 @@ NumericVector gravityGradientSphericalCoords(const NumericMatrix Pnm,
 
 // [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::export]]
-NumericVector clenshawAllDerivatives(double t, int N, double Ta, double Tb, NumericVector Coeffs, int derivativesOrder) {
+NumericVector gravityGradientSphericalCoords_2(const NumericMatrix Pnm,
+                                             const NumericMatrix dPnm,
+                                             const NumericMatrix Cnm,
+                                             const NumericMatrix Snm,
+                                             const double lat,
+                                             const double lon,
+                                             const double d,
+                                             const double R,
+                                             const double GM,
+                                             const int n,
+                                             const int m) {
+    // Using equations A1 to A10 from "Gravitational gradient changes following 
+    // the 2004 December 26 Sumatra–Andaman Earthquake inferred from GRACE"
+    double dUr = 0;
+    double dUlat = 0;
+    double dUlon = 0;
+    double g1 = -GM/pow(d,2);
+    double g2 = GM/pow(d,2);
+    double x1;
+    double x2;
+    for(double i = 0 ; i <= n ; i++) {
+        // for(double i = 2 ; i < n ; i++) {
+        x1 = g1 * (i + 1) * pow((R/d), i);
+        x2 = g2 * pow((R/d), i);
+        for(double j = 0; j <= i; j++) {
+            dUr += x1*Pnm(i,j)*(Cnm(i,j)*cos(j*lon) + Snm(i,j)*sin(j*lon));
+            // Note the derivative with respect to latitude should include
+            // multiplication by cos(lat) due to chain rule, but this is 
+            // already included in the values calculated by function legendre
+            // so I don't include it here
+            dUlat += x2*dPnm(i,j)*(Cnm(i,j)*cos(j*lon) + Snm(i,j)*sin(j*lon));
+            dUlon += x2* j * (Pnm(i,j)/cos(lat)) * (Snm(i,j)*cos(j*lon) - Cnm(i,j)*sin(j*lon));
+        }
+    }
+    NumericVector output = {dUr, dUlat, dUlon};
+    return output;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
+NumericVector clenshawAllDerivatives_OLD(double t, int N, double Ta, double Tb, NumericVector Coeffs, int derivativesOrder) {
     const double tau = (2*t-Ta-Tb)/(Tb-Ta);
     // tau is the same as s in SPICE algorithm
     std::vector<std::vector<double> > helperValues(derivativesOrder + 1, std::vector<double>(3));
@@ -117,6 +233,125 @@ NumericVector clenshawAllDerivatives(double t, int N, double Ta, double Tb, Nume
         output[j] = (scale*helperValues[j-1][0] + tau*helperValues[j][0] - helperValues[j][1]) / (scale2);
         scale += 1.0;
         scale2 = scale2 * scale2initial;
+    }
+    return output;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
+NumericVector clenshawAllDerivatives_NoIntegral(double t, int N, double XS1, double XS2, NumericVector Coeffs, int derivativesOrder,
+                                     double xScaleUnitFactor) {
+    const double tau = (t-XS1)/(XS2);
+    // tau is the same as s in SPICE algorithm
+    std::vector<std::vector<double> > helperValues(derivativesOrder + 1, std::vector<double>(3));
+    helperValues[0][0] = helperValues[0][1] = helperValues[0][2] = 0;
+    double scale;
+    for(double i = N; i > 1; i--) {
+        helperValues[0][2] = helperValues[0][1];
+        helperValues[0][1] = helperValues[0][0];
+        helperValues[0][0] = 2*tau*helperValues[0][1]-helperValues[0][2] + Coeffs[i - 1];
+        scale=2.0;
+        for(int j = 1; j <= derivativesOrder; j++) {
+            helperValues[j][2] = helperValues[j][1];
+            helperValues[j][1] = helperValues[j][0];
+            helperValues[j][0] = scale*helperValues[j-1][1] + 2*tau*helperValues[j][1] - helperValues[j][2];
+            scale += 2.0;
+        }
+    }
+    NumericVector output(derivativesOrder + 1);
+    output[0] = tau*helperValues[0][0] - helperValues[0][1] + Coeffs[0];
+    scale = 1.0;
+    double scale2initial = XS2 * xScaleUnitFactor, scale2 = scale2initial;
+    // double scale2initial = ((Tb-Ta)/2), scale2 = scale2initial;
+    //Rprintf("\n 1 is %f, 2 is %f and 3 is %f \n", helperValues[1][0], helperValues[1][1], helperValues[1][2]);
+    for(R_xlen_t j = 1; j <= derivativesOrder; j++) {
+        output[j] = (scale*helperValues[j-1][0] + tau*helperValues[j][0] - helperValues[j][1]) / (scale2);
+        scale += 1.0;
+        scale2 = scale2 * scale2initial;
+    }
+    return output;
+}
+
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::export]]
+NumericVector clenshawAllDerivatives(double t, int N, double XS1, double XS2, NumericVector Coeffs, int derivativesOrder,
+                                     double xScaleUnitFactor, const bool integral) {
+    const double tau = (t-XS1)/(XS2);
+    // tau is the same as s in SPICE algorithm
+    std::vector<std::vector<double> > helperValues(derivativesOrder + 1, std::vector<double>(3));
+    helperValues[0][0] = helperValues[0][1] = helperValues[0][2] = 0;
+    double scale;
+    double a2;
+    double adegp1;
+    double adegp2;
+    double ai;
+    double c0;
+    double targetIntegralValue;
+    std::vector<double> integralHelperValues;
+    std::vector<double> integralAt0HelperValues;
+    if(integral) {
+        // degp = N - 1
+        // N = degp + 1
+        adegp1 = 0;
+        adegp2 = 0;
+        integralHelperValues = {0, 0, 0}; // f array in CSPICE
+        integralAt0HelperValues = {0, 0, 0}; // z array in CSPICE
+        if(N >= 3) {
+            a2 = Coeffs[0] - Coeffs[2] * 0.5;
+            adegp1 = Coeffs[N - 2] * .5 / (N - 1);
+        } else {
+            a2 = Coeffs[0];
+        }
+        if(N >= 2) {
+            adegp2 = Coeffs[N - 1] * .5 / (N);
+        }
+        if(N == 1) {
+            integralHelperValues[0] = a2;
+        } else {
+            integralHelperValues[0] = adegp2;
+        }
+        integralAt0HelperValues[0] = integralHelperValues[0];
+    }
+    for(double i = N; i > 1; i--) {
+        helperValues[0][2] = helperValues[0][1];
+        helperValues[0][1] = helperValues[0][0];
+        helperValues[0][0] = 2*tau*helperValues[0][1]-helperValues[0][2] + Coeffs[i - 1];
+        if(integral) {
+            if(i == 2) {
+                ai = a2;
+            } else if(i < N) {
+                ai = (Coeffs[i - 2] - Coeffs[i]) * 0.5 / (i - 1);
+            } else {
+                ai = adegp1;
+            }
+            integralHelperValues[2] = integralHelperValues[1];
+            integralHelperValues[1] = integralHelperValues[0];
+            integralHelperValues[0] = ai + (2 * tau * integralHelperValues[1] - integralHelperValues[2]);
+            integralAt0HelperValues[2] = integralAt0HelperValues[1];
+            integralAt0HelperValues[1] = integralAt0HelperValues[0];
+            integralAt0HelperValues[0] = ai - integralAt0HelperValues[2];
+        }
+        scale=2.0;
+        for(int j = 1; j <= derivativesOrder; j++) {
+            helperValues[j][2] = helperValues[j][1];
+            helperValues[j][1] = helperValues[j][0];
+            helperValues[j][0] = scale*helperValues[j-1][1] + 2*tau*helperValues[j][1] - helperValues[j][2];
+            scale += 2.0;
+        }
+    }
+    NumericVector output(derivativesOrder + 1);
+    output[0] = tau*helperValues[0][0] - helperValues[0][1] + Coeffs[0];
+    scale = 1.0;
+    double scale2initial = XS2 * xScaleUnitFactor, scale2 = scale2initial;
+    for(R_xlen_t j = 1; j <= derivativesOrder; j++) {
+        output[j] = (scale*helperValues[j-1][0] + tau*helperValues[j][0] - helperValues[j][1]) / (scale2);
+        scale += 1.0;
+        scale2 = scale2 * scale2initial;
+    }
+    if(integral) {
+        c0 = integralAt0HelperValues[1];
+        targetIntegralValue = (c0 + tau * integralHelperValues[0] - integralHelperValues[1]) * XS2/xScaleUnitFactor;
+        output.push_front(targetIntegralValue);
     }
     return output;
 }

@@ -160,10 +160,83 @@ GCRFtoITRF <- function(position_GCRF, velocity_GCRF=c(0, 0, 0), dateTime) {
     ))
 }
 
-TEMEtoGCRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime) {
-    hasData()
-    ecef_results <- TEMEtoITRF(position_TEME, velocity_TEME, dateTime)
-    GCRF_results <- ITRFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
+TEMEtoGCRF <- function(position_TEME, velocity_TEME=c(0,0,0), dateTime=NULL, 
+                       SPICEAlgorithm=FALSE, ephemerisTime=NULL) {
+    if(SPICEAlgorithm) {
+        if(is.null(ephemerisTime)) {
+            if(!is.null(dateTime)) {
+                ephemerisTime <- as.numeric(as.POSIXct(dateTime, tz="UTC") - as.POSIXct("2000-01-01 12:00:00", tz="UTC"))*86400
+            } else {
+                stop("A valid UTC date-time string or ephemeris time in TDB seconds since
+                 J2000 must be specified")
+            }
+        }
+        precession76 <- IAU76_precession(ephemerisTime, inputInSeconds = TRUE)
+        nutation76 <- IAU76_nutation(ephemerisTime, inputInSeconds = TRUE)
+        eulerAnglesPrecession <- c(-precession76$z, precession76$theta, -precession76$zeta)
+        eulerAngleRatesPrecession <- c(-precession76$dZ, precession76$dTheta, -precession76$dZeta)
+        eulerAnglesNutation <- c(-nutation76$meanEclipticObliquity - nutation76$deltaEps, 
+                                 -nutation76$deltaPsi, 
+                                 nutation76$meanEclipticObliquity)
+        eulerAngleRatesNutation <- c(-nutation76$dMeanEclipticObliquity - nutation76$dDeltaEps, 
+                                     -nutation76$dDeltaPsi, 
+                                     nutation76$dMeanEclipticObliquity)
+        rotationMatrixTEMEToMEME <- eulerAnglesToDCM(rev(eulerAnglesNutation), "XZX")
+        angularVelocityVectorTEMEtoMEME <- eulerAngleRatesToAngularVelocity(rev(eulerAnglesNutation),
+                                                                            rev(eulerAngleRatesNutation),
+                                                                            "XZX")
+        angularVelocityTensorTEMEtoMEME <- matrix(c(
+            0, -angularVelocityVectorTEMEtoMEME[3], angularVelocityVectorTEMEtoMEME[2],
+            angularVelocityVectorTEMEtoMEME[3], 0, -angularVelocityVectorTEMEtoMEME[1],
+            -angularVelocityVectorTEMEtoMEME[2], angularVelocityVectorTEMEtoMEME[1], 0),
+            nrow=3, byrow=TRUE
+        )
+        zmeme <- t(rotationMatrixTEMEToMEME)[3, ]
+        zmemeRate <- t(angularVelocityTensorTEMEtoMEME %*% rotationMatrixTEMEToMEME)[3, ]
+        positionMEME <- drop(rotationMatrixTEMEToMEME %*% position_TEME)
+        velocityMEME <- drop(rotationMatrixTEMEToMEME %*% velocity_TEME) - drop(angularVelocityTensorTEMEtoMEME %*% positionMEME)
+        rotationMatrixMEMEtoGCRF <- eulerAnglesToDCM(rev(eulerAnglesPrecession), "ZYZ")
+        angularVelocityVectorMEMEtoGCRF <- eulerAngleRatesToAngularVelocity(rev(eulerAnglesPrecession),
+                                                                            rev(eulerAngleRatesPrecession),
+                                                                            "ZYZ")
+        angularVelocityTensorMEMEtoGCRF <- matrix(c(
+            0, -angularVelocityVectorMEMEtoGCRF[3], angularVelocityVectorMEMEtoGCRF[2],
+            angularVelocityVectorMEMEtoGCRF[3], 0, -angularVelocityVectorMEMEtoGCRF[1],
+            -angularVelocityVectorMEMEtoGCRF[2], angularVelocityVectorMEMEtoGCRF[1], 0),
+            nrow=3, byrow=TRUE
+        )
+        xj2000 <- t(rotationMatrixMEMEtoGCRF)[1, ]
+        # The following should maybe take transpose?
+        xj2000Rate <- t(angularVelocityTensorMEMEtoGCRF %*% rotationMatrixMEMEtoGCRF)[1, ]
+        zj2000 <- drop(rotationMatrixMEMEtoGCRF %*% zmeme)
+        zj2000Rate <- drop((angularVelocityTensorMEMEtoGCRF%*%rotationMatrixMEMEtoGCRF ) %*% zmeme + rotationMatrixMEMEtoGCRF %*% zmemeRate)
+        #stateTransformationTEMEtoGCRF <- zztwovxf(c())
+        positionGCRF <- drop(rotationMatrixMEMEtoGCRF %*% positionMEME)
+        velocityGCRF <- drop(rotationMatrixMEMEtoGCRF %*% velocityMEME) - drop(angularVelocityTensorMEMEtoGCRF %*% positionGCRF)
+        stateTransformationTEMEtoGCRF <- zztwovxf(c(zj2000, zj2000Rate), 3, c(xj2000, xj2000Rate), 1)
+        stateGCRF <- stateTransformationTEMEtoGCRF %*% c(position_TEME, velocity_TEME)
+        # TODO: this still does not match SPICE output EXACTLY, but quite close.
+        # Implement zztwovxf to obtain perfect match I guess...
+        GCRF_results <- list(position=stateGCRF[1:3],
+                             velocity=stateGCRF[4:6])
+    } else {
+        if(is.null(dateTime)) {
+            if(!is.null(ephemerisTime)) {
+                dateTime <- format(as.POSIXct(
+                    TDBSecondsToUTCSeconds_J2000(ephemerisTime),
+                    origin="2000-01-01 12:00:00",
+                    tz = "UTC"), 
+                    "%Y-%m-%d %H:%M:%OS6"
+                )
+            } else {
+                stop("A valid UTC date-time string or ephemeris time in TDB seconds since
+                 J2000 must be specified")
+            }
+        }
+        hasData()
+        ecef_results <- TEMEtoITRF(position_TEME, velocity_TEME, dateTime)
+        GCRF_results <- ITRFtoGCRF(ecef_results$position, ecef_results$velocity, dateTime)
+    }
     return(GCRF_results)
 }
 

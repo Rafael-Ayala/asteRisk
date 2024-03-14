@@ -1231,6 +1231,7 @@ readPlanetLabsStateVectors <- function(filename) {
         lastCommentsAddress <- recordLengthBytes*(firstSummaryRecord-1)
         comments <- parseBinDAFCommentsRecords(rawData[(recordLengthBytes+1):lastCommentsAddress])
     } else {
+        lastCommentsAddress <- recordLengthBytes
         comments <- NULL
     }
     numIntsSummary <- fileRecord$numIntsSummary
@@ -1487,7 +1488,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         numberRecords <- SPKArray[length(SPKArray)]
         centralBodyGM <- SPKArray[length(SPKArray)-1]
         stateVectors <- SPKArray[1:(numberRecords*6)]
-        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7 + 1)]
+        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7)]
         stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
         colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
                                           "velocityX", "velocityY", "velocityZ")
@@ -1513,7 +1514,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         numberRecords <- SPKArray[length(SPKArray)]
         polynomialDegree <- SPKArray[length(SPKArray)-1]
         stateVectors <- SPKArray[1:(numberRecords*6)]
-        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7 + 1)]
+        epoch <- SPKArray[(numberRecords*6 + 1):(numberRecords*7)]
         stateVectorsMatrix <- matrix(stateVectors, ncol=6, nrow=numberRecords, byrow=TRUE)
         colnames(stateVectorsMatrix) <- c("positionX", "positionY", "positionZ",
                                           "velocityX", "velocityY", "velocityZ")
@@ -1640,26 +1641,32 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         numberDataPackets <- metaData[12]
         firstDataPacketsDouble <- metaData[11]
         dataPacketSize <- metaData[15]
-        dataPacketSize <- dataPacketSize + 1
+        # dataPacketSize <- dataPacketSize + 1
+        dataPacketOffset <- metaData[16]
         numberRefValues <- metaData[7]
         firstRefValuesDouble <- metaData[6]
-        polynomialDegree <- SPKArray[firstConstantsDouble]
-        numberCoefficients <- polynomialDegree + 1
+        numberCoefficients <- SPKArray[firstConstantsDouble] 
+        polynomialDegree <- numberCoefficients - 1
         # The following should be equal to dataPacketSize
         elementsPerRecord <- numberCoefficients*6 + 2
         if(elementsPerRecord != dataPacketSize) {
             stop("Inconsistency in number of coefficients and elements per record.
                  Please report the problem and provide an example file.")
         }
-        lastDataPacketsDouble <- firstDataPacketsDouble + numberDataPackets * dataPacketSize
+        lastDataPacketsDouble <- firstDataPacketsDouble + numberDataPackets * (dataPacketSize + dataPacketOffset)
         records <- SPKArray[(firstDataPacketsDouble + 1):lastDataPacketsDouble]
-        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberDataPackets)
-        midPointIndexes <- 1 + recordStartIndexes
-        intervalRadiiIndexes <- 2 + recordStartIndexes
-        midPoints <- records[midPointIndexes]
-        intervalRadii <- records[intervalRadiiIndexes]
-        allCoefficients <- records[-c(midPointIndexes, intervalRadiiIndexes)]
-        chebyshevCoefficients <- matrix(allCoefficients, ncol=6*numberCoefficients, nrow=numberRecords,
+        #recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberDataPackets)
+        recordStartIndexes <- seq(from=0, by=elementsPerRecord, length.out=numberDataPackets) + 
+            seq(from=dataPacketOffset, length.out=numberDataPackets, by=dataPacketOffset) 
+        recordsDataPacketsOnly <- records[as.vector(sapply(recordStartIndexes+1, seq, length.out=dataPacketSize))]
+        # midPointIndexes <- 1 + recordStartIndexes
+        midPointIndexes <- seq(from=1, by=dataPacketSize, length.out=numberDataPackets)
+        # intervalRadiiIndexes <- 2 + recordStartIndexes
+        intervalRadiiIndexes <- midPointIndexes + 1
+        midPoint <- recordsDataPacketsOnly[midPointIndexes]
+        intervalRadius <- recordsDataPacketsOnly[intervalRadiiIndexes]
+        allCoefficients <- recordsDataPacketsOnly[-c(midPointIndexes, intervalRadiiIndexes)]
+        chebyshevCoefficients <- matrix(allCoefficients, ncol=6*numberCoefficients, nrow=numberDataPackets,
                                         byrow = TRUE)
         colnames(chebyshevCoefficients) <- paste(rep(c("positionXCoeff", "positionYCoeff", "positionZCoeff", 
                                                        "velocityXCoeff", "velocityYCoeff", "velocityZCoeff"), 
@@ -1670,7 +1677,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
             chebyshevCoefficients=cbind(initialEpoch, midPoint, intervalRadius, chebyshevCoefficients)
         )
     } else if(SPKTypeCode == 15) {
-        if(length(SPKArray != 16)) {
+        if(length(SPKArray) != 16) {
             stop("Malformed type 15 segment (wrong length).")
         }
         formattedArray <- as.list(SPKArray)
@@ -1684,7 +1691,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         # Note: according to SPICE comments, all units in radians, km and seconds 
         # except J2 (dimensionless)
     } else if(SPKTypeCode == 17) {
-        if(length(SPKArray != 12)) {
+        if(length(SPKArray) != 12) {
             stop("Malformed type 17 segment (wrong length).")
         }
         formattedArray <- as.list(SPKArray)
@@ -1718,7 +1725,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         }
         lastDataPacketsDouble <- numberDataPackets*dataPacketSize
         allEphemerides <- SPKArray[1:lastDataPacketsDouble]
-        ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize*allEphemerides, 
+        ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize, 
                                     nrow=numberDataPackets, byrow = TRUE)
         colnames(ephemeridesMatrix) <- elementNames
         epoch <- SPKArray[(lastDataPacketsDouble + 1):(lastDataPacketsDouble + numberDataPackets)]
@@ -1734,18 +1741,28 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         boundaryChoiceFlag <- SPKArray[length(SPKArray) - 1]
         lastMinisegmentEndIndex <- SPKArray[length(SPKArray) - 2]
         minisegmentStartIndexes <- SPKArray[(length(SPKArray) - 2 - numberIntervals):(length(SPKArray) - 3)]
-        minisegmentEndIndexes <- c(minisegmentStartIndexes[2:numberIntervals] - 1, lastMinisegmentEndIndex)
+        if(numberIntervals > 1) {
+            minisegmentEndIndexes <- c(minisegmentStartIndexes[2:numberIntervals] - 1, lastMinisegmentEndIndex)
+        } else {
+            minisegmentEndIndexes <- lastMinisegmentEndIndex
+        }
+        minisegmentEndIndexes <- minisegmentEndIndexes - 1
         minisegmentIndexes <- Map(`:`, minisegmentStartIndexes, minisegmentEndIndexes)
         minisegmentArrays <- lapply(minisegmentIndexes, function(i) SPKArray[i])
-        intervalStarts <- SPKArray[(lastMinisegmentEndIndex + 1):(lastMinisegmentEndIndex + numberIntervals)]
-        lastIntervalEnd <- SPKArray[lastMinisegmentEndIndex + numberIntervals + 1]
-        intervalEnds <- c(intervalStarts[2:numberIntervals], lastIntervalEnd)
+        intervalStarts <- SPKArray[(lastMinisegmentEndIndex):(lastMinisegmentEndIndex + numberIntervals - 1)]
+        lastIntervalEnd <- SPKArray[lastMinisegmentEndIndex + numberIntervals]
+        intervalEnds <- c(intervalStarts[-1], lastIntervalEnd)
+        # if(numberIntervals >= 2) {
+        #     intervalEnds <- c(intervalStarts[2:numberIntervals], lastIntervalEnd)
+        # } else {
+        #     intervalEnds <- lastIntervalEnd
+        # }
         minisegments <- vector(mode="list", length=numberIntervals)
         for(i in 1:numberIntervals) {
             newMinisegment <- formatSPKType19Minisegment(minisegmentArrays[[i]])
-            append(newMinisegment, list(intervalStartEpoch=intervalStarts[i],
-                                        intervalEndEpoch=intervalEnds[i]))
-            minisegments[[i]] <- newMinisegment
+            minisegments[[i]] <- append(newMinisegment, list(intervalStartEpoch=intervalStarts[i],
+                                                             intervalEndEpoch=intervalEnds[i]),
+                                        after = 1)
         }
         formattedArray <- list(
             boundaryChoiceFlag=boundaryChoiceFlag,
@@ -1755,12 +1772,12 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         numberRecords <- SPKArray[length(SPKArray)]
         elementsPerRecord <- SPKArray[length(SPKArray)-1]
         numberCoefficients <- (elementsPerRecord - 3)/3
-        polynomialDegree <- numberCoefficients+1
+        polynomialDegree <- numberCoefficients-1
         # we convert interval length to TDB Julian seconds
         intervalLength <- SPKArray[length(SPKArray)-2] * 86400
         # 2 records for first initial epoch in Julian TDB days, integer and fractional parts
         # we add them and convert to TDB Julian seconds
-        firstInitialEpoch <- (SPKArray[length(SPKArray)-3] + SPKArray[length(SPKArray)-4]) * 86400
+        firstInitialEpoch <- (SPKArray[length(SPKArray)-3] + SPKArray[length(SPKArray)-4] - JD_J2000_0) * 86400
         # tscale is time scale used for velocity, in TDB seconds. E.g., a value of 1 means
         # we are using velocity directly in TDB seconds. A value of 86400 means the time units
         # of velocity would be TDB Julian days, etc.
@@ -1776,7 +1793,7 @@ formatSPKArray <- function(SPKArray, SPKArraySummary) {
         midPointPositionX <- SPKArray[midPointPositionXIndexes]
         midPointPositionY <- SPKArray[midPointPositionYIndexes]
         midPointPositionZ <- SPKArray[midPointPositionZIndexes]
-        allCoefficients <- SPKArray[-c(midPointPositionXIndexes, midPointPositionYIndexes, 
+        allCoefficients <- records[-c(midPointPositionXIndexes, midPointPositionYIndexes, 
                                        midPointPositionZIndexes)]
         coefficientsMatrix <- matrix(allCoefficients, ncol=3*numberCoefficients, 
                                      nrow=numberRecords, byrow = TRUE)
@@ -1834,7 +1851,7 @@ formatSPKType19Minisegment <- function(minisegmentArray) {
     numberDataPackets <- minisegmentArray[length(minisegmentArray)]
     windowSize <- minisegmentArray[length(minisegmentArray) - 1]
     subTypeCode <- minisegmentArray[length(minisegmentArray) - 2]
-    if(subTypeCode != 0 && subTypeCode != 1 && subTypeCode != 1) {
+    if(subTypeCode != 0 && subTypeCode != 1 && subTypeCode != 2) {
         stop("Invalid SPK type 19 subtype code")
     }
     if(subTypeCode == 0){
@@ -1869,7 +1886,7 @@ formatSPKType19Minisegment <- function(minisegmentArray) {
     }
     lastDataPacketsDouble <- numberDataPackets*dataPacketSize
     allEphemerides <- minisegmentArray[1:lastDataPacketsDouble]
-    ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize*allEphemerides, 
+    ephemeridesMatrix <- matrix(allEphemerides, ncol=dataPacketSize, 
                                 nrow=numberDataPackets, byrow = TRUE)
     colnames(ephemeridesMatrix) <- elementNames
     epoch <- minisegmentArray[(lastDataPacketsDouble + 1):(lastDataPacketsDouble + numberDataPackets)]

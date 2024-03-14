@@ -295,7 +295,10 @@ accel_debug <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, 
         a <- a + relativity(Y[1:3], Y[4:6])
     } else if(centralBody == "Moon") {
         # Acceleration due to Moon with spherical harmonics
-        a_moon <- elasticMoonAcceleration(MJD_UTC, Y[1:3], JPL_ephemerides$positionSun, 
+        if(t>=5736.80150622129440) {
+            TRUE
+        }
+        a_moon <- elasticMoonAcceleration_debug(MJD_UTC, Y[1:3], JPL_ephemerides$positionSun, 
                                             JPL_ephemerides$positionEarth,
                                             JPL_ephemerides$lunarLibrationAngles, 
                                             UT1_UTC, TT_UTC, moonSPHDegree, 
@@ -358,5 +361,105 @@ accel_debug <- function(t, Y, MJD_UTC, solarArea, satelliteMass, satelliteArea, 
                 JPL_ephemerides$positionSunSSBarycentric, JPL_ephemerides$velocitySunSSBarycentric, JPL_ephemerides$accelerationSunSSBarycentric,
                 JPL_ephemerides$lunarLibrationAngles, JPL_ephemerides$lunarLibrationAnglesDerivatives, JPL_ephemerides$lunarLibrationAnglesSecondDerivatives
                 ))
+}
+
+elasticMoonAcceleration_debug <- function(Mjd_UTC, r, r_sun, r_earth, moonLibrations, UT1_UTC,
+                                    TT_UTC, moonSPHDegree, SMTcorrections) {
+    ## GRAIL gravity fields use the Moon Principal Axes reference frame
+    if((moonSPHDegree+1) > nrow(asteRiskData::GRGM1200B_Cnm)) {
+        warning(strwrap(paste("Spherical harmonics coefficients are only available
+                            up to degree ", nrow(asteRiskData::GRGM1200B_Cnm)-1, ", but ",
+                              moonSPHDegree, " was input. Defaulting to the maximum
+                            available degree and order of ", nrow(asteRiskData::GRGM1200B_Cnm)-1, ".")))
+        moonSPHDegree <- nrow(asteRiskData::GRGM1200B_Cnm)-1
+    }
+    C <- asteRiskData::GRGM1200B_Cnm[1:(moonSPHDegree+1), 1:(moonSPHDegree+1)]
+    S <- asteRiskData::GRGM1200B_Snm[1:(moonSPHDegree+1), 1:(moonSPHDegree+1)]
+    ## Rotation from Moon Principal Axes frame to Lunar Celestial Reference Frame
+    ## (Lunar cenetered ICRF). See Eq 8 at https://iopscience.iop.org/article/10.3847/1538-3881/abd414
+    ## TODO : check if actually conversion from lunar frames ME to PA is required
+    # Solid Moon Tides Corrections based on https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2014JE004755
+    # These are anelastic corrections
+    MPAtoLCRF <- iauRz(-moonLibrations[1], 
+                       iauRx(-moonLibrations[2], 
+                             iauRz(-moonLibrations[3], diag(3))
+                       )
+    )
+    if(SMTcorrections) {
+        r_earth <- t(MPAtoLCRF) %*% r_earth
+        earth_polar <- CartesianToPolar(r_earth)
+        r_sun <- t(MPAtoLCRF) %*% r_sun
+        sun_polar <- CartesianToPolar(r_sun)
+        # Mjd_TT <- Mjd_UTC + TT_UTC/86400
+        # Mjd_UT1 <- Mjd_UTC + UT1_UTC/86400
+        # Time <- (Mjd_TT-MJD_J2000)/36525
+        MJD_TDB <- MJDUTCtoMJDTDB(Mjd_UTC)
+        Centuries_TDB <- (MJD_TDB-MJD_J2000)/36525
+        delaunayVars <- delaunayVariables(Centuries_TDB)
+        delaunayVarsNoOmega <- delaunayVars[1:4]
+        legendre_earthTheta <- legendre(2, 2, earth_polar[2])[[1]]
+        legendre_sunTheta <- legendre(2, 2, sun_polar[2])[[1]]
+        correctionFactorEarth <- GMratioEarthMoon*((moonRadius/earth_polar[3])^3)
+        correctionFactorSun <- GMratioSunMoon*((moonRadius/sun_polar[3])^3)
+        dC20 <- k20moon * (correctionFactorEarth * legendre_earthTheta[3, 1] +
+                               correctionFactorSun * legendre_sunTheta[3, 1]) / 5
+        dC21 <- k21moon * (correctionFactorEarth * legendre_earthTheta[3, 2] * cos(earth_polar[1]) +
+                               correctionFactorSun * legendre_sunTheta[3, 2] * cos(sun_polar[1]))/5
+        dC22 <- k22moon * (correctionFactorEarth * legendre_earthTheta[3, 3] * cos(2*earth_polar[1]) +
+                               correctionFactorSun * legendre_sunTheta[3, 3] * cos(2*sun_polar[1]))/5
+        dS21 <- k21moon * (correctionFactorEarth * legendre_earthTheta[3, 2] * sin(earth_polar[1]) +
+                               correctionFactorSun * legendre_sunTheta[3, 2] * sin(sun_polar[1]))/5
+        dS22 <- k22moon * (correctionFactorEarth * legendre_earthTheta[3, 3] * sin(2*earth_polar[1]) +
+                               correctionFactorSun * legendre_sunTheta[3, 3] * sin(2*sun_polar[1]))/5
+        # technically the following dissipation terms are anelastic 
+        # dissTermsC20 <- dissTermsC21 <- dissTermsC22 <- dissTermsS21 <- dissTermsS22 <- numeric(nrow(solidMoonTidesSimple))
+        # for(i in 1:length(dissTermsC20)) {
+        #     solidMoonTidesRow <- solidMoonTidesSimple[i, ]
+        #     argumentZeta <- drop(solidMoonTidesRow[1:4] %*% delaunayVarsNoOmega)
+        #     dissTermsC20[i] <- solidMoonTidesRow[7] * sin(argumentZeta)
+        #     dissTermsC21[i] <- solidMoonTidesRow[8] * cos(argumentZeta)
+        #     dissTermsS21[i] <- solidMoonTidesRow[9] * sin(argumentZeta)
+        #     dissTermsC22[i] <- solidMoonTidesRow[10] * sin(argumentZeta)
+        #     dissTermsS22[i] <- solidMoonTidesRow[11] * cos(argumentZeta)
+        # }
+        # C[3,1] <- C[3,1] + dC20 + sum(dissTermsC20)
+        # C[3,2] <- C[3,2] + dC21 + sum(dissTermsC21)
+        # C[3,3] <- C[3,3] + dC22 + sum(dissTermsC22)
+        # S[3,2] <- S[3,2] + dS21 + sum(dissTermsS21)
+        # S[3,3] <- S[3,3] + dS22 + sum(dissTermsS22)
+        C[3,1] <- C[3,1] + dC20 
+        C[3,2] <- C[3,2] + dC21 
+        C[3,3] <- C[3,3] + dC22 
+        S[3,2] <- S[3,2] + dS21 
+        S[3,3] <- S[3,3] + dS22 
+    }
+    pos_LCRF <- r
+    pos_MPA <- t(MPAtoLCRF) %*% pos_LCRF
+    d <- sqrt(sum(pos_MPA^2))
+    latgc <- asin(pos_MPA[3]/d)
+    lon <- atan2(pos_MPA[2], pos_MPA[1])
+    # Define order of Legendre functions
+    n <- m <- moonSPHDegree
+    legendre_latgc <- legendre(n, m, latgc)
+    legendre_latgc_Pnm <- legendre_latgc[[1]]
+    legendre_latgc_dPnm <- legendre_latgc[[2]]
+    gradient <- gravityGradientSphericalCoords_2(legendre_latgc_Pnm, legendre_latgc_dPnm,
+                                               C, S, latgc, lon, d, moonRadius, GM_Moon_GRGM1200B, n, m)
+    # dUdr <- gradient[1]
+    # dUdlatgc <- gradient[2]
+    # dUdlon <- gradient[3]
+    # r2xy <- pos_MPA[1]^2+pos_MPA[2]^2
+    # ax_d <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[1]-(1/r2xy*dUdlon)*pos_MPA[2]
+    # ay_d <- (1/d*dUdr-pos_MPA[3]/(d^2*sqrt(r2xy))*dUdlatgc)*pos_MPA[2]+(1/r2xy*dUdlon)*pos_MPA[1]
+    # az_d <- 1/d*dUdr*pos_MPA[3]+sqrt(r2xy)/d^2*dUdlatgc
+    axayaz <- drop(matrix(c(cos(latgc) * cos(lon), -sin(latgc)*cos(lon), -sin(lon),
+                       cos(latgc) * sin(lon), -sin(latgc) * sin(lon), cos(lon),
+                       sin(latgc), cos(latgc), 0), nrow=3, byrow=TRUE) %*% gradient)
+    # ax <- axayaz[1]
+    # ay <- axayaz[2]
+    # az <- axayaz[3]
+    a_bf <- axayaz
+    a <- MPAtoLCRF %*% a_bf
+    return(as.vector(a))
 }
 

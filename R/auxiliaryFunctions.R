@@ -85,3 +85,184 @@ rawToDouble <- function(x) {
     readBin(x, numeric())
 }
 
+interpolateSPKTypes8_9_12_13_18_19 <- function(sortedEpochs, segmentData,
+                                               requiredRecords, requiredRecordsWindows,
+                                               targetEpochsRecords, interpolationType) {
+    results <- matrix(nrow=length(sortedEpochs), ncol=10)
+    counter <- 1
+    if(interpolationType == "Lagrange") {
+        for(i in 1:length(requiredRecords)) {
+            epochsCurrentRecord <- sortedEpochs[targetEpochsRecords==requiredRecords[i]]
+            requiredRecordsIndexes <- requiredRecordsWindows[i, 1]:requiredRecordsWindows[i, 2]
+            allRequiredRecords <- segmentData[requiredRecordsIndexes, ]
+            refEpochs <- allRequiredRecords[, 1]
+            xPositions0 <- allRequiredRecords[, 2]
+            yPositions0 <- allRequiredRecords[, 3]
+            zPositions0 <- allRequiredRecords[, 4]
+            xVelocities0 <- allRequiredRecords[, 5]
+            yVelocities0 <- allRequiredRecords[, 6]
+            zVelocities0 <- allRequiredRecords[, 7]
+            lagrangeXPos <- lagrange_(refEpochs, xPositions0)
+            lagrangeYPos <- lagrange_(refEpochs, yPositions0)
+            lagrangeZPos <- lagrange_(refEpochs, zPositions0)
+            lagrangeXVel <- lagrange_(refEpochs, xVelocities0)
+            lagrangeYVel <- lagrange_(refEpochs, yVelocities0)
+            lagrangeZVel <- lagrange_(refEpochs, zVelocities0)
+            xPositions <- lagrangeXPos(epochsCurrentRecord, 0)
+            yPositions <- lagrangeYPos(epochsCurrentRecord, 0)
+            zPositions <- lagrangeZPos(epochsCurrentRecord, 0)
+            xVelAccel <- lagrangeXVel(epochsCurrentRecord, 1)
+            yVelAccel <- lagrangeYVel(epochsCurrentRecord, 1)
+            zVelAccel <- lagrangeZVel(epochsCurrentRecord, 1)
+            xVelocities <- xVelAccel[1,]
+            yVelocities <- yVelAccel[1,]
+            zVelocities <- zVelAccel[1,]
+            xAccelerations <- xVelAccel[2,]
+            yAccelerations <- yVelAccel[2,]
+            zAccelerations <- zVelAccel[2,]
+            # newResultsBlock <- cbind(epochsCurrentRecord, xPositions, yPositions, zPositions,
+            #                          xVelocities, yVelocities, zVelocities, xAcceleration,
+            #                          yAcceleration, zAcceleration)
+            if(length(epochsCurrentRecord) == 1) {
+                results[counter, ] <- c(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions, 
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + 1
+            } else {
+                results[counter:(counter + length(epochsCurrentRecord) - 1), ] <- cbind(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions,
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + length(epochsCurrentRecord)
+            }
+        }
+    } else if(interpolationType == "Hermite-joint") {
+        for(i in 1:length(requiredRecords)) {
+            epochsCurrentRecord <- sortedEpochs[targetEpochsRecords==requiredRecords[i]]
+            allRequiredRecords <- segmentData[requiredRecordsWindows[i, ], ]
+            refEpochs <- allRequiredRecords[, 1]
+            xPositions0 <- allRequiredRecords[, 2]
+            yPositions0 <- allRequiredRecords[, 3]
+            zPositions0 <- allRequiredRecords[, 4]
+            xVelocities0 <- allRequiredRecords[, 5]
+            yVelocities0 <- allRequiredRecords[, 6]
+            zVelocities0 <- allRequiredRecords[, 7]
+            hermiteX <- hermite_(refEpochs, xPositions0, xVelocities0)
+            hermiteY <- hermite_(refEpochs, yPositions0, yVelocities0)
+            hermiteZ <- hermite_(refEpochs, zPositions0, zVelocities0)
+            x <- hermiteX(epochsCurrentRecord, 2)
+            y <- hermiteY(epochsCurrentRecord, 2)
+            z <- hermiteZ(epochsCurrentRecord, 2)
+            xPositions <- x[1, ]
+            yPositions <- y[1, ]
+            zPositions <- z[1, ]
+            xVelocities <- x[2,]
+            yVelocities <- y[2,]
+            zVelocities <- z[2,]
+            xAccelerations <- x[3,]
+            yAccelerations <- y[3,]
+            zAccelerations <- z[3,]
+            # newResultsBlock <- cbind(epochsCurrentRecord, xPositions, yPositions, zPositions,
+            #                          xVelocities, yVelocities, zVelocities, xAcceleration,
+            #                          yAcceleration, zAcceleration)
+            if(length(epochsCurrentRecord) == 1) {
+                results[counter, ] <- c(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions, 
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + 1
+            } else {
+                results[counter:(counter + length(epochsCurrentRecord) - 1), ] <- cbind(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions,
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + length(epochsCurrentRecord)
+            }
+        }
+    } else if(interpolationType == "Hermite") {
+        for(i in 1:length(requiredRecords)) {
+            epochsCurrentRecord <- sortedEpochs[targetEpochsRecords==requiredRecords[i]]
+            allRequiredRecords <- segmentData[requiredRecordsWindows[i, ], ]
+            refEpochs <- allRequiredRecords[, 1]
+            xPositions0 <- allRequiredRecords[, 2]
+            yPositions0 <- allRequiredRecords[, 3]
+            zPositions0 <- allRequiredRecords[, 4]
+            xVelocities0_1 <- allRequiredRecords[, 5]
+            yVelocities0_1 <- allRequiredRecords[, 6]
+            zVelocities0_1 <- allRequiredRecords[, 7]
+            xVelocities0_2 <- allRequiredRecords[, 8]
+            yVelocities0_2 <- allRequiredRecords[, 9]
+            zVelocities0_2 <- allRequiredRecords[, 10]
+            xAccelerations0 <- allRequiredRecords[, 11]
+            yAccelerations0 <- allRequiredRecords[, 12]
+            zAccelerations0 <- allRequiredRecords[, 13]
+            hermitePosVelX <- hermite_(refEpochs, xPositions0, xVelocities0_1)
+            hermitePosVelY <- hermite_(refEpochs, yPositions0, yVelocities0_1)
+            hermitePosVelZ <- hermite_(refEpochs, zPositions0, zVelocities0_1)
+            hermiteVelAccelX <- hermite_(refEpochs, xVelocities0_2, xAccelerations0)
+            hermiteVelAccelY <- hermite_(refEpochs, yVelocities0_2, yAccelerations0)
+            hermiteVelAccelZ <- hermite_(refEpochs, zVelocities0_2, zAccelerations0)
+            xPositions <- hermitePosVelX(epochsCurrentRecord, 0)
+            yPositions <- hermitePosVelX(epochsCurrentRecord, 0)
+            zPositions <- hermitePosVelX(epochsCurrentRecord, 0)
+            xVelAccel <- hermiteVelAccelX(epochsCurrentRecord, 1)
+            yVelAccel <- hermiteVelAccelY(epochsCurrentRecord, 1)
+            zVelAccel <- hermiteVelAccelZ(epochsCurrentRecord, 1)
+            xVelocities <- xVelAccel[1,]
+            yVelocities <- yVelAccel[1,]
+            zVelocities <- zVelAccel[1,]
+            xAccelerations <- xVelAccel[2,]
+            yAccelerations <- yVelAccel[2,]
+            zAccelerations <- zVelAccel[2,]
+            if(length(epochsCurrentRecord) == 1) {
+                results[counter, ] <- c(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions, 
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + 1
+            } else {
+                results[counter:(counter + length(epochsCurrentRecord) - 1), ] <- cbind(
+                    epochsCurrentRecord, xPositions, yPositions, zPositions,
+                    xVelocities, yVelocities, zVelocities, xAccelerations,
+                    yAccelerations, zAccelerations
+                )
+                counter <- counter + length(epochsCurrentRecord)
+            }
+        }
+    }
+    return(results)
+}
+
+vectorCrossProductDerivative3D <- function(position1, velocity1, position2, velocity2) {
+    # equivalent to SPICE's dvcross
+    crossProd <- vectorCrossProduct3D(position1, position2)
+    crossProdRate <- vectorCrossProduct3D(velocity1, position2) + vectorCrossProduct3D(position1, velocity2)
+    return(list(
+        crossProduct = crossProd,
+        crossProductDerivative = crossProdRate
+    ))
+}
+
+vectorCrossProductDerivative3D_unitNorm <- function(position1, velocity1, position2, velocity2) {
+    # equivalent to SPICE's ducross
+    scale1 <- max(position1)
+    scale2 <- max(position2)
+    position1 <- position1/scale1
+    velocity1 <- velocity1/scale1
+    position2 <- position2/scale2
+    velocity2 <- velocity2/scale2
+    unnormResults <- vectorCrossProductDerivative3D(position1, velocity1, position2, velocity2)
+    results <- dvhat(unnormResults$crossProduct, unnormResults$crossProductDerivative)
+    return(list(
+        normCrossProduct = results[1:3],
+        normCrossProductDerivative = results[4:6]
+    ))
+}
+
+

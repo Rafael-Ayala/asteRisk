@@ -14,7 +14,10 @@ dateTimeToMJD <- function(dateTime, timeSystem="UTC") {
     hour <- dateTimeComponents$hour
     minute <- dateTimeComponents$min
     second <- dateTimeComponents$sec
-    MJD <- iauCal2jd(year, month, day, hour, minute, second)$DATE
+    #MJD <- iauCal2jd(year, month, day, hour, minute, second)$DATE
+    UTCSecondsJ2000 <- as.numeric(difftime(as.POSIXct(dateTime, tz="UTC"), J2000_POSIXct, units="secs"))
+    MJD_UTC <- UTCSecondsJ2000/86400 + MJD_J2000
+    MJD <- MJD_UTC
     if(timeSystem == "TT") {
         hasData()
         MJD <- MJDUTCtoMJDTT(MJD)
@@ -101,7 +104,9 @@ JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", derivatives
     }
     if(length(centralBody) != 1 | !(centralBody %in% c("SSB", "Mercury", "Venus", "Earth",
                                                        "Moon", "Jupiter", "Saturn", "Uranus",
-                                                       "Neptune", "Pluto")))
+                                                       "Neptune", "Pluto"))) {
+        stop(strwrap("Please choose a single central body from SSB, Mercury, Venus, Earth, Moon, Jupiter, Saturn, Uranus, Neptune or Pluto"))
+    }
     if(timeSystem == "UTC") {
         MJD <- Mjday_TDB(MJDUTCtoMJDTT(MJD))
     } else if(timeSystem == "UT1") {
@@ -111,6 +116,43 @@ JPLephemerides <- function(MJD, timeSystem="UTC", centralBody="SSB", derivatives
     }
     derivativesOrder <- switch(derivatives, velocity=1, acceleration=2, 0)
     return(JPLephemeridesDE440(MJD, centralBody=centralBody, derivativesOrder=derivativesOrder))
+}
+
+.JPLplanetaryEphemerides <- function(ephemerisTime, ephemeridesVersion) {
+    ephemeridesVersion <- gsub("^de", "", tolower(ephemeridesVersion))
+    checkDEversion(ephemeridesVersion)
+    DEfolder <- file.path(asteRiskDataFolder, "DEkernels")
+    if(!dir.exists(DEfolder)) {
+        dir.create(DEfolder, recursive = TRUE)
+    }
+    ephemeridesFilename <- paste("de", ephemeridesVersion, ".bsp", sep="")
+    availableDEfilenames <- list.files(DEfolder)
+    if(!(ephemeridesFilename %in% availableDEfilenames)) {
+        ephemeridesURL <- paste(JPLbinPlanetEphemeridesURL, ephemeridesFilename, sep="")
+        filesize <- as.numeric(httr::headers(httr::HEAD(ephemeridesURL))[["Content-Length"]])
+        filesizeMB <- filesize/1048576
+        currentTimeout <- getOption("timeout")
+        expectedTime <- filesizeMB/0.4
+        # on tests download from JPL FTP usually goes at around 0.8 MB/s
+        downloadPrompt <- readline(prompt=strwrap("Download is ", filesizeMB, 
+                            " large. This might take a long time, possibly over ",
+                            floor(expectedTime/120), " minutes. Alternatively, you can
+                            download the target DE ephemerides file separately and register it 
+                            with function loadPlanetaryEphemerides(). Would you like to
+                            proceed with download anyway? (y/n): "))
+        downloadPrompt <- substr(tolower(downloadPrompt), 1, 1)
+        if(downloadPrompt != "y") {
+            stop("Download of required planetary ephemerides has been aborted.")
+        } else {
+            options(timeout=expectedTime)
+            download.file(ephemeridesURL, paste(DEfolder, ephemeridesFilename, sep=""))
+            options(timeout=currentTimeout)
+        }
+    }
+    
+    
+
+    
 }
 
 # doodsonVariables <- function(MJD_TT) {
@@ -159,4 +201,97 @@ acot <- function(x) {
 
 acoth <- function(x) {
     return(atanh(1/x))
+}
+
+stumpff <- function(x, k) {
+    # Using the closed-form solutions for all values of x
+    # might be a problem for high k values
+    if(k < 0) {
+        stop("Negative value of k for Stumpff's functions")
+    }
+    if(x > 0) {
+        z <- sqrt(x)
+        c0 <- cos(z)
+        if(k == 0) {
+            return(c0)
+        }
+        c1 <- sin(z)/z
+        if(k == 1) {
+            return(c(c0, c1))
+        }
+    } else {
+        z <- sqrt(-x)
+        c0 <- cosh(z)
+        if(k == 0) {
+            return(c0)
+        }
+        c1 <- sinh(z)/z
+        if(k == 1) {
+            return(c(c0, c1))
+        }
+    }
+    ck <- vector(mode="numeric", length=k+1)
+    ck[1] <- c0
+    ck[2] <- c1
+    for(i in 2:(k)) {
+        ck[i+1] <- (1/factorial(i-2) - ck[i-1])/x
+    }
+    return(ck)
+}
+
+lagrange_ <- function(x0, y0) {
+    x0Min <- min(x0)
+    x0Max <- max(x0) 
+    intervalRadius <- (x0Max - x0Min)/2
+    x0norm <- 2*(x0-x0Min) / (x0Max - x0Min) - 1
+    interpolationPoly <- poly.calc(x0norm, y0)
+    f <- function(x, derivativesOrder) {
+        results <- numeric(derivativesOrder + 1)
+        xNorm <- 2*(x-x0Min) / (x0Max - x0Min) - 1
+        results[1] <- as.function(interpolationPoly)(xNorm)
+        if(derivativesOrder > 0) {
+            newPolynom <- interpolationPoly
+            for(i in 1:derivativesOrder) {
+                newPolynom <- deriv(newPolynom)
+                results[i+1] <- as.function(newPolynom)(xNorm)/(intervalRadius^i)
+            }
+        }
+        return(results)
+    }
+    return(Vectorize(f, "x"))
+}
+
+hermite_ <- function(x0, y0, yp0) {
+    x0Mean <- mean(x0)
+    # x0Min <- min(x0)
+    # x0Max <- max(x0)
+    # intervalRadius <- (x0Max - x0Min)/2
+    # x0norm <- 2*(x0-x0Min) / (x0Max - x0Min) - 1
+    x0 <- x0-x0Mean
+    A <- polynomial(0)
+    B <- polynomial(0)
+    for(i in 1:length(x0)) {
+        li0 <- poly.calc(x0[-i])/prod(x0[i]-x0[-i])
+        li1 <- deriv(li0)
+        xMinusxi <- polynomial(c(-x0[i], 1))
+        A <- A + (1-2*xMinusxi*predict(li1, x0[i]))*li0^2*y0[i]
+        B <- B + xMinusxi*li0^2*yp0[i]
+    }
+    interpolationPoly <- A + B
+    f <- function(x, derivativesOrder) {
+        results <- numeric(derivativesOrder + 1)
+        # xNorm <- 2*(x-x0Min) / (x0Max - x0Min) - 1
+        xNorm <- x - x0Mean
+        results[1] <- as.function(interpolationPoly)(xNorm)
+        if(derivativesOrder > 0) {
+            newPolynom <- interpolationPoly
+            for(i in 1:derivativesOrder) {
+                newPolynom <- deriv(newPolynom)
+                # results[i+1] <- as.function(newPolynom)(xNorm)/(intervalRadius^i)
+                results[i+1] <- as.function(newPolynom)(xNorm)
+            }
+        }
+        return(results)
+    }
+    return(Vectorize(f, "x"))
 }

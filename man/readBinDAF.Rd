@@ -95,12 +95,10 @@ elements:
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/daf.html
 }
 \examples{
-# The file vgr2_jup230.bsp distributed by NAIF includes information for the 
+# The file vgr2_jup230.bsp provided with the package includes information for the
 # Jupiter flyby of Voyager 2
 
-testDAFFilePath <- tempfile()
-download.file("https://naif.jpl.nasa.gov/pub/naif/VOYAGER/kernels/spk/vgr2_jup230.bsp", testDAFFilePath)
-testDAF <- readBinDAF(testDAFFilePath)
+testDAF <- readBinDAF(paste0(path.package("asteRisk"), "/vgr2_jup230.bsp"))
 testDAF$metadata
 # The file seems to be of type SPK
 testDAF$comments

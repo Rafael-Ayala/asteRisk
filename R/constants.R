@@ -2,22 +2,22 @@
 
 # XKMPER <- 6378.135 # Earth radius in kilometers
 earthRadius_SGP4 <- 6378.135 # Earth radius in kilometers, value for SGP/SDP. From WGS-72
-ae <- 1 # distance units per earth radii
+ae_SGP4 <- 1 # distance units per earth radii
 # earthEccentricity <- 0.0818191908 # Earth eccentricity
 
-J2 <- 1.082616e-3 # second gravitational zonal harmonic of Earth
-J3 <- -2.53881e-6 # third gravitational zonal harmonic of Earth
-J4 <- -1.65597e-6 # fourth gravitational zonal harmonic of Earth
-k2 <- 0.5 * J2 * ae ^ 2
-k4 <- (-3 / 8) * J4 * ae ^ 4
+J2_SGP4 <- 1.082616e-3 # second gravitational zonal harmonic of Earth
+J3_SGP4 <- -2.53881e-6 # third gravitational zonal harmonic of Earth
+J4_SGP4 <- -1.65597e-6 # fourth gravitational zonal harmonic of Earth
+k2_SGP4 <- 0.5 * J2_SGP4 * ae_SGP4 ^ 2
+k4_SGP4 <- (-3 / 8) * J4_SGP4 * ae_SGP4 ^ 4
 # ke <- 7.43669161e-2 OLD IMPLEMENTATION OF WGS72
-GM_Earth_WGS72 <- 398600.8
-ke <- 60/(sqrt(earthRadius_SGP4^3/GM_Earth_WGS72))
-A30 <- -J3 * ae ^ 3
+GM_Earth_WGS72_SGP4 <- 398600.8
+ke_SGP4 <- 60/(sqrt(earthRadius_SGP4^3/GM_Earth_WGS72_SGP4))
+A30_SGP4 <- -J3_SGP4 * ae_SGP4 ^ 3
 
-q0 <- 120 / 6378.135 + 1 # q0 parameter for SGP4/SGP8 density function
-s <- 78 / 6378.135 + 1 # s parameter for SGP4/SGP8 density function
-qzms2t <- ((120 - 78)/earthRadius_SGP4)^4
+q0_SGP4 <- 120 / 6378.135 + 1 # q0 parameter for SGP4/SGP8 density function
+s0_SGP4 <- 78 / 6378.135 + 1 # s (s0) parameter for SGP4/SGP8 density function
+qzms2t_SGP4 <- ((120 - 78)/earthRadius_SGP4)^4
 
 ## Constants required for SDP4
 
@@ -187,3 +187,8 @@ rownames(solidMoonTidesSimple) <- c("l", "F", "2D-l", "2D", "2l", "F+l")
 colnames(solidMoonTidesSimple) <- c("l", "lprime", "F", "D", "Omega", "Period(days)", 
                                     "C20qNorm", "C21qNorm", "S21qnorm", "C22qNorm",
                                     "S22qNorm")
+
+## File downloads URLs etc
+
+JPLbinPlanetEphemeridesURL <- "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/"
+asteRiskDataFolder <- R_user_dir("asteRisk")
